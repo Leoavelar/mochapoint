@@ -1,0 +1,32 @@
+# Path: pubspec.yaml
+
+name: mocha_point
+description: A Flutter coffee subscription app.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.19.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  google_fonts: ^4.0.3  # Added for Montserrat font
+  # We'll add more dependencies as needed in future iterations
+  # qr_flutter: ^4.0.0  # Will use for actual QR code generation
+  # google_maps_flutter: ^2.2.3  # Will use for map implementation
+  # shared_preferences: ^2.0.18  # Will use for local storage
+  # provider: ^6.0.5  # Will use for state management
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  # We'll add custom assets later
+  # assets:
+  #   - assets/images/
