@@ -133,6 +133,7 @@ class _HomeTab extends StatelessWidget {
                                 color: Colors.white,
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: 'Mocha',
                               ),
                             ),
                             Row(
