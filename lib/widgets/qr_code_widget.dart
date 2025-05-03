@@ -21,7 +21,7 @@ class QRCodeWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             children: [
               Text(
@@ -36,12 +36,12 @@ class QRCodeWidget extends StatelessWidget {
                 'Valid until midnight',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 0),
 
               // QR code container
               Container(
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black, width: 1),
+                  // border: Border.all(color: Colors.black, width: 1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 padding: const EdgeInsets.all(16),
@@ -99,7 +99,7 @@ class QRCodeWidget extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 0),
 
               // Ready to redeem status with green background
               Container(
@@ -111,9 +111,9 @@ class QRCodeWidget extends StatelessWidget {
                     color: Colors.green.withOpacity(0.3),
                   ),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.check_circle,
                       color: Colors.green,

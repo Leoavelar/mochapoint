@@ -85,7 +85,6 @@ class _HomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -189,7 +188,7 @@ class _HomeTab extends StatelessWidget {
             ],
           ),
 
-          SizedBox(height: 400),
+          SizedBox(height: 350),
 
           // Main content area
           Container(
