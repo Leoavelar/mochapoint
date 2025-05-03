@@ -10,22 +10,16 @@ class NearestShopsWidget extends StatelessWidget {
     // Mock data for nearest shops
     final shops = [
       {
-        'name': 'Mocha Point Downtown',
-        'distance': '0.3 miles',
+        'name': 'Tribeka Kaiserfeldgasse',
+        'distance': '600m',
         'rating': 4.8,
-        'walking_time': '5 min',
+        'walking_time': '2 min',
       },
       {
-        'name': 'Mocha Point Riverside',
-        'distance': '0.5 miles',
-        'rating': 4.6,
-        'walking_time': '8 min',
-      },
-      {
-        'name': 'Mocha Point University',
-        'distance': '0.8 miles',
-        'rating': 4.9,
-        'walking_time': '12 min',
+        'name': 'Home Bakery',
+        'distance': '1.1km',
+        'rating': 4.7,
+        'walking_time': '4 min',
       },
     ];
 
@@ -35,92 +29,139 @@ class NearestShopsWidget extends StatelessWidget {
   }
 
   Widget _buildShopItem(BuildContext context, Map<String, dynamic> shop) {
-    final darkGreen = Theme.of(context).primaryColor;
     final coffeeBean = Theme.of(context).colorScheme.secondary;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 2,
+      color: Colors.white,
+      shadowColor: Colors.black26, // Add this line
+      surfaceTintColor: Colors.transparent, // Add this line
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: darkGreen,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            Icons.location_on,
-            color: Colors.white,
-            size: 28,
-          ),
-        ),
-        title: Text(
-          shop['name'],
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: darkGreen,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
           children: [
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.location_on, size: 14, color: coffeeBean),
-                const SizedBox(width: 4),
-                Text(shop['distance']),
-                const SizedBox(width: 12),
-                Icon(Icons.directions_walk, size: 14, color: coffeeBean),
-                const SizedBox(width: 4),
-                Text(shop['walking_time']),
-              ],
+            // Shop logo/icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Image.asset(
+                  'assets/images/Icon.png',
+                  width: 30,
+                  height: 30,
+                  // color: Colors.white,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(
+                      Icons.location_on,
+                      color: Colors.white,
+                      size: 24,
+                    );
+                  },
+                ),
+              ),
             ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.star, size: 14, color: Colors.amber),
-                const SizedBox(width: 4),
-                Text('${shop['rating']}'),
-              ],
+            const SizedBox(width: 16),
+
+            // Shop details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    shop['name'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.directions_walk,
+                        size: 14,
+                        color: Colors.orange,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        shop['distance'],
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Icon(
+                        Icons.access_time,
+                        size: 14,
+                        color: Colors.orange,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        shop['walking_time'],
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.star,
+                        size: 14,
+                        color: Colors.amber,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${shop['rating']}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Directions button
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: coffeeBean,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.directions,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Directions to ${shop['name']} coming soon!'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: Icon(Icons.directions, color: coffeeBean),
-          onPressed: () {
-            // Will implement directions functionality later
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Directions to ${shop['name']} coming soon!'),
-                backgroundColor: darkGreen,
-                duration: const Duration(seconds: 1),
-              ),
-            );
-          },
-        ),
-        onTap: () {
-          // Will implement shop details view later
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${shop['name']} details coming soon!'),
-              backgroundColor: darkGreen,
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        },
       ),
     );
   }

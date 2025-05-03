@@ -44,62 +44,56 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    final darkGreen = Theme.of(context).primaryColor;
     final coffeeBean = Theme.of(context).colorScheme.secondary;
 
     return Scaffold(
-      backgroundColor: darkGreen,
+      backgroundColor: const Color(0xFFF9F5F1), // Light cream background color
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Coffee bean icon inside a location pin
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 120,
-                    color: Colors.white,
-                  ),
-                  Positioned(
-                    top: 30,
-                    child: Container(
-                      width: 40,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: coffeeBean,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 15,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
+              // Logo
+              Image.asset(
+                'assets/images/logo.svg',
+                width: 120,
+                height: 120,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: coffeeBean,
+                      shape: BoxShape.circle,
                     ),
-                  ),
-                ],
+                    child: const Icon(
+                      Icons.coffee,
+                      size: 60,
+                      color: Colors.white,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
               Text(
                 'Mocha Point',
                 style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
               ),
+              const SizedBox(height: 8),
               Text(
                 'Coffee when you need it',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.black54,
                 ),
+              ),
+              const SizedBox(height: 48),
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA6623A)), // Coffee bean color
+                strokeWidth: 3,
               ),
             ],
           ),
