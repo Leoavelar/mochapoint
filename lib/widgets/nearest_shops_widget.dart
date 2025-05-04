@@ -8,7 +8,7 @@ class NearestShopsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Updated shop data with additional entries
+    // Updated shop data with additional entries and subscription status
     final shops = [
       {
         'name': 'Tribeka Kaiserfeldgasse',
@@ -16,6 +16,8 @@ class NearestShopsWidget extends StatelessWidget {
         'rating': 4.8,
         'walking_time': '2 min',
         'logo': 'assets/images/shops/tribeka.png',
+        'subscription': true, // User has subscription here
+        'joker': false, // No need for joker since user has subscription
       },
       {
         'name': 'Sorger Sporgasse',
@@ -23,6 +25,8 @@ class NearestShopsWidget extends StatelessWidget {
         'rating': 4.7,
         'walking_time': '4 min',
         'logo': 'assets/images/shops/sorger.png',
+        'subscription': false, // No subscription
+        'joker': true, // Can use joker here
       },
       {
         'name': 'AUER Hauptplatz',
@@ -30,6 +34,8 @@ class NearestShopsWidget extends StatelessWidget {
         'rating': 4.6,
         'walking_time': '2 min',
         'logo': 'assets/images/shops/auer.png',
+        'subscription': false,
+        'joker': true,
       },
       {
         'name': 'Home Bakery',
@@ -37,6 +43,8 @@ class NearestShopsWidget extends StatelessWidget {
         'rating': 4.7,
         'walking_time': '4 min',
         'logo': 'assets/images/shops/home_bakery.png',
+        'subscription': false,
+        'joker': true,
       },
     ];
 
@@ -47,6 +55,7 @@ class NearestShopsWidget extends StatelessWidget {
 
   Widget _buildShopItem(BuildContext context, Map<String, dynamic> shop) {
     final coffeeBean = Theme.of(context).colorScheme.secondary;
+    const coffeeGreen = Color(0xFF4CAF50);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -61,7 +70,7 @@ class NearestShopsWidget extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            // Shop logo - updated to use specific shop logos
+            // Shop logo
             Container(
               width: 48,
               height: 48,
@@ -150,6 +159,34 @@ class NearestShopsWidget extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Subscription or Joker indicator
+                      if (shop['subscription'])
+                        Icon(
+                          Icons.local_cafe,
+                          size: 14,
+                          color: coffeeGreen,
+                        )
+                      else if (shop['joker'])
+                        Icon(
+                          Icons.card_giftcard,
+                          size: 14,
+                          color: coffeeBean,
+                        ),
+
+                      const SizedBox(width: 4),
+
+                      // Subscription or Joker text
+                      Text(
+                        shop['subscription'] ? 'subscribed' : (shop['joker'] ? 'joker' : ''),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: shop['subscription'] ? coffeeGreen :
+                          (shop['joker'] ? coffeeBean : Colors.black54),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],

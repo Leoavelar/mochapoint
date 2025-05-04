@@ -1,4 +1,4 @@
-// Path: lib/widgets/coffee_stats_card.dart
+// Path: lib/widgets/redemption_stats_card.dart
 
 import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
@@ -70,7 +70,7 @@ class CoffeeStatsCard extends StatelessWidget {
                   context,
                   jokersCount,
                   'Jokers',
-                  Icons.auto_awesome,
+                  Icons.card_giftcard,
                 ),
               ],
             ),

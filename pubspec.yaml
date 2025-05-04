@@ -16,6 +16,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+  flutter_native_splash: ^2.3.10
 
 flutter:
   uses-material-design: true
@@ -38,3 +39,24 @@ flutter:
     - family: Mocha
       fonts:
         - asset: assets/fonts/mocha.otf
+
+flutter_launcher_name:
+  name: "Mocha Point"
+
+flutter_icons:
+  android: true
+  ios: true
+  adaptive_icon_background: "#4C2915"
+
+flutter_native_splash:
+  color: "#4C2915"
+  image: assets/images/icon.svg
+  android: true
+  ios: true
+  web: false
+
+  # Optional: Make the splash screen on Android 12+ follow the new splash screen API
+  android_12:
+    color: "#FAF5F2"
+    image: assets/images/icon.svg
+    icon_background_color: "#4C2915"
