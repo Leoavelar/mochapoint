@@ -1,25 +1,42 @@
 // Path: lib/widgets/nearest_shops_widget.dart
 
 import 'package:flutter/material.dart';
+import 'package:mocha_point/main.dart';
 
 class NearestShopsWidget extends StatelessWidget {
   const NearestShopsWidget({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Mock data for nearest shops
+    // Updated shop data with additional entries
     final shops = [
       {
         'name': 'Tribeka Kaiserfeldgasse',
         'distance': '600m',
         'rating': 4.8,
         'walking_time': '2 min',
+        'logo': 'assets/images/shops/tribeka.png',
+      },
+      {
+        'name': 'Sorger Sporgasse',
+        'distance': '1.4km',
+        'rating': 4.7,
+        'walking_time': '4 min',
+        'logo': 'assets/images/shops/sorger.png',
+      },
+      {
+        'name': 'AUER Hauptplatz',
+        'distance': '1.3km',
+        'rating': 4.6,
+        'walking_time': '2 min',
+        'logo': 'assets/images/shops/auer.png',
       },
       {
         'name': 'Home Bakery',
         'distance': '1.1km',
         'rating': 4.7,
         'walking_time': '4 min',
+        'logo': 'assets/images/shops/home_bakery.png',
       },
     ];
 
@@ -35,8 +52,8 @@ class NearestShopsWidget extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
       color: Colors.white,
-      shadowColor: Colors.black26, // Add this line
-      surfaceTintColor: Colors.transparent, // Add this line
+      shadowColor: Colors.black26,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -44,7 +61,7 @@ class NearestShopsWidget extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            // Shop logo/icon
+            // Shop logo - updated to use specific shop logos
             Container(
               width: 48,
               height: 48,
@@ -52,17 +69,22 @@ class NearestShopsWidget extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
                 child: Image.asset(
-                  'assets/images/Icon.png',
-                  width: 30,
-                  height: 30,
-                  // color: Colors.white,
+                  shop['logo'],
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(
-                      Icons.location_on,
-                      color: Colors.white,
-                      size: 24,
+                    // Fallback to a coffee icon if image fails to load
+                    return Container(
+                      color: coffeeBean.withOpacity(0.1),
+                      child: Icon(
+                        Icons.coffee,
+                        color: coffeeBean,
+                        size: 24,
+                      ),
                     );
                   },
                 ),
@@ -88,7 +110,7 @@ class NearestShopsWidget extends StatelessWidget {
                       const Icon(
                         Icons.directions_walk,
                         size: 14,
-                        color: Colors.orange,
+                        color: MyApp.coffeeBean,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -102,7 +124,7 @@ class NearestShopsWidget extends StatelessWidget {
                       const Icon(
                         Icons.access_time,
                         size: 14,
-                        color: Colors.orange,
+                        color: MyApp.coffeeBean,
                       ),
                       const SizedBox(width: 4),
                       Text(

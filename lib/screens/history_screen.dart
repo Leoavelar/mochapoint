@@ -38,7 +38,10 @@ class HistoryScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppHeader(), // Header spans full width
+          AppHeader(
+            backgroundImage: 'assets/images/header_2.png',
+            height: 200,
+          ), // Header spans full width
 
           // Content area with padding
           Padding(
@@ -157,7 +160,7 @@ class HistoryScreen extends StatelessWidget {
                   item['shopName']!,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: darkGreen,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(height: 4),
