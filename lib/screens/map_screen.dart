@@ -1,9 +1,6 @@
-// Path: lib/screens/map_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({Key? key}) : super(key: key);
@@ -22,29 +19,29 @@ class _MapScreenState extends State<MapScreen> {
   final List<Map<String, dynamic>> _coffeeShops = [
     {
       'name': 'Tribeka Kaiserfeldgasse',
-      'position': const LatLng(47.0707, 15.4410),
+      'position': const LatLng(47.06837847307516, 15.440760976673467),
       'subscription': true,
       'rating': 4.8,
     },
     {
       'name': 'Sorger Sporgasse',
-      'position': const LatLng(47.0717, 15.4385),
+      'position': const LatLng(47.07186680617716, 15.438352049466518),
       'subscription': false,
       'joker': true,
       'rating': 4.7,
     },
     {
       'name': 'AUER Hauptplatz',
-      'position': const LatLng(47.0696, 15.4376),
+      'position': const LatLng(47.07158402395699, 15.438189099660917),
       'subscription': false,
       'joker': true,
       'rating': 4.6,
     },
     {
       'name': 'Home Bakery',
-      'position': const LatLng(47.0730, 15.4420),
-      'subscription': true,
-      'joker': false,
+      'position': const LatLng(47.06793815882071, 15.442564496718765),
+      'subscription': false,
+      'joker': true,
       'rating': 4.7,
     },
   ];
@@ -59,7 +56,7 @@ class _MapScreenState extends State<MapScreen> {
         title: Row(
           children: [
             Image.asset(
-              'assets/images/Icon.png', // Make sure this path exists in your assets
+              'assets/images/Icon.png',
               height: 32,
               width: 32,
             ),
@@ -67,7 +64,7 @@ class _MapScreenState extends State<MapScreen> {
             const Text(
               'Mocha Point Locations',
               style: TextStyle(
-                fontSize: 18, // Smaller font size
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -79,49 +76,62 @@ class _MapScreenState extends State<MapScreen> {
       body: Column(
         children: [
           Expanded(
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                center: _center,
-                zoom: 14.5,
-                minZoom: 10,
-                maxZoom: 18,
-              ),
+            child: Stack(
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.mocha_point',
-                  // Light mode map
-                  tileBuilder: (context, child, tile) {
-                    return ColorFiltered(
-                      colorFilter: const ColorFilter.matrix([
-                        1.1, 0.0, 0.0, 0.0, 0.0,
-                        0.0, 1.1, 0.0, 0.0, 0.0,
-                        0.0, 0.0, 1.1, 0.0, 0.0,
-                        0.0, 0.0, 0.0, 1.0, 0.0,
-                      ]),
-                      child: child,
-                    );
-                  },
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    center: _center,
+                    zoom: 14.5,
+                    minZoom: 10,
+                    maxZoom: 18,
+                    // Disable rotation
+                    interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.mocha_point',
+                    ),
+                    MarkerLayer(
+                      markers: _coffeeShops.map((shop) {
+                        return Marker(
+                          point: shop['position'],
+                          width: 40,
+                          height: 40,
+                          builder: (context) => GestureDetector(
+                            onTap: () {
+                              _showShopDetails(context, shop);
+                            },
+                            child: _buildCustomMarker(
+                              context,
+                              shop['subscription'] == true ? coffeeGreen : coffeeBean,
+                              shop['subscription'] == true,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
-                MarkerLayer(
-                  markers: _coffeeShops.map((shop) {
-                    return Marker(
-                      point: shop['position'],
-                      width: 40,
-                      height: 40,
-                      builder: (context) => GestureDetector(
-                        onTap: () {
-                          _showShopDetails(context, shop);
-                        },
-                        child: _buildCustomMarker(
-                          context,
-                          shop['subscription'] == true ? coffeeGreen : coffeeBean,
-                          shop['subscription'] == true,
-                        ),
+                // Attribution positioned at the bottom right
+                Positioned(
+                  bottom: 5,
+                  left: 5,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: Text(
+                      '© CARTO © OpenStreetMap contributors',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[700],
                       ),
-                    );
-                  }).toList(),
+                    ),
+                  ),
                 ),
               ],
             ),
