@@ -1,6 +1,7 @@
 // Path: lib/screens/splash_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // Add this import
 import 'dart:async';
 import 'home_screen.dart';
 
@@ -27,7 +28,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _animationController.forward();
 
     // Navigate to home screen after 2 seconds
-    Timer(const Duration(seconds: 2), () {
+    Timer(const Duration(seconds: 4), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => const HomeScreen(),
@@ -54,38 +55,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
-              Image.asset(
-                'assets/images/logo.svg',
+              // Logo using SVG
+              SvgPicture.asset(
+                'assets/images/icon.svg',
                 width: 120,
                 height: 120,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: coffeeBean,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.coffee,
-                      size: 60,
-                      color: Colors.white,
-                    ),
-                  );
-                },
               ),
               const SizedBox(height: 24),
               Text(
                 'Mocha Point',
                 style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
                   color: Colors.black,
+                  fontFamily: 'Mocha', // Use your custom font
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Coffee when you need it',
+                'Your daily dose of Happiness',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Colors.black54,
                 ),

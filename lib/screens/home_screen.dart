@@ -1,6 +1,7 @@
 // Path: lib/screens/home_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:mocha_point/main.dart';
 import '../widgets/qr_code_widget.dart';
 import '../widgets/nearest_shops_widget.dart';
 import 'map_screen.dart';
@@ -43,8 +44,8 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).colorScheme.secondary,
-        unselectedItemColor: Colors.white,
-        backgroundColor: Colors.black,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Colors.white,
         elevation: 8,
         onTap: (index) {
           setState(() {
@@ -106,7 +107,7 @@ class _HomeTab extends StatelessWidget {
                       width: double.infinity,
                       height: headerHeight,
                       child: Image.asset(
-                        'assets/images/header.png',
+                        'assets/images/header_2.png',
                         width: double.infinity,
                         height: headerHeight,
                         fit: BoxFit.cover,
@@ -127,42 +128,30 @@ class _HomeTab extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Mocha \nPoint',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Mocha',
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                GestureDetector(
-                                  onTap: onProfileTap,
-                                  child: Container(
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.white,
-                                    ),
-                                    padding: const EdgeInsets.all(2),
-                                    child: ClipOval(
-                                      child: Image.asset(
-                                        'assets/images/profile.png',
-                                        width: 60,
-                                        height: 60,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Icon(
-                                            Icons.person,
-                                            size: 20,
-                                            color: Colors.black54,
-                                          );
-                                        },
-                                      ),
-                                    ),
+                            const SizedBox(), // Empty spacer on the left
+                            GestureDetector(
+                              onTap: onProfileTap,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white,
+                                ),
+                                padding: const EdgeInsets.all(2),
+                                child: ClipOval(
+                                  child: Image.asset(
+                                    'assets/images/profile.png',
+                                    width: 60,
+                                    height: 60,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(
+                                        Icons.person,
+                                        size: 20,
+                                        color: Colors.black54,
+                                      );
+                                    },
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ],
                         ),

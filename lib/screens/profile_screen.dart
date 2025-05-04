@@ -17,25 +17,44 @@ class ProfileScreen extends StatelessWidget {
           // Profile header
           Container(
             padding: const EdgeInsets.symmetric(vertical: 30),
-            color: darkGreen,
+            decoration: const BoxDecoration(
+              color: Colors.black,
+              image: DecorationImage(
+                image: AssetImage('assets/images/header.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
             child: Center(
               child: Column(
                 children: [
-                  const CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Color(0xFF0A3029),
+                  Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/profile.png',
+                        width: 100,
+                        height: 100,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(
+                            Icons.person,
+                            size: 20,
+                            color: Colors.black54,
+                          );
+                        },
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Jane Doe',
+                    'Leonardo Avelar',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.bold
+                      // fontFamily: 'Mocha'
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -70,14 +89,26 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const LogoWidget(size: 30),
+                    Image.asset(
+                      'assets/images/Icon.png',
+                      width: 20,
+                      height: 30,
+                      // color: Colors.white,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.location_on,
+                          color: Colors.white,
+                          size: 24,
+                        );
+                      },
+                    ),
                     const SizedBox(width: 12),
-                    Text(
-                      'Premium Plan',
+                    const Text(
+                      'Cappuccino Plan',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
-                        color: darkGreen,
+                        color: Colors.black,
                       ),
                     ),
                     const Spacer(),
@@ -87,13 +118,13 @@ class ProfileScreen extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: coffeeBean,
+                        color: Colors.green.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
                         'Active',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Colors.green,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -203,9 +234,9 @@ class ProfileScreen extends StatelessWidget {
         const Spacer(),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+            color: Colors.black
           ),
         ),
       ],

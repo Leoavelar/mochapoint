@@ -1,6 +1,7 @@
 // Path: lib/screens/history_screen.dart
 
 import 'package:flutter/material.dart';
+import '../widgets/app_header.dart';
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({Key? key}) : super(key: key);
@@ -32,67 +33,78 @@ class HistoryScreen extends StatelessWidget {
       },
     ];
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+    return SingleChildScrollView(
+      // Removed padding here
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Your Coffee History',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Track your redemptions and favorite places',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 24),
+          const AppHeader(), // Header spans full width
 
-          // History items list
-          Text(
-            'Recent Redemptions',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Emulate ListView with fixed content for now
-          ...historyItems.map((item) => _buildHistoryItem(context, item)).toList(),
-
-          const SizedBox(height: 24),
-
-          // Stats section (placeholder)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: darkGreen.withOpacity(0.2),
-              ),
-            ),
+          // Content area with padding
+          Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your Coffee Stats',
-                  style: TextStyle(
-                    fontSize: 18,
+                  'Your Coffee History',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: darkGreen,
                   ),
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatItem(context, '12', 'This Month'),
-                    _buildStatItem(context, '3', 'Top Location'),
-                    _buildStatItem(context, '45', 'Total'),
-                  ],
+                const SizedBox(height: 8),
+                Text(
+                  'Track your redemptions and favorite places',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 24),
+
+                // History items list
+                Text(
+                  'Recent Redemptions',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Emulate ListView with fixed content for now
+                ...historyItems.map((item) => _buildHistoryItem(context, item)).toList(),
+
+                const SizedBox(height: 24),
+
+                // Stats section (placeholder)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: darkGreen.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Your Coffee Stats',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem(context, '12', 'This Month'),
+                          _buildStatItem(context, '3', 'Top Location'),
+                          _buildStatItem(context, '45', 'Total'),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
