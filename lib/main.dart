@@ -17,7 +17,6 @@ class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   // Colors based on the updated design
-  static const Color darkGreen = Color(0xFF0A3029); // Keeping as backup
   static const Color coffeeBean = Color(0xFFA6623A); // Brown for coffee bean
   static const Color background = Color(0xFFF9F5F1); // Light cream background
 

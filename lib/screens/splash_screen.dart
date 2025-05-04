@@ -27,8 +27,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _animationController.forward();
 
-    // Navigate to home screen after 2 seconds
-    Timer(const Duration(seconds: 4), () {
+    Timer(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => const HomeScreen(),

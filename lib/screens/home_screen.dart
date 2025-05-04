@@ -1,8 +1,7 @@
 // Path: lib/screens/home_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:mocha_point/main.dart';
-import '../widgets/qr_code_widget.dart';
+import 'package:mocha_point/screens/profile_screen.dart';
 import '../widgets/nearest_shops_widget.dart';
 import 'map_screen.dart';
 import '../widgets/coffee_stats_card.dart';
@@ -13,13 +12,19 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _tabs = [];
+
+  void setSelectedIndex(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   void initState() {
@@ -28,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _tabs.add(const _HomeTab());
     _tabs.add(const MapScreen());
     _tabs.add(const SizedBox()); // Placeholder for the redeem button (not used as a real tab)
+    _tabs.add(const ProfileScreen()); // Add profile screen as a tab
   }
 
   @override

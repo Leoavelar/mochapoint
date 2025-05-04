@@ -1,6 +1,7 @@
 // Path: lib/widgets/app_header.dart
 
 import 'package:flutter/material.dart';
+import '../screens/home_screen.dart';
 import '../screens/profile_screen.dart';
 
 class AppHeader extends StatelessWidget {
@@ -15,6 +16,9 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the parent scaffold's context to ensure consistent navigation
+    final scaffoldContext = Scaffold.of(context).context;
+
     return Container(
       color: Colors.black,
       width: double.infinity,
@@ -36,7 +40,7 @@ class AppHeader extends StatelessWidget {
             },
           ),
 
-          // Profile image in top-right corner with navigation built-in
+          // Profile image in top-right corner
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -46,15 +50,24 @@ class AppHeader extends StatelessWidget {
                   const SizedBox(), // Empty spacer on the left
                   GestureDetector(
                     onTap: () {
-                      // Use named route instead of direct push
-                      // This will ensure the ProfileScreen gets proper theme and context
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const ProfileScreen(),
-                          // Make sure we're using full-screen dialog for proper rendering
-                          fullscreenDialog: false,
-                        ),
-                      );
+                      // Instead of direct navigation, use a tab switch method
+                      // Find the nearest HomeScreen state and tell it to switch tabs
+                      final HomeScreenState? homeState =
+                      context.findAncestorStateOfType<HomeScreenState>();
+
+                      if (homeState != null) {
+                        // Switch to profile tab (index 3)
+                        homeState.setSelectedIndex(3);
+                      } else {
+                        // Fallback navigation if not inside HomeScreen
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const ProfileScreen(),
+                            // Use MaterialPageRoute settings that match tab behavior
+                            maintainState: true,
+                          ),
+                        );
+                      }
                     },
                     child: Container(
                       decoration: const BoxDecoration(
