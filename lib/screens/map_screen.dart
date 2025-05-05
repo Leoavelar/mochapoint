@@ -86,11 +86,13 @@ class _MapScreenState extends State<MapScreen> {
                     minZoom: 10,
                     maxZoom: 18,
                     // Disable rotation
-                    interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                    interactiveFlags:
+                        InteractiveFlag.all & ~InteractiveFlag.rotate,
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.mocha_point',
                     ),
                     MarkerLayer(
@@ -105,7 +107,9 @@ class _MapScreenState extends State<MapScreen> {
                             },
                             child: _buildCustomMarker(
                               context,
-                              shop['subscription'] == true ? coffeeGreen : coffeeBean,
+                              shop['subscription'] == true
+                                  ? coffeeGreen
+                                  : coffeeBean,
                               shop['subscription'] == true,
                             ),
                           ),
@@ -119,7 +123,8 @@ class _MapScreenState extends State<MapScreen> {
                   bottom: 5,
                   left: 5,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(3),
@@ -136,28 +141,18 @@ class _MapScreenState extends State<MapScreen> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(12.0),
-            color: Colors.white,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _buildLegendItem(
-                    context,
-                    'Subscription',
-                    coffeeGreen,
-                    true
-                ),
-                const SizedBox(width: 24),
-                _buildLegendItem(
-                    context,
-                    'Joker',
-                    coffeeBean,
-                    false
-                ),
-              ],
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.all(12.0),
+          //   color: Colors.white,
+          //   child: Row(
+          //     mainAxisAlignment: MainAxisAlignment.center,
+          //     children: [
+          //       _buildLegendItem(context, 'Subscription', coffeeGreen, true),
+          //       const SizedBox(width: 24),
+          //       _buildLegendItem(context, 'Joker', coffeeBean, false),
+          //     ],
+          //   ),
+          // ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -171,65 +166,17 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _buildCustomMarker(BuildContext context, Color color, bool isSubscription) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Icon(
-          isSubscription ? Icons.local_cafe : Icons.redeem,
-          color: color,
-          size: 22,
-        ),
+  Widget _buildCustomMarker(
+      BuildContext context, Color color, bool isSubscription) {
+    return Center(
+      child: Image.asset(
+        isSubscription ? 'assets/images/mochalogo.png' : 'assets/images/Icon.png',
+        height: 32,
+        width: 32,
       ),
     );
   }
 
-  Widget _buildLegendItem(BuildContext context, String label, Color color, bool isSubscription) {
-    return Row(
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Icon(
-              isSubscription ? Icons.local_cafe : Icons.redeem,
-              color: color,
-              size: 14,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
 
   void _showShopDetails(BuildContext context, Map<String, dynamic> shop) {
     final coffeeBean = Theme.of(context).colorScheme.secondary;
@@ -270,9 +217,10 @@ class _MapScreenState extends State<MapScreen> {
                       children: [
                         Text(
                           shop['name'],
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         const SizedBox(height: 4),
                         Row(
