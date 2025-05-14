@@ -90,7 +90,7 @@ class CoffeeStatsCard extends StatelessWidget {
           height: 70,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: coffeeBean.withOpacity(0.1),
+            color: MyApp.coffeeBean.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
