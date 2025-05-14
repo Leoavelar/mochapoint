@@ -16,7 +16,8 @@ class OverlappingContentLayout extends StatefulWidget {
     required this.overlappingWidget,
     required this.contentWidgets,
     this.overlap = 60.0,
-    this.backgroundColor = const Color(0xFFF9F5F1),
+    // this.backgroundColor = const Color(0xFFF9F5F1),
+    this.backgroundColor = Colors.white12,
     this.contentSpacing = 16.0, // Default spacing between content widgets
   }) : super(key: key);
 
@@ -92,6 +93,7 @@ class _OverlappingContentLayoutState extends State<OverlappingContentLayout> {
               // Content area
               Container(
                 color: widget.backgroundColor,
+                // color: widget.backgroundColor,
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(

@@ -52,7 +52,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: MyApp.coffeeBean.withOpacity(0.3),
-          width: 1.5,
+          width: 1.0,
         ),
       ),
       child: Column(
