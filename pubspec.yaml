@@ -14,6 +14,10 @@ dependencies:
   flutter_map: ^5.0.0
   latlong2: ^0.9.0
 
+  # Test these one by one
+  http: ^1.2.2  # Try older version
+  shared_preferences: ^2.0.20  # Try older version
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -57,7 +61,6 @@ flutter_native_splash:
   ios: true
   web: false
 
-  # Optional: Make the splash screen on Android 12+ follow the new splash screen API
   android_12:
     color: "#FAF5F2"
     image: assets/images/icon.svg
