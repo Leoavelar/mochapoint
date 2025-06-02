@@ -1,11 +1,17 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   static const String baseUrl = 'http://192.168.1.105:3000/api';
   static const String _tokenKey = 'jwt_token';
   static const String _userKey = 'user_data';
+
+  // Google Sign-In instance
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
 
   // Get stored JWT token
   static Future<String?> getToken() async {
@@ -65,6 +71,9 @@ class AuthService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_tokenKey);
       await prefs.remove(_userKey);
+
+      // Also sign out from Google
+      await _googleSignIn.signOut();
     } catch (e) {
       print('Error during logout: $e');
     }
@@ -128,45 +137,60 @@ class AuthService {
     }
   }
 
-  // Google Sign-In using custom approach
+  // Clean Google Sign-In using the official package
   static Future<AuthResult> signInWithGoogle() async {
-    // For now, show a message that Google Sign-In is in development
-    // Later we can integrate the WebView approach
-    return AuthResult(
-      success: false,
-      error: 'Google Sign-In is being implemented. Please use email/password for now.',
-    );
-  }
-
-  // Method to handle Google token (for future use)
-  static Future<AuthResult> signInWithGoogleToken(String accessToken, Map<String, dynamic> userInfo) async {
     try {
+      print('Starting Google Sign-In...');
+
+      // Trigger the Google Sign-In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        print('User cancelled Google Sign-In');
+        return AuthResult(success: false, error: 'Sign-in cancelled');
+      }
+
+      print('Google Sign-In successful! User: ${googleUser.email}');
+
+      // Get the authentication details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      print('Got Google auth tokens. Access token: ${googleAuth.accessToken?.substring(0, 20)}...');
+
+      // Send Google user data to your backend
+      print('Sending data to backend...');
       final response = await http.post(
         Uri.parse('$baseUrl/auth/google'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
-          'googleId': userInfo['id'],
-          'email': userInfo['email'],
-          'name': userInfo['name'],
-          'photoUrl': userInfo['picture'],
-          'accessToken': accessToken,
+          'googleId': googleUser.id,
+          'email': googleUser.email,
+          'name': googleUser.displayName,
+          'photoUrl': googleUser.photoUrl,
+          'accessToken': googleAuth.accessToken,
         }),
       );
+
+      print('Backend response status: ${response.statusCode}');
+      print('Backend response body: ${response.body}');
 
       final data = json.decode(response.body);
 
       if (response.statusCode == 200) {
         await setToken(data['token']);
         await setUser(data['user']);
+        print('Successfully stored user data');
         return AuthResult(success: true, user: data['user']);
       } else {
+        print('Backend error: ${data}');
         return AuthResult(
           success: false,
           error: data['error'] ?? data['message'] ?? 'Google sign-in failed',
         );
       }
     } catch (e) {
-      return AuthResult(success: false, error: 'Network error: $e');
+      print('Google Sign-In error: $e');
+      return AuthResult(success: false, error: 'Google sign-in failed: $e');
     }
   }
 

@@ -17,8 +17,8 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
 
   // Your Google OAuth configuration
   static const String clientId = '***REMOVED***';
-  static const String redirectUri = 'http://localhost:3000/auth/google/callback';
-  static const String scope = 'openid email profile';
+  static const String redirectUri = 'https://mocha-point.firebaseapp.com/__/auth/handler';
+  static const String scope = 'email profile';
 
   @override
   void initState() {
@@ -27,17 +27,24 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
   }
 
   void _generateAuthUrl() {
+    final state = 'mocha_point_${DateTime.now().millisecondsSinceEpoch}';
+
     final params = {
       'client_id': clientId,
       'redirect_uri': redirectUri,
       'scope': scope,
       'response_type': 'code',
+      'state': state,
       'access_type': 'offline',
       'prompt': 'consent',
     };
 
-    final query = params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&');
+    final query = params.entries
+        .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .join('&');
+
     _authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?$query';
+    print('Generated Auth URL: $_authUrl'); // For debugging
   }
 
   @override
@@ -120,8 +127,8 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
 
                 _buildStep(1, 'Tap "Open Google Sign-In" below'),
                 _buildStep(2, 'Sign in with your Google account'),
-                _buildStep(3, 'Copy the authorization code'),
-                _buildStep(4, 'Paste it in the field below'),
+                _buildStep(3, 'You\'ll be redirected to Firebase'),
+                _buildStep(4, 'Copy the authorization code from the URL'),
 
                 const SizedBox(height: 24),
 
@@ -266,31 +273,14 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
     });
 
     try {
-      // Exchange authorization code for access token
-      final tokenResponse = await _exchangeCodeForToken(code);
+      // Send authorization code to your backend
+      final result = await AuthService.signInWithGoogleCode(code);
 
-      if (tokenResponse != null) {
-        // Get user info from Google
-        final userInfo = await _getUserInfo(tokenResponse['access_token']);
-
-        if (userInfo != null) {
-          // Send to your backend
-          final result = await AuthService.signInWithGoogleToken(
-            tokenResponse['access_token'],
-            userInfo,
-          );
-
-          if (result.success) {
-            Navigator.of(context).pop(); // Close this screen
-            // The main app will automatically navigate to home
-          } else {
-            _showError(result.error ?? 'Google sign-in failed');
-          }
-        } else {
-          _showError('Failed to get user information from Google');
-        }
+      if (result.success) {
+        Navigator.of(context).pop(); // Close this screen
+        // The main app will automatically navigate to home
       } else {
-        _showError('Failed to exchange authorization code');
+        _showError(result.error ?? 'Google sign-in failed');
       }
     } catch (e) {
       _showError('Error during Google sign-in: $e');
@@ -308,7 +298,7 @@ class _GoogleAuthScreenState extends State<GoogleAuthScreen> {
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         body: {
           'client_id': clientId,
-          'client_secret': 'YOUR_GOOGLE_CLIENT_SECRET', // You'll need this
+          'client_secret': '***REMOVED***', // You'll need this
           'code': code,
           'grant_type': 'authorization_code',
           'redirect_uri': redirectUri,

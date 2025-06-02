@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
-import 'google_auth_screen.dart'; // Add this import
+// Remove the google_auth_screen import since we don't need it anymore
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -52,12 +52,23 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleSignIn() async {
-    // Navigate to Google Auth screen
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const GoogleAuthScreen(),
-      ),
-    );
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await AuthService.signInWithGoogle();
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result.success) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } else {
+      _showErrorDialog(result.error ?? 'Google Sign-In failed');
+    }
   }
 
   void _showErrorDialog(String message) {

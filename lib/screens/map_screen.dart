@@ -81,18 +81,19 @@ class _MapScreenState extends State<MapScreen> {
                 FlutterMap(
                   mapController: _mapController,
                   options: MapOptions(
-                    center: _center,
-                    zoom: 14.5,
+                    initialCenter: _center, // Updated: center -> initialCenter
+                    initialZoom: 14.5, // Updated: zoom -> initialZoom
                     minZoom: 10,
                     maxZoom: 18,
-                    // Disable rotation
-                    interactiveFlags:
-                        InteractiveFlag.all & ~InteractiveFlag.rotate,
+                    // Updated: interactiveFlags -> interactionOptions
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                    ),
                   ),
                   children: [
                     TileLayer(
                       urlTemplate:
-                          'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                      'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.mocha_point',
                     ),
                     MarkerLayer(
@@ -101,7 +102,7 @@ class _MapScreenState extends State<MapScreen> {
                           point: shop['position'],
                           width: 40,
                           height: 40,
-                          builder: (context) => GestureDetector(
+                          child: GestureDetector( // Updated: builder -> child
                             onTap: () {
                               _showShopDetails(context, shop);
                             },
@@ -124,7 +125,7 @@ class _MapScreenState extends State<MapScreen> {
                   left: 5,
                   child: Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(3),
@@ -141,18 +142,6 @@ class _MapScreenState extends State<MapScreen> {
               ],
             ),
           ),
-          // Container(
-          //   padding: const EdgeInsets.all(12.0),
-          //   color: Colors.white,
-          //   child: Row(
-          //     mainAxisAlignment: MainAxisAlignment.center,
-          //     children: [
-          //       _buildLegendItem(context, 'Subscription', coffeeGreen, true),
-          //       const SizedBox(width: 24),
-          //       _buildLegendItem(context, 'Joker', coffeeBean, false),
-          //     ],
-          //   ),
-          // ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -176,7 +165,6 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
-
 
   void _showShopDetails(BuildContext context, Map<String, dynamic> shop) {
     final coffeeBean = Theme.of(context).colorScheme.secondary;
@@ -218,9 +206,9 @@ class _MapScreenState extends State<MapScreen> {
                         Text(
                           shop['name'],
                           style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Row(

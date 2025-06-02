@@ -11,17 +11,24 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   flutter_svg: ^2.0.7
-  flutter_map: ^5.0.0
+  flutter_map: ^8.1.1
   latlong2: ^0.9.0
+  geolocator: ^14.0.1
+  permission_handler: ^12.0.0+1
 
-  # Test these one by one
-  http: ^1.2.2  # Try older version
-  shared_preferences: ^2.0.20  # Try older version
+  # Authentication packages - Latest versions
+  http: ^1.2.2
+  shared_preferences: ^2.2.2
+  url_launcher: ^6.2.2
+  crypto: ^3.0.3
+
+  # Test the Google Sign-In package
+  google_sign_in: ^6.2.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^6.0.0
   flutter_native_splash: ^2.3.10
 
 flutter:
