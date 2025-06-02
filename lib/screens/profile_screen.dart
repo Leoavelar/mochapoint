@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../widgets/profile_avatar.dart';
 import 'login_screen.dart';
 import 'change_password_screen.dart';
 
@@ -110,30 +111,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     const SizedBox(height: 20),
 
-                    // Profile Picture
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.white,
-                      child: _user?['photoUrl'] != null
-                          ? ClipOval(
-                        child: Image.network(
-                          _user!['photoUrl'],
-                          width: 100,
-                          height: 100,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                          const Icon(
-                            Icons.person,
-                            size: 50,
-                            color: Color(0xFFA6623A),
-                          ),
-                        ),
-                      )
-                          : const Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Color(0xFFA6623A),
-                      ),
+                    // Profile Picture using reusable widget
+                    ProfileAvatar(
+                      user: _user,
+                      size: 100,
                     ),
 
                     const SizedBox(height: 16),

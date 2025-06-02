@@ -1,10 +1,9 @@
-// Path: lib/widgets/app_header.dart
-
 import 'package:flutter/material.dart';
-import '../screens/home_screen.dart';
-import '../screens/profile_screen.dart';
+import '../services/auth_service.dart';
+import 'profile_avatar.dart';
+import '../screens/home_screen.dart'; // Import home screen instead
 
-class AppHeader extends StatelessWidget {
+class AppHeader extends StatefulWidget {
   final String backgroundImage;
   final double height;
 
@@ -15,87 +14,74 @@ class AppHeader extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<AppHeader> createState() => _AppHeaderState();
+}
+
+class _AppHeaderState extends State<AppHeader> {
+  Map<String, dynamic>? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = await AuthService.getUser();
+      if (mounted) {
+        setState(() {
+          _user = user;
+        });
+      }
+    } catch (e) {
+      print('Error loading user data: $e');
+    }
+  }
+
+  void _navigateToProfile() {
+    // Find the HomeScreen in the widget tree and switch to profile tab
+    final homeScreen = context.findAncestorStateOfType<HomeScreenState>();
+    if (homeScreen != null) {
+      homeScreen.setSelectedIndex(3); // Profile tab index
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Get the parent scaffold's context to ensure consistent navigation
-    final scaffoldContext = Scaffold.of(context).context;
-
     return Container(
-      color: Colors.black,
-      width: double.infinity,
-      height: height,
-      child: Stack(
-        children: [
-          // Background image
-          Image.asset(
-            backgroundImage,
-            width: double.infinity,
-            height: height,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                width: double.infinity,
-                height: height,
-                color: const Color(0xFFE3D0BA),
-              );
-            },
+      height: widget.height,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(widget.backgroundImage),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withOpacity(0.3),
+              Colors.black.withOpacity(0.1),
+            ],
           ),
-
-          // Profile image in top-right corner
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const SizedBox(), // Empty spacer on the left
-                  GestureDetector(
-                    onTap: () {
-                      // Instead of direct navigation, use a tab switch method
-                      // Find the nearest HomeScreen state and tell it to switch tabs
-                      final HomeScreenState? homeState =
-                      context.findAncestorStateOfType<HomeScreenState>();
-
-                      if (homeState != null) {
-                        // Switch to profile tab (index 3)
-                        homeState.setSelectedIndex(3);
-                      } else {
-                        // Fallback navigation if not inside HomeScreen
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const ProfileScreen(),
-                            // Use MaterialPageRoute settings that match tab behavior
-                            maintainState: true,
-                          ),
-                        );
-                      }
-                    },
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                      padding: const EdgeInsets.all(2),
-                      child: ClipOval(
-                        child: Image.asset(
-                          'assets/images/profile.png',
-                          width: 60,
-                          height: 60,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.person,
-                              size: 20,
-                              color: Colors.black54,
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Align(
+              alignment: Alignment.topRight,
+              child: ProfileAvatar(
+                user: _user,
+                size: 60,
+                showBorder: true,
+                onTap: _navigateToProfile,
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
