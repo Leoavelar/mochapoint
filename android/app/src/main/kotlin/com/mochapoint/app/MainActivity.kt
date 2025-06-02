@@ -1,4 +1,4 @@
-package com.example.expresso_app
+package com.mochapoint.app
 
 import io.flutter.embedding.android.FlutterActivity
 
