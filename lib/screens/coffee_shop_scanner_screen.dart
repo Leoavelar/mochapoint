@@ -56,9 +56,9 @@ class _CoffeeShopScannerScreenState extends State<CoffeeShopScannerScreen> {
       ),
       body: Column(
         children: [
-          // Scanner area
+          // Scanner area - takes most of the screen
           Expanded(
-            flex: 4,
+            flex: 5, // Increased from 4 to give more space to scanner
             child: Stack(
               children: [
                 MobileScanner(
@@ -107,103 +107,63 @@ class _CoffeeShopScannerScreenState extends State<CoffeeShopScannerScreen> {
             ),
           ),
 
-          // Instructions and controls
-          Expanded(
-            flex: 2,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -5),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.qr_code_scanner,
-                    size: 48,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Position the customer\'s QR code within the frame',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'The code will be scanned automatically',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          // Instructions and controls - use SafeArea and SingleChildScrollView to prevent overflow
+          Container(
+            width: double.infinity,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.35, // Limit height to 35% of screen
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.qr_code_scanner,
+                      size: 40, // Reduced from 48
                       color: Colors.grey[600],
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 12), // Reduced from 16
+                    Text(
+                      'Position the customer\'s QR code within the frame',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16, // Explicit font size
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6), // Reduced from 8
+                    Text(
+                      'The code will be scanned automatically',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                        fontSize: 14, // Explicit font size
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16), // Reduced from 24
 
-                  // Camera controls
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _buildControlButton(
-                        icon: Icons.pause,
-                        label: 'Pause',
-                        onPressed: () => cameraController.stop(),
-                      ),
-                      _buildControlButton(
-                        icon: Icons.play_arrow,
-                        label: 'Resume',
-                        onPressed: () => cameraController.start(),
-                      ),
-                    ],
-                  ),
-                ],
+                    // Add some bottom padding to ensure SafeArea works properly
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildControlButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onPressed,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFA6623A).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            onPressed: onPressed,
-            icon: Icon(icon),
-            color: const Color(0xFFA6623A),
-            iconSize: 24,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Color(0xFFA6623A),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
     );
   }
 
@@ -278,51 +238,58 @@ class _CoffeeShopScannerScreenState extends State<CoffeeShopScannerScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            const Text('Coffee Redeemed!'),
+            const Expanded(
+              child: Text(
+                'Coffee Redeemed!',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInfoRow('Customer', customer['name'] ?? 'Unknown'),
-            _buildInfoRow('Type', customer['redemptionType'] == 'subscription' ? 'Subscription' : 'Joker'),
-            if (customer['subscriptionInfo'] != null)
-              _buildInfoRow('Bundle', customer['subscriptionInfo']['bundleName'] ?? 'N/A'),
-            if (customer['redemptionType'] == 'joker')
-              _buildInfoRow('Remaining Jokers', '${customer['remainingJokers']}'),
-            _buildInfoRow('Time', DateTime.now().toString().substring(0, 16)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoRow('Customer', customer['name'] ?? 'Unknown'),
+              _buildInfoRow('Type', customer['redemptionType'] == 'subscription' ? 'Subscription' : 'Joker'),
+              if (customer['subscriptionInfo'] != null)
+                _buildInfoRow('Bundle', customer['subscriptionInfo']['bundleName'] ?? 'N/A'),
+              if (customer['redemptionType'] == 'joker')
+                _buildInfoRow('Remaining Jokers', '${customer['remainingJokers']}'),
+              _buildInfoRow('Time', DateTime.now().toString().substring(0, 16)),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Available coffee types based on subscription
-            if (customer['subscriptionInfo']?['allowedCoffeeTypes'] != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Available Coffee Types:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+              // Available coffee types based on subscription
+              if (customer['subscriptionInfo']?['allowedCoffeeTypes'] != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Available Coffee Types:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      (customer['subscriptionInfo']['allowedCoffeeTypes'] as List)
-                          .join(', '),
-                      style: const TextStyle(color: Colors.blue),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        (customer['subscriptionInfo']['allowedCoffeeTypes'] as List)
+                            .join(', '),
+                        style: const TextStyle(color: Colors.blue),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -363,15 +330,22 @@ class _CoffeeShopScannerScreenState extends State<CoffeeShopScannerScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('What coffee was served?'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: coffeeTypes.map((type) => ListTile(
-            title: Text(type),
-            onTap: () {
-              Navigator.of(context).pop();
-              _logCoffeeType(type);
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: coffeeTypes.length,
+            itemBuilder: (context, index) {
+              final type = coffeeTypes[index];
+              return ListTile(
+                title: Text(type),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _logCoffeeType(type);
+                },
+              );
             },
-          )).toList(),
+          ),
         ),
         actions: [
           TextButton(
@@ -403,9 +377,12 @@ class _CoffeeShopScannerScreenState extends State<CoffeeShopScannerScreen> {
             label,
             style: const TextStyle(fontWeight: FontWeight.w500),
           ),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.grey),
+          Flexible(
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.grey),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -434,7 +411,12 @@ class _CoffeeShopScannerScreenState extends State<CoffeeShopScannerScreen> {
               ),
             ),
             const SizedBox(width: 12),
-            const Text('Redemption Failed'),
+            const Expanded(
+              child: Text(
+                'Redemption Failed',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
           ],
         ),
         content: Text(error),
