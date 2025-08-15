@@ -99,7 +99,8 @@ class UserSubscriptionStatus {
 
 class ApiService {
   // Update this IP address to your backend server's LAN IP
-  static const String baseUrl = 'http://192.168.1.105:3000/api';
+  // static const String baseUrl = 'http://192.168.1.105:3000/api';
+  static const String baseUrl = 'https://mochapoint.coffee/api';
 
   static Future<Map<String, dynamic>> getCoffeeShops({
     double? latitude,
