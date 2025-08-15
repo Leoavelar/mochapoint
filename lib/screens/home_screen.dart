@@ -1,4 +1,8 @@
 // lib/screens/home_screen.dart
+
+// Add this import at the top of your file
+import 'package:intl/intl.dart';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mocha_point/screens/profile_screen.dart';
@@ -8,11 +12,13 @@ import '../utils/admin_interface_helper.dart';
 import '../services/auth_service.dart';
 import 'map_screen.dart';
 import 'coffee_shop_home_screen.dart';
-import '../widgets/redemption_stats_card.dart';
+import '../widgets/redemption_stats_card.dart'; // Ensure this is the correct path
 import '../widgets/coffee_bottom_nav.dart';
 import '../widgets/app_header.dart';
 import '../widgets/overlapping_content_layout.dart';
 
+
+// ... (HomeScreen code remains the same)
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -56,7 +62,9 @@ class HomeScreenState extends State<HomeScreen> {
       setState(() {
         _isLoading = false;
       });
-      print('Error loading user interface: $e');
+      if (kDebugMode) {
+        print('Error loading user interface: $e');
+      }
     }
   }
 
@@ -90,8 +98,20 @@ class HomeScreenState extends State<HomeScreen> {
       );
     }
 
+    // A check to prevent range errors if tabs are not yet initialized
+    if (_tabs.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Initializing...'),
+        ),
+      );
+    }
+
+    // Handle index 2 which is a placeholder
+    final int effectiveIndex = _selectedIndex >= _tabs.length || _selectedIndex == 2 ? 0 : _selectedIndex;
+
     return Scaffold(
-      body: _tabs.isNotEmpty ? _tabs[_selectedIndex == 2 ? 0 : _selectedIndex] : const SizedBox(),
+      body: _tabs[effectiveIndex],
       bottomNavigationBar: CoffeeBottomNav(
         selectedIndex: _selectedIndex,
         onIndexChanged: (index) {
@@ -104,36 +124,38 @@ class HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Keep the original customer home screen as a separate widget
+// MODIFIED WIDGET
 class _CustomerHomeTab extends StatelessWidget {
   const _CustomerHomeTab({Key? key}) : super(key: key);
 
-  final bool hasCoffeeAvailableToday = true;
-
   @override
   Widget build(BuildContext context) {
+    // 1. Get the current date
+    final now = DateTime.now();
+
+    // 2. Format it to "Month Year" using the intl package
+    final String formattedDate = DateFormat('MMMM yyyy').format(now);
+
     return OverlappingContentLayout(
       header: const AppHeader(
         backgroundImage: 'assets/images/header_2.png',
         height: 200.0,
       ),
-      overlappingWidget: const CoffeeStatsCard(
-        month: 'May 2025',
+      overlappingWidget: CoffeeStatsCard(
+        // 3. Use the formatted string here
+        month: formattedDate,
         redeemedCount: '12',
         availableCount: '10',
         jokersCount: '2',
       ),
       contentWidgets: [
-        // Daily Coffee Card - now with internal state management
         DailyCoffeeCard(
           onRedeem: () {
             if (kDebugMode) {
               print('Redeem button pressed!');
             }
-            // Any additional logic you want to trigger from the parent
           },
         ),
-
         Text(
           'Nearest Coffee Shops',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
