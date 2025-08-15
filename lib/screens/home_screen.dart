@@ -1,11 +1,13 @@
-// Path: lib/screens/home_screen.dart
-
+// lib/screens/home_screen.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mocha_point/screens/profile_screen.dart';
 import '../widgets/daily_coffee_card.dart';
 import '../widgets/nearest_shops_widget.dart';
+import '../utils/admin_interface_helper.dart';
+import '../services/auth_service.dart';
 import 'map_screen.dart';
+import 'coffee_shop_home_screen.dart';
 import '../widgets/redemption_stats_card.dart';
 import '../widgets/coffee_bottom_nav.dart';
 import '../widgets/app_header.dart';
@@ -20,6 +22,9 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  Map<String, dynamic>? _user;
+  bool _showCoffeeShopInterface = false;
+  bool _isLoading = true;
 
   final List<Widget> _tabs = [];
 
@@ -32,19 +37,61 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize tabs here to avoid issues with context
-    _tabs.add(const _HomeTab());
-    _tabs.add(const MapScreen());
-    _tabs.add(
-        const SizedBox()); // Placeholder for the redeem button (not used as a real tab)
-    _tabs.add(const ProfileScreen()); // Add profile screen as a tab
+    _loadUserAndInterface();
+  }
+
+  Future<void> _loadUserAndInterface() async {
+    try {
+      final user = await AuthService.getUser();
+      final shouldShowCoffeeShop = await AdminInterfaceHelper.shouldShowCoffeeShopInterface(user);
+
+      setState(() {
+        _user = user;
+        _showCoffeeShopInterface = shouldShowCoffeeShop;
+        _isLoading = false;
+      });
+
+      _initializeTabs();
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print('Error loading user interface: $e');
+    }
+  }
+
+  void _initializeTabs() {
+    _tabs.clear();
+
+    if (_showCoffeeShopInterface) {
+      // Coffee shop interface
+      _tabs.add(const CoffeeShopHomeScreen());
+      _tabs.add(const MapScreen());
+      _tabs.add(const SizedBox()); // Placeholder for scanner button
+      _tabs.add(const ProfileScreen());
+    } else {
+      // Regular user interface
+      _tabs.add(const _CustomerHomeTab());
+      _tabs.add(const MapScreen());
+      _tabs.add(const SizedBox()); // Placeholder for QR generator button
+      _tabs.add(const ProfileScreen());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA6623A)),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
-      body: _tabs[_selectedIndex == 2 ? 0 : _selectedIndex],
-      // Don't use index 2 as it's just a placeholder
+      body: _tabs.isNotEmpty ? _tabs[_selectedIndex == 2 ? 0 : _selectedIndex] : const SizedBox(),
       bottomNavigationBar: CoffeeBottomNav(
         selectedIndex: _selectedIndex,
         onIndexChanged: (index) {
@@ -57,10 +104,9 @@ class HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _HomeTab extends StatelessWidget {
-  const _HomeTab({
-    Key? key,
-  }) : super(key: key);
+// Keep the original customer home screen as a separate widget
+class _CustomerHomeTab extends StatelessWidget {
+  const _CustomerHomeTab({Key? key}) : super(key: key);
 
   final bool hasCoffeeAvailableToday = true;
 
@@ -91,9 +137,9 @@ class _HomeTab extends StatelessWidget {
         Text(
           'Nearest Coffee Shops',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
         const NearestShopsWidget(),
       ],

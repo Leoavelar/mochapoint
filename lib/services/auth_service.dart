@@ -202,6 +202,48 @@ class AuthService {
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
+
+  // Validate if current token is still valid
+  static Future<bool> validateToken() async {
+    try {
+      final token = await getToken();
+      if (token == null) return false;
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print('Token validation error: $e');
+      return false;
+    }
+  }
+
+  // Get a fresh token if current one is invalid
+  static Future<String?> getValidToken() async {
+    final isValid = await validateToken();
+    if (isValid) {
+      return await getToken();
+    }
+
+    // Token is invalid, need to re-authenticate
+    print('Token is invalid, user needs to log in again');
+    await logout(); // Clear invalid token
+    return null;
+  }
+
+  // Enhanced method to check if user is actually authenticated
+  static Future<bool> isAuthenticated() async {
+    final token = await getToken();
+    if (token == null) return false;
+
+    return await validateToken();
+  }
 }
 
 class AuthResult {
