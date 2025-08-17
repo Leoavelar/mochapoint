@@ -56,6 +56,15 @@ flutter:
     - family: Mocha
       fonts:
         - asset: assets/fonts/mocha.otf
+    - family: ClashDisplay
+      fonts:
+        - asset: assets/fonts/ClashDisplay-Regular.otf
+        - asset: assets/fonts/ClashDisplay-Bold.otf
+          weight: 700
+        - asset: assets/fonts/ClashDisplay-SemiBold.otf
+          weight: 600
+        - asset: assets/fonts/ClashDisplay-Medium.otf
+          weight: 500
 
 flutter_launcher_name:
   name: "Mocha Point"

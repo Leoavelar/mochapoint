@@ -19,8 +19,8 @@ class MyApp extends StatelessWidget {
 
   // Colors based on the updated design
   static const Color coffeeBean = Color(0xFFA6623A); // Brown for coffee bean
-  static const Color background = Color(0xFFF9F5F1); // Light cream background
-
+  // static const Color background = Color(0xFFF9F5F1); // Light cream background
+  static const Color background = Color(0xFFF0F1F5); // Light cream background
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primaryColor: coffeeBean,
         scaffoldBackgroundColor: background,
-        fontFamily: 'Montserrat',
+        fontFamily: 'ClashDisplay',
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.black,
@@ -62,7 +62,7 @@ class MyApp extends StatelessWidget {
         cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(5),
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -70,7 +70,7 @@ class MyApp extends StatelessWidget {
             backgroundColor: coffeeBean,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(5),
             ),
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
           ),

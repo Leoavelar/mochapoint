@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'auth_service.dart';
 
 class RedemptionService {
-  static const String baseUrl = 'http://192.168.1.105:3000'; // Replace with your API URL
+  static const String baseUrl = 'https://mochapoint.coffee/api'; // Replace with your API URL
 
   // Generate QR token for redemption
   static Future<Map<String, dynamic>> generateQRToken(String redemptionType) async {

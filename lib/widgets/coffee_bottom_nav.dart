@@ -166,8 +166,8 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFFA6623A),
-                              Color(0xFF8B4513),
+                              Color(0xFF000000),
+                              Color(0xFF000000),
                             ],
                           ),
                           shape: BoxShape.circle,
@@ -241,7 +241,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                 isSelected ? activeIcon : icon,
                 key: ValueKey(isSelected),
                 color: isSelected
-                    ? const Color(0xFFA6623A)
+                    ? const Color(0xFF000000)
                     : Colors.grey[500],
                 size: 24,
               ),
@@ -252,7 +252,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
                 color: isSelected
-                    ? const Color(0xFFA6623A)
+                    ? const Color(0xFF000000)
                     : Colors.grey[500],
                 fontSize: isSelected ? 13 : 12,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,

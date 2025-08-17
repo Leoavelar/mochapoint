@@ -25,7 +25,7 @@ class CoffeeStatsCard extends StatelessWidget {
       shadowColor: Colors.black26,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -91,7 +91,7 @@ class CoffeeStatsCard extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: MyApp.coffeeBean.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(5),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min, // Prevents overflow
