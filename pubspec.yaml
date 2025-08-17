@@ -41,6 +41,7 @@ flutter:
     - assets/images/
     - assets/images/shops/
     - assets/images/redeem.png
+    - assets/icons/
 
   fonts:
     - family: Montserrat

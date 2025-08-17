@@ -56,7 +56,7 @@ class _MapScreenState extends State<MapScreen> {
         title: Row(
           children: [
             Image.asset(
-              'assets/images/Icon.png',
+              'assets/icons/mocha_icon_black.png',
               height: 32,
               width: 32,
             ),
@@ -159,7 +159,7 @@ class _MapScreenState extends State<MapScreen> {
       BuildContext context, Color color, bool isSubscription) {
     return Center(
       child: Image.asset(
-        isSubscription ? 'assets/images/mochalogo.png' : 'assets/images/Icon.png',
+        isSubscription ? 'assets/icons/mocha_icon_active.png' : 'assets/icons/mocha_icon_black.png',
         height: 32,
         width: 32,
       ),
