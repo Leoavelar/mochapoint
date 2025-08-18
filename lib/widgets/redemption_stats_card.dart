@@ -35,7 +35,7 @@ class CoffeeStatsCard extends StatelessWidget {
             Text(
               month,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 fontSize: 20,
                 color: MyApp.coffeeBean,
               ),
@@ -44,7 +44,7 @@ class CoffeeStatsCard extends StatelessWidget {
             Text(
               'Your Redemption Stats',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 fontSize: 20,
               ),
             ),

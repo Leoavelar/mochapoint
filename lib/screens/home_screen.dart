@@ -159,7 +159,7 @@ class _CustomerHomeTab extends StatelessWidget {
         Text(
           'Nearest Coffee Shops',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             fontSize: 20,
           ),
         ),

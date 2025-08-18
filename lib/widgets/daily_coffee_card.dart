@@ -52,9 +52,10 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.black, width: 1.0),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -77,7 +78,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
                           TextSpan(
                             text: 'Your Coffee is ',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                               color: Colors.black,
                             ),
                           ),
@@ -174,7 +175,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
                       hasCoffees ? 'Redeem Now' : 'Wait for Refill',
                       style: TextStyle(
                         color: hasCoffees ? Colors.black : Colors.grey.shade600,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                         fontSize: 15, // Slightly increased font size
                       ),
                     ),
@@ -282,7 +283,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
                       'New Coffee Tomorrow',
                       style: TextStyle(
                         color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
