@@ -31,14 +31,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: Colors.transparent,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: isAvailableToday ? _buildAvailableView(context) : _buildRedeemedView(context),
-      ),
-    );
+    return isAvailableToday ? _buildAvailableView(context) : _buildRedeemedView(context);
   }
 
   Widget _buildAvailableView(BuildContext context) {
@@ -55,7 +48,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
         side: BorderSide(color: Colors.black, width: 1.0),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20.0), // FIXED: Now matches CoffeeStatsCard exactly
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -201,7 +194,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20.0), // FIXED: Changed from 16 to 20.0 to match
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
