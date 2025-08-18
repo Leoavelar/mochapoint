@@ -88,7 +88,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
                         : Text(
                       'Coffee Coming Soon',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                         color: Colors.black,
                       ),
                     ),
