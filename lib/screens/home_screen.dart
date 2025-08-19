@@ -141,12 +141,13 @@ class _CustomerHomeTab extends StatelessWidget {
         backgroundImage: 'assets/images/header_2.png',
         height: 200.0,
       ),
-      overlappingWidget: CoffeeStatsCard(
-        // 3. Use the formatted string here
-        month: formattedDate,
-        redeemedCount: '12',
-        availableCount: '10',
-        jokersCount: '2',
+      overlappingWidget: const CoffeeStatsCard(
+        // Remove the hardcoded values - the widget will fetch them from API
+        // Optional: provide fallback values for when API fails
+        fallbackMonth: null, // Will use current month if needed
+        fallbackRedeemedCount: '0',
+        fallbackAvailableCount: '0',
+        fallbackJokersCount: '0',
       ),
       contentWidgets: [
         DailyCoffeeCard(

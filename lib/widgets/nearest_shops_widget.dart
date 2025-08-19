@@ -99,8 +99,8 @@ class UserSubscriptionStatus {
 
 class ApiService {
   // Update this IP address to your backend server's LAN IP
-  // static const String baseUrl = 'http://192.168.1.105:3000/api';
-  static const String baseUrl = 'https://mochapoint.coffee/api';
+  static const String baseUrl = 'http://192.168.1.109:8000/api';
+  // static const String baseUrl = 'https://mochapoint.coffee/api';
 
   static Future<Map<String, dynamic>> getCoffeeShops({
     double? latitude,
@@ -118,17 +118,12 @@ class ApiService {
         }
       }
 
-      print('Making API call to: $url'); // Debug log
-
       final response = await http.get(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
         },
       ).timeout(const Duration(seconds: 10));
-
-      print('Response status: ${response.statusCode}'); // Debug log
-      print('Response body: ${response.body}'); // Debug log
 
       if (response.statusCode == 200) {
         final dynamic responseData = json.decode(response.body);
@@ -565,7 +560,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                   Text(
                     shop.name,
                     style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       fontSize: 16,
                     ),
                   ),

@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.1.105:3000/api';
+  static const String baseUrl = 'http://192.168.1.109:8000/api';
   static const String _tokenKey = 'jwt_token';
   static const String _userKey = 'user_data';
 

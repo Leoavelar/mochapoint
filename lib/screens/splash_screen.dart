@@ -15,6 +15,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  Timer? _navigationTimer; // Store timer reference for proper disposal
 
   @override
   void initState() {
@@ -27,17 +28,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _animationController.forward();
 
-    Timer(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const HomeScreen(),
-        ),
-      );
+    // FIXED: Store timer reference and check mounted before navigation
+    _navigationTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) { // Check if widget is still mounted before using context
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+        );
+      }
     });
   }
 
   @override
   void dispose() {
+    // IMPORTANT: Cancel the timer to prevent unmounted widget errors
+    _navigationTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -56,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             children: [
               // Logo using SVG
               SvgPicture.asset(
-                'assets/images/icon.svg',
+                'assets/icons/icon.svg',
                 width: 120,
                 height: 120,
               ),
