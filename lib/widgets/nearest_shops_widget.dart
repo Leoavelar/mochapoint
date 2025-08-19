@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mocha_point/main.dart';
 
+import '../services/subscription_service.dart';
+
 class CoffeeShop {
   final int id;
   final String name;
@@ -192,16 +194,16 @@ class ApiService {
 class NearestShopsWidget extends StatefulWidget {
   final double? userLatitude;
   final double? userLongitude;
-  final double searchRadius; // in kilometers
-  final String? userToken; // JWT token for authenticated requests
+  final double searchRadius;
+  final String? userToken;
 
   const NearestShopsWidget({
-    Key? key,
+    super.key,
     this.userLatitude,
     this.userLongitude,
-    this.searchRadius = 5.0, // Default 5km radius
+    this.searchRadius = 5.0,
     this.userToken,
-  }) : super(key: key);
+  });
 
   @override
   State<NearestShopsWidget> createState() => _NearestShopsWidgetState();
@@ -210,10 +212,12 @@ class NearestShopsWidget extends StatefulWidget {
 class _NearestShopsWidgetState extends State<NearestShopsWidget> {
   List<CoffeeShop> shops = [];
   UserSubscriptionStatus? subscriptionStatus;
+  UserSubscriptionData? _subscriptionData; // NEW: Add subscription data
   bool isLoading = true;
   String? errorMessage;
-  String? debugRawJson; // Store raw JSON for debugging
-  Map<String, dynamic>? debugParsedData; // Store parsed data for debugging
+  String? debugRawJson;
+  Map<String, dynamic>? debugParsedData;
+  bool _isDisposed = false; // Track disposal state
 
   @override
   void initState() {
@@ -221,7 +225,16 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     _loadData();
   }
 
+  @override
+  void dispose() {
+    _isDisposed = true; // Mark as disposed
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
+    // Check if widget is still mounted and not disposed
+    if (!mounted || _isDisposed) return;
+
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -234,6 +247,9 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         longitude: widget.userLongitude,
         radius: widget.searchRadius,
       );
+
+      // Check again after async operation
+      if (!mounted || _isDisposed) return;
 
       // Load user subscription status if token provided
       UserSubscriptionStatus? userStatus;
@@ -248,14 +264,33 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         );
       }
 
+      // Check again after async operation
+      if (!mounted || _isDisposed) return;
+
+      // NEW: Load subscription data to know which shops user is subscribed to
+      UserSubscriptionData? subscriptionData;
+      try {
+        subscriptionData = await SubscriptionService.getUserSubscription();
+      } catch (e) {
+        print('Error loading subscription data: $e');
+        subscriptionData = null;
+      }
+
+      // Final check before setState
+      if (!mounted || _isDisposed) return;
+
       setState(() {
         shops = shopData['shops'] as List<CoffeeShop>;
         subscriptionStatus = userStatus;
+        _subscriptionData = subscriptionData; // NEW: Store subscription data
         debugRawJson = shopData['rawJson'] as String;
         debugParsedData = shopData['parsedData'] as Map<String, dynamic>?;
         isLoading = false;
       });
     } catch (e) {
+      // Check if widget is still mounted before calling setState
+      if (!mounted || _isDisposed) return;
+
       setState(() {
         errorMessage = e.toString();
         isLoading = false;
@@ -265,6 +300,28 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
   Future<void> _refresh() async {
     await _loadData();
+  }
+
+  // NEW: Helper method to check if shop is subscribed
+  bool _isUserSubscribedToShop(int shopId) {
+    if (_subscriptionData?.hasActiveSubscription != true) {
+      return false;
+    }
+
+    return _subscriptionData!.accessibleShops.any((shop) => shop.id == shopId);
+  }
+
+  // NEW: Get subscription type for shop
+  String? _getSubscriptionType(int shopId) {
+    if (_subscriptionData?.hasActiveSubscription != true) {
+      return null;
+    }
+
+    final accessibleShop = _subscriptionData!.accessibleShops
+        .where((shop) => shop.id == shopId)
+        .firstOrNull;
+
+    return accessibleShop?.subscriptionType;
   }
 
   @override
@@ -290,140 +347,90 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       onRefresh: _refresh,
       child: Column(
         children: [
+          // NEW: Show subscription info summary if user has active subscription
+          if (_subscriptionData?.hasActiveSubscription == true)
+            _buildSubscriptionSummary(),
+
           // Coffee shops list
           ...shops.map((shop) => _buildShopItem(context, shop)).toList(),
-
-          // Debug section (only shown in debug mode)
-          // if (kDebugMode) _buildDebugSection(),  // ✅ Temporarily disabled
         ],
       ),
     );
   }
 
-  Widget _buildDebugSection() {
+  // NEW: Build subscription summary widget
+  Widget _buildSubscriptionSummary() {
+    final subscription = _subscriptionData!.subscription!;
+    final accessibleShopsCount = _subscriptionData!.accessibleShops.length;
+
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        color: MyApp.coffeeBean.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: MyApp.coffeeBean.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.bug_report, size: 16, color: Colors.orange),
+              Icon(
+                Icons.card_membership,
+                color: MyApp.coffeeBean,
+                size: 20,
+              ),
               const SizedBox(width: 8),
-              Text(
-                'DEBUG INFO (Development Only)',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange[700],
+              Expanded(
+                child: Text(
+                  subscription.planName,
+                  style: TextStyle(
+                    color: MyApp.coffeeBean,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: MyApp.coffeeBean,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${subscription.usedThisWeek}/${subscription.weeklyLimit}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-
-          // Subscription Status
-          Text(
-            'User Subscription Status:',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
-            ),
-          ),
-          Text(
-            'Has Subscription: ${subscriptionStatus?.hasActiveSubscription ?? false}',
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-          Text(
-            'Jokers Available: ${subscriptionStatus?.jokerCount ?? 0}',
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-          Text(
-            'Weekly Usage: ${subscriptionStatus?.weeklyUsageCount ?? 0}/${subscriptionStatus?.weeklyLimit ?? 0}',
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-          Text(
-            'Bundle: ${subscriptionStatus?.bundleName ?? "None"}',
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-
-          const SizedBox(height: 12),
-
-          // Raw JSON Response
-          Text(
-            'Raw API Response:',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            width: double.infinity,
-            constraints: const BoxConstraints(maxHeight: 200),
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black87,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: SingleChildScrollView(
-              child: Text(
-                _formatJson(debugRawJson ?? ''),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontFamily: 'monospace',
-                  color: Colors.green,
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                Icons.store,
+                color: MyApp.coffeeBean,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '$accessibleShopsCount subscribed ${accessibleShopsCount == 1 ? 'shop' : 'shops'} nearby',
+                style: TextStyle(
+                  color: MyApp.coffeeBean,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
+            ],
           ),
-
-          const SizedBox(height: 12),
-
-          // Parsed Shop Data Summary
-          Text(
-            'Parsed Shop Data Summary:',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
-            ),
-          ),
-          ...shops.take(3).map((shop) => Padding(
-            padding: const EdgeInsets.only(left: 8, top: 2),
-            child: Text(
-              '• ${shop.name}: jokerEnabled=${shop.jokerEnabled}, logo=${shop.logoUrl ?? "null"}',
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
-            ),
-          )),
-          if (shops.length > 3)
-            Padding(
-              padding: const EdgeInsets.only(left: 8, top: 2),
-              child: Text(
-                '... and ${shops.length - 3} more shops',
-                style: const TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-            ),
         ],
       ),
     );
-  }
-
-  String _formatJson(String jsonString) {
-    try {
-      final dynamic jsonData = json.decode(jsonString);
-      return const JsonEncoder.withIndent('  ').convert(jsonData);
-    } catch (e) {
-      return jsonString;
-    }
   }
 
   Widget _buildErrorWidget() {
@@ -493,10 +500,15 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     final coffeeBean = Theme.of(context).colorScheme.secondary;
     const coffeeGreen = Color(0xFF4CAF50);
 
+    // Check if user is subscribed to this shop
+    final bool isSubscribed = _isUserSubscribedToShop(shop.id);
+    final String? subscriptionType = _getSubscriptionType(shop.id);
+
     // Determine if user can use subscription at this shop
     final bool canUseSubscription = subscriptionStatus?.hasActiveSubscription == true &&
         shop.subscriptionEnabled &&
-        (subscriptionStatus?.weeklyUsageCount ?? 0) < (subscriptionStatus?.weeklyLimit ?? 0);
+        (subscriptionStatus?.weeklyUsageCount ?? 0) < (subscriptionStatus?.weeklyLimit ?? 0) &&
+        isSubscribed; // NEW: Add subscription check
 
     // Simple check: does the shop accept jokers?
     final bool shopAcceptsJokers = shop.jokerEnabled;
@@ -511,194 +523,290 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       shadowColor: Colors.black26,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
+        // NEW: Add colored border for subscribed shops
+        side: isSubscribed
+            ? BorderSide(color: MyApp.coffeeBean, width: 2.0)
+            : BorderSide.none,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            // Shop logo
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: shop.logoUrl != null
-                    ? Image.asset(
-                  'assets/images/shops/${shop.logoUrl}',
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    // Fallback to default logo if specific logo fails
-                    return Image.asset(
-                      'assets/images/shops/default_coffee_logo.png',
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        // Final fallback to icon
-                        return _buildFallbackLogo(coffeeBean);
-                      },
-                    );
-                  },
-                )
-                    : _buildFallbackLogo(coffeeBean),
-              ),
-            ),
-            const SizedBox(width: 16),
-
-            // Shop details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    shop.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
+      child: Container(
+        // NEW: Add subtle background color for subscribed shops
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: isSubscribed
+              ? MyApp.coffeeBean.withOpacity(0.05)
+              : Colors.white,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              // NEW: Add subscription badge at the top
+              if (isSubscribed)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: MyApp.coffeeBean,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  if (shop.brand != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      shop.brand!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      if (shop.distance != null) ...[
-                        const Icon(
-                          Icons.directions_walk,
-                          size: 14,
-                          color: MyApp.coffeeBean,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${(shop.distance! * 1000).round()}m',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                      ],
-                      if (shop.walkingTime != null) ...[
-                        const Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: MyApp.coffeeBean,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          shop.walkingTime!,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
                         Icons.star,
-                        size: 14,
-                        color: Colors.amber,
+                        color: Colors.white,
+                        size: 16,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                       Text(
-                        displayRating.toStringAsFixed(1),
+                        subscriptionType == 'brand-wide'
+                            ? 'Brand Subscription'
+                            : 'Your Subscribed Shop',
                         style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Subscription or Joker indicator
-                      if (canUseSubscription)
-                        Icon(
-                          Icons.local_cafe,
-                          size: 14,
-                          color: coffeeGreen,
-                        )
-                      else if (shopAcceptsJokers)
-                        Icon(
-                          Icons.card_giftcard,
-                          size: 14,
-                          color: coffeeBean,
-                        )
-                      else
-                        Icon(
-                          Icons.payments,
-                          size: 14,
-                          color: Colors.grey,
-                        ),
-
-                      const SizedBox(width: 4),
-
-                      // Simple text labels
-                      Text(
-                        canUseSubscription
-                            ? 'subscription'
-                            : shopAcceptsJokers
-                            ? 'Accepts Joker'
-                            : 'No Joker',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: canUseSubscription
-                              ? coffeeGreen
-                              : shopAcceptsJokers
-                              ? coffeeBean
-                              : Colors.grey,
-                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],
                   ),
+                ),
+
+              Row(
+                children: [
+                  // Shop logo
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      // NEW: Add border for subscribed shops
+                      border: isSubscribed
+                          ? Border.all(color: MyApp.coffeeBean, width: 2)
+                          : null,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: shop.logoUrl != null
+                          ? Image.asset(
+                        'assets/images/shops/${shop.logoUrl}',
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Image.asset(
+                            'assets/images/shops/default_coffee_logo.png',
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildFallbackLogo(coffeeBean);
+                            },
+                          );
+                        },
+                      )
+                          : _buildFallbackLogo(coffeeBean),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Shop details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                shop.name,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  // NEW: Highlight subscribed shop names
+                                  color: isSubscribed ? MyApp.coffeeBean : Colors.black,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (shop.brand != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            shop.brand!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.8) : Colors.grey,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            if (shop.distance != null) ...[
+                              Icon(
+                                Icons.directions_walk,
+                                size: 14,
+                                color: isSubscribed ? MyApp.coffeeBean : MyApp.coffeeBean,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${(shop.distance! * 1000).round()}m',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                            ],
+                            if (shop.walkingTime != null) ...[
+                              Icon(
+                                Icons.access_time,
+                                size: 14,
+                                color: isSubscribed ? MyApp.coffeeBean : MyApp.coffeeBean,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                shop.walkingTime!,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 14,
+                              color: Colors.amber,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              displayRating.toStringAsFixed(1),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+
+                            // Subscription or Joker indicator with enhanced styling
+                            if (canUseSubscription)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: coffeeGreen,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.local_cafe,
+                                      size: 12,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      'Free Coffee',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else if (shopAcceptsJokers)
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.card_giftcard,
+                                    size: 14,
+                                    color: coffeeBean,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Accepts Joker',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: coffeeBean,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.payments,
+                                    size: 14,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'No Joker',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Directions button with enhanced styling for subscribed shops
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isSubscribed ? MyApp.coffeeBean : coffeeBean,
+                      borderRadius: BorderRadius.circular(8),
+                      // NEW: Add glow effect for subscribed shops
+                      boxShadow: isSubscribed ? [
+                        BoxShadow(
+                          color: MyApp.coffeeBean.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ] : null,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.directions,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Directions to ${shop.name} coming soon!'),
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
-            ),
-
-            // Directions button
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: coffeeBean,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.directions,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Directions to ${shop.name} coming soon!'),
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
