@@ -187,7 +187,7 @@ CREATE TRIGGER trigger_update_rating
 
 ### Future Tables (Database Ready)
 
-#### subscription_plans - Subscription plan definitions
+#### subscription_plans - Subscription plan definitions ✅ **IMPLEMENTED**
 ```sql
 CREATE TABLE subscription_plans (
     id SERIAL PRIMARY KEY,
@@ -202,6 +202,27 @@ CREATE TABLE subscription_plans (
     description TEXT,
     features JSONB,
     is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### user_subscriptions - User subscription records ✅ **IMPLEMENTED**
+```sql
+CREATE TABLE user_subscriptions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    plan_id INTEGER REFERENCES subscription_plans(id),
+    status ENUM('active', 'cancelled', 'expired', 'trialing', 'past_due'),
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    current_period_start DATE NOT NULL,
+    current_period_end DATE NOT NULL,
+    auto_renew BOOLEAN DEFAULT true,
+    stripe_subscription_id VARCHAR(255) UNIQUE,
+    stripe_customer_id VARCHAR(255),
+    cancelled_at TIMESTAMP,
+    cancellation_reason TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -390,27 +411,27 @@ lib/
 ```dart
 // API abstraction layer
 class MonthlyStatsService {
-    static const String baseUrl = 'http://192.168.1.109:8000/api';
-    
-    static Future<MonthlyStatsData> getMonthlyStats() async {
-        final headers = await AuthService.getAuthHeaders();
-        
-        if (!headers.containsKey('Authorization')) {
-            throw Exception('No authentication token found');
-        }
+  static const String baseUrl = 'http://192.168.1.109:8000/api';
 
-        final response = await http.get(
-            Uri.parse('$baseUrl/redemptions/monthly-stats'),
-            headers: headers,
-        );
+  static Future<MonthlyStatsData> getMonthlyStats() async {
+    final headers = await AuthService.getAuthHeaders();
 
-        if (response.statusCode == 200) {
-            final jsonResponse = json.decode(response.body);
-            return MonthlyStatsData.fromJson(jsonResponse);
-        } else {
-            throw Exception('Failed to load monthly stats');
-        }
+    if (!headers.containsKey('Authorization')) {
+      throw Exception('No authentication token found');
     }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/redemptions/monthly-stats'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      return MonthlyStatsData.fromJson(jsonResponse);
+    } else {
+      throw Exception('Failed to load monthly stats');
+    }
+  }
 }
 ```
 
@@ -418,47 +439,47 @@ class MonthlyStatsService {
 ```dart
 // Stateful widgets with lifecycle management
 class CoffeeStatsCard extends StatefulWidget {
-    @override
-    State<CoffeeStatsCard> createState() => _CoffeeStatsCardState();
+  @override
+  State<CoffeeStatsCard> createState() => _CoffeeStatsCardState();
 }
 
 class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
-    MonthlyStatsData? _monthlyStats;
-    bool _isLoading = true;
-    String? _errorMessage;
+  MonthlyStatsData? _monthlyStats;
+  bool _isLoading = true;
+  String? _errorMessage;
 
-    @override
-    void initState() {
-        super.initState();
-        _loadMonthlyStats();
+  @override
+  void initState() {
+    super.initState();
+    _loadMonthlyStats();
+  }
+
+  Future<void> _loadMonthlyStats() async {
+    try {
+      if (!mounted) return; // Prevent memory leaks
+
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final stats = await MonthlyStatsService.getMonthlyStats();
+
+      if (!mounted) return;
+
+      setState(() {
+        _monthlyStats = stats;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
     }
-
-    Future<void> _loadMonthlyStats() async {
-        try {
-            if (!mounted) return; // Prevent memory leaks
-            
-            setState(() {
-                _isLoading = true;
-                _errorMessage = null;
-            });
-
-            final stats = await MonthlyStatsService.getMonthlyStats();
-            
-            if (!mounted) return;
-            
-            setState(() {
-                _monthlyStats = stats;
-                _isLoading = false;
-            });
-        } catch (e) {
-            if (!mounted) return;
-            
-            setState(() {
-                _errorMessage = e.toString();
-                _isLoading = false;
-            });
-        }
-    }
+  }
 }
 ```
 
@@ -466,22 +487,22 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
 ```dart
 // Dynamic interface based on user role
 class CoffeeBottomNav extends StatefulWidget {
-    void _handleCenterButtonTap() {
-        final bool isCoffeeShopUser = _user?['role'] == 'coffee_shop';
+  void _handleCenterButtonTap() {
+    final bool isCoffeeShopUser = _user?['role'] == 'coffee_shop';
 
-        if (isCoffeeShopUser) {
-            // Navigate to scanner screen
-            Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => CoffeeShopScannerScreen())
-            );
-        } else {
-            // Show QR generation modal
-            showModalBottomSheet(
-                context: context,
-                builder: (context) => RedemptionSelectionModal(),
-            );
-        }
+    if (isCoffeeShopUser) {
+      // Navigate to scanner screen
+      Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => CoffeeShopScannerScreen())
+      );
+    } else {
+      // Show QR generation modal
+      showModalBottomSheet(
+        context: context,
+        builder: (context) => RedemptionSelectionModal(),
+      );
     }
+  }
 }
 ```
 
@@ -579,26 +600,26 @@ const shops = await CoffeeShop.findAndCountAll({
 ```dart
 // Efficient widget rebuilding
 class OptimizedStatsCard extends StatefulWidget {
-    @override
-    Widget build(BuildContext context) {
-        return FutureBuilder<MonthlyStatsData>(
-            future: _statsFuture, // Cache future to prevent rebuilds
-            builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                    return _buildStatsDisplay(snapshot.data!);
-                }
-                return _buildLoadingState();
-            },
-        );
-    }
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<MonthlyStatsData>(
+      future: _statsFuture, // Cache future to prevent rebuilds
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return _buildStatsDisplay(snapshot.data!);
+        }
+        return _buildLoadingState();
+      },
+    );
+  }
 }
 
 // Memory management
 @override
 void dispose() {
-    _timer?.cancel(); // Prevent memory leaks
-    _animationController.dispose();
-    super.dispose();
+  _timer?.cancel(); // Prevent memory leaks
+  _animationController.dispose();
+  super.dispose();
 }
 ```
 

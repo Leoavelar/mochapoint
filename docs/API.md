@@ -233,6 +233,54 @@ Authorization: Bearer <JWT_TOKEN>
 }
 ```
 
+### Get User Subscription ⭐ NEW
+```http
+GET /users/subscription
+Authorization: Bearer <JWT_TOKEN>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "hasActiveSubscription": true,
+    "subscription": {
+      "id": 2,
+      "planName": "Premium Monthly Plan",
+      "status": "active",
+      "startDate": "2025-01-01",
+      "endDate": "2025-12-31",
+      "weeklyLimit": 5,
+      "usedThisWeek": 2,
+      "autoRenew": true
+    },
+    "accessibleShops": [
+      {
+        "id": 1,
+        "name": "Central Coffee Graz",
+        "address": "Hauptplatz 1, 8010 Graz",
+        "subscriptionType": "shop-specific",
+        "latitude": 47.0707,
+        "longitude": 15.4395
+      }
+    ]
+  }
+}
+```
+
+**Response (200) - No Active Subscription:**
+```json
+{
+  "success": true,
+  "data": {
+    "hasActiveSubscription": false,
+    "subscription": null,
+    "accessibleShops": []
+  }
+}
+```
+
 ---
 
 ## Coffee Shop Management

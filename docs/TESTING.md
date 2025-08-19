@@ -298,7 +298,7 @@ import 'package:mocha_point/screens/login_screen.dart';
 void main() {
   testWidgets('Login screen has email and password fields', (WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(home: LoginScreen()));
-    
+
     expect(find.byType(TextFormField), findsNWidgets(2));
     expect(find.text('Email'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
@@ -316,10 +316,10 @@ import 'package:mocha_point/widgets/coffee_stats_card.dart';
 void main() {
   testWidgets('Stats card shows loading state initially', (WidgetTester tester) async {
     await tester.pumpWidget(MaterialApp(home: CoffeeStatsCard()));
-    
+
     expect(find.byType(CircularProgressIndicator), findsWidgets);
   });
-  
+
   testWidgets('Stats card shows retry button on error', (WidgetTester tester) async {
     // Mock network error
     // Verify retry button appears
@@ -438,17 +438,17 @@ void main() {
 
       // Test splash screen
       expect(find.text('Mocha Point'), findsOneWidget);
-      
+
       // Wait for navigation
       await tester.pumpAndSettle(Duration(seconds: 4));
-      
+
       // Test login screen appears
       expect(find.text('Login'), findsOneWidget);
-      
+
       // Test navigation to registration
       await tester.tap(find.text('Sign Up'));
       await tester.pumpAndSettle();
-      
+
       expect(find.text('Register'), findsOneWidget);
     });
   });
@@ -547,10 +547,10 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('Stats card loads within 3 seconds', (WidgetTester tester) async {
     final stopwatch = Stopwatch()..start();
-    
+
     await tester.pumpWidget(MaterialApp(home: CoffeeStatsCard()));
     await tester.pumpAndSettle();
-    
+
     stopwatch.stop();
     expect(stopwatch.elapsedMilliseconds, lessThan(3000));
   });
@@ -667,12 +667,12 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
-      
+
       - name: Install dependencies
         run: |
           cd backend
           npm ci
-      
+
       - name: Run tests
         run: |
           cd backend
@@ -692,12 +692,12 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.16.0'
-      
+
       - name: Install dependencies
         run: |
           cd frontend
           flutter pub get
-      
+
       - name: Run tests
         run: |
           cd frontend

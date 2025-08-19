@@ -1,6 +1,11 @@
 # MochaPoint ☕
 
-> Your daily dose of happiness - A coffee subscription platform connecting coffee lovers with partner shops in your city
+> Your daily dose of happiness - A coffee subscription platform connecting coffee lovers with partner shops in Graz, Austria
+
+[![Flutter](https://img.shields.io/badge/Flutter-3.0+-blue.svg)](https://flutter.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17+-blue.svg)](https://postgresql.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## 🚀 Quick Start
 
@@ -28,6 +33,8 @@ MochaPoint is a mobile-first coffee subscription platform that connects coffee l
 - **📊 Real-time Stats**: Monthly redemption tracking
 - **⭐ Rating System**: Community-driven shop ratings
 - **👥 Role-based Access**: Different interfaces for users and coffee shop owners
+- **🎫 Subscription Integration**: Visual highlighting of subscribed coffee shops
+- **📈 Subscription Dashboard**: Shows subscription plan details and accessible shops
 
 ## 📚 Documentation
 
@@ -64,6 +71,9 @@ MochaPoint is a mobile-first coffee subscription platform that connects coffee l
 - **Mobile App**: Cross-platform iOS/Android with role-based UI
 - **Monthly Statistics**: Real-time redemption tracking and breakdowns
 - **Rating System**: Dual-source ratings (app + Google) with aggregation
+- **🆕 Subscription Integration**: Complete subscription system with shop highlighting
+- **🆕 User Subscription API**: Backend endpoint for subscription details
+- **🆕 Enhanced UI**: Visual subscription indicators and accessible shop highlighting
 
 ### 🚧 In Development (Database Ready)
 - **Subscription System**: Monthly coffee plans and billing
