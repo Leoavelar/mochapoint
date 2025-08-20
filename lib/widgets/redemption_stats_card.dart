@@ -1,4 +1,4 @@
-// Path: lib/widgets/redemption_stats_card.dart
+// lib/widgets/redemption_stats_card.dart
 
 import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
@@ -8,16 +8,16 @@ class CoffeeStatsCard extends StatefulWidget {
   // Optional parameters for fallback/loading states
   final String? fallbackMonth;
   final String? fallbackRedeemedCount;
-  final String? fallbackAvailableCount;
+  final String? fallbackRemainingCount;
   final String? fallbackJokersCount;
 
   const CoffeeStatsCard({
-    Key? key,
+    super.key,
     this.fallbackMonth,
     this.fallbackRedeemedCount,
-    this.fallbackAvailableCount,
+    this.fallbackRemainingCount,
     this.fallbackJokersCount,
-  }) : super(key: key);
+  });
 
   @override
   State<CoffeeStatsCard> createState() => _CoffeeStatsCardState();
@@ -92,9 +92,13 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
 
   Widget _buildHeader() {
     String month = 'Loading...';
+    String subtitle = 'Your Redemption Stats';
 
     if (_monthlyStats != null) {
       month = _monthlyStats!.month;
+      if (_monthlyStats!.hasActiveSubscription && _monthlyStats!.subscriptionPlanName != null) {
+        subtitle = _monthlyStats!.subscriptionPlanName!;
+      }
     } else if (!_isLoading && _errorMessage == null && widget.fallbackMonth != null) {
       month = widget.fallbackMonth!;
     } else if (_errorMessage != null) {
@@ -170,7 +174,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildLoadingStatItem('Available'),
+        _buildLoadingStatItem('Remaining'),
         _buildLoadingStatItem('Redeemed'),
         _buildLoadingStatItem('Jokers'),
       ],
@@ -243,9 +247,11 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       children: [
         _buildStatItemWithIcon(
           context,
-          _monthlyStats!.totalAvailable.toString(),
-          'Available',
-          Icons.local_cafe,
+          _monthlyStats!.remainingMonthly.toString(),
+          'Remaining',
+          Icons.coffee,
+          // Show different color if no remaining redemptions
+          _monthlyStats!.remainingMonthly == 0 ? Colors.grey : null,
         ),
         _buildStatItemWithIcon(
           context,
@@ -269,9 +275,9 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       children: [
         _buildStatItemWithIcon(
           context,
-          widget.fallbackAvailableCount ?? '0',
-          'Available',
-          Icons.local_cafe,
+          widget.fallbackRemainingCount ?? '0',
+          'Remaining',
+          Icons.coffee,
         ),
         _buildStatItemWithIcon(
           context,
@@ -289,8 +295,14 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
     );
   }
 
-  Widget _buildStatItemWithIcon(BuildContext context, String value, String label, IconData icon) {
-    final coffeeBean = Theme.of(context).colorScheme.secondary;
+  Widget _buildStatItemWithIcon(
+      BuildContext context,
+      String value,
+      String label,
+      IconData icon,
+      [Color? overrideColor]
+      ) {
+    final coffeeBean = overrideColor ?? Theme.of(context).colorScheme.secondary;
 
     return Column(
       children: [
@@ -299,7 +311,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
           height: 70,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: MyApp.coffeeBean.withOpacity(0.1),
+            color: coffeeBean.withOpacity(0.1),
             borderRadius: BorderRadius.circular(5),
           ),
           child: Column(

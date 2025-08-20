@@ -4,30 +4,41 @@ import 'package:http/http.dart' as http;
 import 'auth_service.dart';
 
 class RedemptionService {
-  static const String baseUrl = 'https://mochapoint.coffee/api'; // Replace with your API URL
+  // FIXED: Use development URL and remove extra /api
+  static const String baseUrl = 'http://192.168.1.109:8000/api'; // Development URL
 
   // Generate QR token for redemption
   static Future<Map<String, dynamic>> generateQRToken(String redemptionType) async {
     try {
-      final token = await AuthService.getToken();
-      if (token == null) {
+      print('🔍 RedemptionService: Generating QR token for $redemptionType');
+
+      // FIXED: Use getAuthHeaders instead of getToken
+      final headers = await AuthService.getAuthHeaders();
+      print('📋 RedemptionService: Headers = $headers');
+
+      if (!headers.containsKey('Authorization')) {
         throw Exception('No authentication token available');
       }
 
+      // FIXED: Remove duplicate /api
+      final url = '$baseUrl/redemptions/generate-qr';
+      print('📞 RedemptionService: Calling $url');
+
       final response = await http.post(
-        Uri.parse('$baseUrl/api/redemptions/generate-qr'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        Uri.parse(url),
+        headers: headers, // Use the headers directly
         body: jsonEncode({
           'redemptionType': redemptionType, // 'subscription' or 'joker'
         }),
       );
 
+      print('📊 RedemptionService: Response status = ${response.statusCode}');
+      print('📊 RedemptionService: Response body = ${response.body}');
+
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success']) {
+        print('✅ RedemptionService: QR generation successful');
         return {
           'success': true,
           'qrToken': data['qrToken'],
@@ -35,6 +46,7 @@ class RedemptionService {
           'userInfo': data['userInfo'],
         };
       } else {
+        print('❌ RedemptionService: QR generation failed - ${data['error']}');
         return {
           'success': false,
           'error': data['error'] ?? 'Failed to generate QR code',
@@ -42,6 +54,7 @@ class RedemptionService {
         };
       }
     } catch (e) {
+      print('💥 RedemptionService: QR generation exception - $e');
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
@@ -52,22 +65,29 @@ class RedemptionService {
   // Coffee shop validates and redeems QR code
   static Future<Map<String, dynamic>> validateAndRedeem(String qrToken, {String? coffeeType}) async {
     try {
-      final token = await AuthService.getToken();
-      if (token == null) {
+      print('🔍 RedemptionService: Validating QR token');
+
+      final headers = await AuthService.getAuthHeaders();
+
+      if (!headers.containsKey('Authorization')) {
         throw Exception('No authentication token available');
       }
 
+      // FIXED: Remove duplicate /api
+      final url = '$baseUrl/redemptions/validate-and-redeem';
+      print('📞 RedemptionService: Calling $url');
+
       final response = await http.post(
-        Uri.parse('$baseUrl/api/redemptions/validate-and-redeem'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        Uri.parse(url),
+        headers: headers,
         body: jsonEncode({
           'qrToken': qrToken,
           'coffeeType': coffeeType,
         }),
       );
+
+      print('📊 RedemptionService: Validation response status = ${response.statusCode}');
+      print('📊 RedemptionService: Validation response body = ${response.body}');
 
       final data = jsonDecode(response.body);
 
@@ -85,6 +105,7 @@ class RedemptionService {
         };
       }
     } catch (e) {
+      print('💥 RedemptionService: Validation exception - $e');
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
@@ -95,33 +116,44 @@ class RedemptionService {
   // Get user's redemption status
   static Future<Map<String, dynamic>> getRedemptionStatus() async {
     try {
-      final token = await AuthService.getToken();
-      if (token == null) {
+      print('🔍 RedemptionService: Getting redemption status');
+
+      final headers = await AuthService.getAuthHeaders();
+      print('📋 RedemptionService: Status headers = $headers');
+
+      if (!headers.containsKey('Authorization')) {
         throw Exception('No authentication token available');
       }
 
+      // FIXED: Remove duplicate /api
+      final url = '$baseUrl/redemptions/status';
+      print('📞 RedemptionService: Calling $url');
+
       final response = await http.get(
-        Uri.parse('$baseUrl/api/redemptions/status'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        Uri.parse(url),
+        headers: headers,
       );
+
+      print('📊 RedemptionService: Status response status = ${response.statusCode}');
+      print('📊 RedemptionService: Status response body = ${response.body}');
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data['success']) {
+        print('✅ RedemptionService: Status retrieval successful');
         return {
           'success': true,
           'status': data['status'],
         };
       } else {
+        print('❌ RedemptionService: Status retrieval failed - ${data['error']}');
         return {
           'success': false,
           'error': data['error'] ?? 'Failed to get redemption status',
         };
       }
     } catch (e) {
+      print('💥 RedemptionService: Status exception - $e');
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
@@ -132,17 +164,18 @@ class RedemptionService {
   // Get user's redemption history
   static Future<Map<String, dynamic>> getRedemptionHistory({int limit = 50, int offset = 0}) async {
     try {
-      final token = await AuthService.getToken();
-      if (token == null) {
+      final headers = await AuthService.getAuthHeaders();
+
+      if (!headers.containsKey('Authorization')) {
         throw Exception('No authentication token available');
       }
 
+      // FIXED: Remove duplicate /api
+      final url = '$baseUrl/redemptions/history?limit=$limit&offset=$offset';
+
       final response = await http.get(
-        Uri.parse('$baseUrl/api/redemptions/history?limit=$limit&offset=$offset'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        Uri.parse(url),
+        headers: headers,
       );
 
       final data = jsonDecode(response.body);

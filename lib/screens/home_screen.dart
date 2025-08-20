@@ -124,9 +124,8 @@ class HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// MODIFIED WIDGET
 class _CustomerHomeTab extends StatelessWidget {
-  const _CustomerHomeTab({Key? key}) : super(key: key);
+  const _CustomerHomeTab({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -141,12 +140,11 @@ class _CustomerHomeTab extends StatelessWidget {
         backgroundImage: 'assets/images/header_2.png',
         height: 200.0,
       ),
-      overlappingWidget: const CoffeeStatsCard(
-        // Remove the hardcoded values - the widget will fetch them from API
-        // Optional: provide fallback values for when API fails
-        fallbackMonth: null, // Will use current month if needed
+      overlappingWidget: CoffeeStatsCard(
+        // Updated parameter names to match the new widget structure
+        fallbackMonth: formattedDate, // Use the formatted current month
         fallbackRedeemedCount: '0',
-        fallbackAvailableCount: '0',
+        fallbackRemainingCount: '0', // Changed from fallbackAvailableCount
         fallbackJokersCount: '0',
       ),
       contentWidgets: [

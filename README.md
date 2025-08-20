@@ -223,4 +223,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **MochaPoint** - Built with ❤️ for the coffee community in Graz, Austria ☕️
 
-*Ready to get started? Check out the [Setup Guide](docs/SETUP.md)!*
+*Ready to get started? Check out the [Setup Guide](docs/SETUP.md)!*~~
