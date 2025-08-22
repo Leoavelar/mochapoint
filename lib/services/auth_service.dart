@@ -1,3 +1,4 @@
+// lib/services/auth_service.dart - Compatible version with both methods
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -203,7 +204,7 @@ class AuthService {
     };
   }
 
-  // Validate if current token is still valid
+  // ORIGINAL METHOD - Keep for backward compatibility (returns bool)
   static Future<bool> validateToken() async {
     try {
       final token = await getToken();
@@ -224,6 +225,103 @@ class AuthService {
     }
   }
 
+  // ORIGINAL METHOD - Keep for backward compatibility (returns bool)
+  static Future<bool> isAuthenticated() async {
+    final token = await getToken();
+    if (token == null) return false;
+
+    return await validateToken();
+  }
+
+  // NEW ENHANCED METHOD - Detailed validation with session expiry detection
+  static Future<AuthValidationResult> validateTokenDetailed() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return AuthValidationResult(isValid: false, needsLogin: true);
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return AuthValidationResult(isValid: true, needsLogin: false);
+      } else if (response.statusCode == 401) {
+        // Parse the error response to check if it's a session expiry
+        try {
+          final errorData = json.decode(response.body);
+          final errorCode = errorData['code'];
+
+          if (errorCode == 'TOKEN_EXPIRED') {
+            return AuthValidationResult(
+                isValid: false,
+                needsLogin: true,
+                isExpired: true,
+                message: 'Your session has expired. Please log in again.'
+            );
+          } else {
+            return AuthValidationResult(
+                isValid: false,
+                needsLogin: true,
+                message: errorData['error'] ?? 'Authentication failed'
+            );
+          }
+        } catch (e) {
+          return AuthValidationResult(
+              isValid: false,
+              needsLogin: true,
+              message: 'Authentication failed'
+          );
+        }
+      } else {
+        return AuthValidationResult(isValid: false, needsLogin: false);
+      }
+    } catch (e) {
+      print('Token validation error: $e');
+      return AuthValidationResult(
+          isValid: false,
+          needsLogin: false,
+          message: 'Network error: $e'
+      );
+    }
+  }
+
+  // NEW ENHANCED METHOD - Detailed authentication check
+  static Future<AuthValidationResult> isAuthenticatedDetailed() async {
+    final token = await getToken();
+    if (token == null) {
+      return AuthValidationResult(isValid: false, needsLogin: true);
+    }
+
+    return await validateTokenDetailed();
+  }
+
+  // Helper method to handle session expiry across the app
+  static Future<bool> handleApiResponse(http.Response response) async {
+    if (response.statusCode == 401) {
+      try {
+        final errorData = json.decode(response.body);
+        final errorCode = errorData['code'];
+
+        if (errorCode == 'TOKEN_EXPIRED') {
+          // Clear expired token
+          await logout();
+          return false; // Indicates session expired
+        }
+      } catch (e) {
+        // If we can't parse the error, still treat 401 as expired
+        await logout();
+        return false;
+      }
+    }
+    return true; // Session is still valid
+  }
+
   // Get a fresh token if current one is invalid
   static Future<String?> getValidToken() async {
     final isValid = await validateToken();
@@ -236,14 +334,6 @@ class AuthService {
     await logout(); // Clear invalid token
     return null;
   }
-
-  // Enhanced method to check if user is actually authenticated
-  static Future<bool> isAuthenticated() async {
-    final token = await getToken();
-    if (token == null) return false;
-
-    return await validateToken();
-  }
 }
 
 class AuthResult {
@@ -255,5 +345,19 @@ class AuthResult {
     required this.success,
     this.user,
     this.error,
+  });
+}
+
+class AuthValidationResult {
+  final bool isValid;
+  final bool needsLogin;
+  final bool isExpired;
+  final String? message;
+
+  AuthValidationResult({
+    required this.isValid,
+    required this.needsLogin,
+    this.isExpired = false,
+    this.message,
   });
 }

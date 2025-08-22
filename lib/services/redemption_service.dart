@@ -1,56 +1,107 @@
-// lib/services/redemption_service.dart
+// lib/services/redemption_service.dart - Enhanced with session handling
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'auth_service.dart';
 
 class RedemptionService {
-  // FIXED: Use development URL and remove extra /api
-  static const String baseUrl = 'http://192.168.1.109:8000/api'; // Development URL
+  static const String baseUrl = 'http://192.168.1.109:8000/api';
+
+  // Helper method to handle API responses with session expiry detection
+  static Map<String, dynamic> _handleApiResponse(http.Response response) {
+    try {
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        return data;
+      } else if (response.statusCode == 401) {
+        // Check if this is a session expiry
+        final errorCode = data['code'];
+        if (errorCode == 'TOKEN_EXPIRED') {
+          return {
+            'success': false,
+            'error': 'Your session has expired. Please log in again.',
+            'isSessionExpired': true,
+            'errorCode': 'SESSION_EXPIRED'
+          };
+        } else {
+          return {
+            'success': false,
+            'error': data['error'] ?? 'Authentication failed',
+            'isSessionExpired': true,
+            'errorCode': 'AUTH_FAILED'
+          };
+        }
+      } else {
+        return {
+          'success': false,
+          'error': data['error'] ?? 'Request failed',
+          'isSessionExpired': false
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Failed to parse response: $e',
+        'isSessionExpired': false
+      };
+    }
+  }
 
   // Generate QR token for redemption
   static Future<Map<String, dynamic>> generateQRToken(String redemptionType) async {
     try {
       print('🔍 RedemptionService: Generating QR token for $redemptionType');
 
-      // FIXED: Use getAuthHeaders instead of getToken
       final headers = await AuthService.getAuthHeaders();
       print('📋 RedemptionService: Headers = $headers');
 
       if (!headers.containsKey('Authorization')) {
-        throw Exception('No authentication token available');
+        return {
+          'success': false,
+          'error': 'No authentication token available',
+          'isSessionExpired': true,
+          'errorCode': 'NO_TOKEN'
+        };
       }
 
-      // FIXED: Remove duplicate /api
       final url = '$baseUrl/redemptions/generate-qr';
       print('📞 RedemptionService: Calling $url');
 
       final response = await http.post(
         Uri.parse(url),
-        headers: headers, // Use the headers directly
+        headers: headers,
         body: jsonEncode({
-          'redemptionType': redemptionType, // 'subscription' or 'joker'
+          'redemptionType': redemptionType,
         }),
       );
 
       print('📊 RedemptionService: Response status = ${response.statusCode}');
       print('📊 RedemptionService: Response body = ${response.body}');
 
-      final data = jsonDecode(response.body);
+      final result = _handleApiResponse(response);
 
-      if (response.statusCode == 200 && data['success']) {
+      // Handle session expiry
+      if (result['isSessionExpired'] == true) {
+        await AuthService.logout();
+        print('🔒 Session expired, user logged out');
+      }
+
+      if (result['success']) {
         print('✅ RedemptionService: QR generation successful');
         return {
           'success': true,
-          'qrToken': data['qrToken'],
-          'expiresAt': data['expiresAt'],
-          'userInfo': data['userInfo'],
+          'qrToken': result['qrToken'],
+          'expiresAt': result['expiresAt'],
+          'userInfo': result['userInfo'],
         };
       } else {
-        print('❌ RedemptionService: QR generation failed - ${data['error']}');
+        print('❌ RedemptionService: QR generation failed - ${result['error']}');
         return {
           'success': false,
-          'error': data['error'] ?? 'Failed to generate QR code',
-          'nextAvailableAt': data['nextAvailableAt'],
+          'error': result['error'],
+          'nextAvailableAt': result['nextAvailableAt'],
+          'isSessionExpired': result['isSessionExpired'] ?? false,
+          'errorCode': result['errorCode']
         };
       }
     } catch (e) {
@@ -58,6 +109,68 @@ class RedemptionService {
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
+        'isSessionExpired': false
+      };
+    }
+  }
+
+  // Get user's redemption status
+  static Future<Map<String, dynamic>> getRedemptionStatus() async {
+    try {
+      print('🔍 RedemptionService: Getting redemption status');
+
+      final headers = await AuthService.getAuthHeaders();
+      print('📋 RedemptionService: Status headers = $headers');
+
+      if (!headers.containsKey('Authorization')) {
+        return {
+          'success': false,
+          'error': 'No authentication token available',
+          'isSessionExpired': true,
+          'errorCode': 'NO_TOKEN'
+        };
+      }
+
+      final url = '$baseUrl/redemptions/status';
+      print('📞 RedemptionService: Calling $url');
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      );
+
+      print('📊 RedemptionService: Status response status = ${response.statusCode}');
+      print('📊 RedemptionService: Status response body = ${response.body}');
+
+      final result = _handleApiResponse(response);
+
+      // Handle session expiry
+      if (result['isSessionExpired'] == true) {
+        await AuthService.logout();
+        print('🔒 Session expired, user logged out');
+      }
+
+      if (result['success']) {
+        print('✅ RedemptionService: Status retrieval successful');
+        return {
+          'success': true,
+          'status': result['status'],
+        };
+      } else {
+        print('❌ RedemptionService: Status retrieval failed - ${result['error']}');
+        return {
+          'success': false,
+          'error': result['error'],
+          'isSessionExpired': result['isSessionExpired'] ?? false,
+          'errorCode': result['errorCode']
+        };
+      }
+    } catch (e) {
+      print('💥 RedemptionService: Status exception - $e');
+      return {
+        'success': false,
+        'error': 'Network error: ${e.toString()}',
+        'isSessionExpired': false
       };
     }
   }
@@ -70,10 +183,13 @@ class RedemptionService {
       final headers = await AuthService.getAuthHeaders();
 
       if (!headers.containsKey('Authorization')) {
-        throw Exception('No authentication token available');
+        return {
+          'success': false,
+          'error': 'No authentication token available',
+          'isSessionExpired': true
+        };
       }
 
-      // FIXED: Remove duplicate /api
       final url = '$baseUrl/redemptions/validate-and-redeem';
       print('📞 RedemptionService: Calling $url');
 
@@ -89,19 +205,27 @@ class RedemptionService {
       print('📊 RedemptionService: Validation response status = ${response.statusCode}');
       print('📊 RedemptionService: Validation response body = ${response.body}');
 
-      final data = jsonDecode(response.body);
+      final result = _handleApiResponse(response);
 
-      if (response.statusCode == 200 && data['success']) {
+      // Handle session expiry
+      if (result['isSessionExpired'] == true) {
+        await AuthService.logout();
+        print('🔒 Session expired, user logged out');
+      }
+
+      if (result['success']) {
         return {
           'success': true,
-          'message': data['message'],
-          'customer': data['customer'],
-          'redemption': data['redemption'],
+          'message': result['message'],
+          'customer': result['customer'],
+          'redemption': result['redemption'],
         };
       } else {
         return {
           'success': false,
-          'error': data['error'] ?? 'Failed to validate redemption',
+          'error': result['error'],
+          'isSessionExpired': result['isSessionExpired'] ?? false,
+          'errorCode': result['errorCode']
         };
       }
     } catch (e) {
@@ -109,54 +233,7 @@ class RedemptionService {
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
-      };
-    }
-  }
-
-  // Get user's redemption status
-  static Future<Map<String, dynamic>> getRedemptionStatus() async {
-    try {
-      print('🔍 RedemptionService: Getting redemption status');
-
-      final headers = await AuthService.getAuthHeaders();
-      print('📋 RedemptionService: Status headers = $headers');
-
-      if (!headers.containsKey('Authorization')) {
-        throw Exception('No authentication token available');
-      }
-
-      // FIXED: Remove duplicate /api
-      final url = '$baseUrl/redemptions/status';
-      print('📞 RedemptionService: Calling $url');
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: headers,
-      );
-
-      print('📊 RedemptionService: Status response status = ${response.statusCode}');
-      print('📊 RedemptionService: Status response body = ${response.body}');
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && data['success']) {
-        print('✅ RedemptionService: Status retrieval successful');
-        return {
-          'success': true,
-          'status': data['status'],
-        };
-      } else {
-        print('❌ RedemptionService: Status retrieval failed - ${data['error']}');
-        return {
-          'success': false,
-          'error': data['error'] ?? 'Failed to get redemption status',
-        };
-      }
-    } catch (e) {
-      print('💥 RedemptionService: Status exception - $e');
-      return {
-        'success': false,
-        'error': 'Network error: ${e.toString()}',
+        'isSessionExpired': false
       };
     }
   }
@@ -167,10 +244,13 @@ class RedemptionService {
       final headers = await AuthService.getAuthHeaders();
 
       if (!headers.containsKey('Authorization')) {
-        throw Exception('No authentication token available');
+        return {
+          'success': false,
+          'error': 'No authentication token available',
+          'isSessionExpired': true
+        };
       }
 
-      // FIXED: Remove duplicate /api
       final url = '$baseUrl/redemptions/history?limit=$limit&offset=$offset';
 
       final response = await http.get(
@@ -178,25 +258,33 @@ class RedemptionService {
         headers: headers,
       );
 
-      final data = jsonDecode(response.body);
+      final result = _handleApiResponse(response);
 
-      if (response.statusCode == 200 && data['success']) {
+      // Handle session expiry
+      if (result['isSessionExpired'] == true) {
+        await AuthService.logout();
+      }
+
+      if (result['success']) {
         return {
           'success': true,
-          'redemptions': data['redemptions'],
-          'total': data['total'],
-          'hasMore': data['hasMore'],
+          'redemptions': result['redemptions'],
+          'total': result['total'],
+          'hasMore': result['hasMore'],
         };
       } else {
         return {
           'success': false,
-          'error': data['error'] ?? 'Failed to get redemption history',
+          'error': result['error'],
+          'isSessionExpired': result['isSessionExpired'] ?? false,
+          'errorCode': result['errorCode']
         };
       }
     } catch (e) {
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
+        'isSessionExpired': false
       };
     }
   }

@@ -26,49 +26,98 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   }
 
   Future<void> _loadRedemptionStatus() async {
+    print('🔍 Starting to load redemption status...');
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
+      print('📞 Calling RedemptionService.getRedemptionStatus()...');
+
       final result = await RedemptionService.getRedemptionStatus();
+
+      print('📊 Raw result: $result');
+
       if (result['success']) {
+        print('✅ Success! Status data: ${result['status']}');
         setState(() {
           _redemptionStatus = result['status'];
           _isLoading = false;
         });
       } else {
+        print('❌ Failed! Error: ${result['error']}');
+
+        // Check if this is a session expiry
+        if (result['isSessionExpired'] == true ||
+            result['errorCode'] == 'SESSION_EXPIRED' ||
+            result['errorCode'] == 'TOKEN_EXPIRED') {
+
+          // Close the modal and navigate to login
+          Navigator.of(context).pop();
+
+          // Show session expired dialog
+          _showSessionExpiredDialog();
+
+          return; // Don't update the error state since we're navigating away
+        }
+
         setState(() {
-          _error = result['error'];
+          _error = result['error'] ?? 'Unknown error from server';
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('💥 Exception caught: $e');
+      print('📚 Stack trace: $stackTrace');
       setState(() {
-        _error = 'Failed to load redemption status';
+        _error = 'Failed to get redemption status: $e';
         _isLoading = false;
       });
     }
   }
 
   Future<void> _generateQRCode(String redemptionType) async {
+    print('🔍 Starting QR generation for type: $redemptionType');
+
     setState(() {
       _isGeneratingQR = true;
       _error = null;
     });
 
     try {
+      print('📞 Calling RedemptionService.generateQRToken($redemptionType)...');
+
       final result = await RedemptionService.generateQRToken(redemptionType);
+
+      print('📊 QR Generation result: $result');
+
       if (result['success']) {
+        print('✅ QR Success! Token: ${result['qrToken']?.substring(0, 20)}...');
         setState(() {
           _selectedRedemptionType = redemptionType;
           _qrToken = result['qrToken'];
           _isGeneratingQR = false;
         });
       } else {
+        print('❌ QR Failed! Error: ${result['error']}');
+
+        // Check if this is a session expiry
+        if (result['isSessionExpired'] == true ||
+            result['errorCode'] == 'SESSION_EXPIRED' ||
+            result['errorCode'] == 'TOKEN_EXPIRED') {
+
+          // Close the modal and show session expired dialog
+          Navigator.of(context).pop();
+
+          _showSessionExpiredDialog();
+
+          return;
+        }
+
         setState(() {
-          _error = result['error'];
+          _error = result['error'] ?? 'Unknown QR generation error';
           _isGeneratingQR = false;
         });
 
@@ -80,12 +129,56 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           });
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('💥 QR Exception caught: $e');
+      print('📚 QR Stack trace: $stackTrace');
       setState(() {
-        _error = 'Failed to generate QR code';
+        _error = 'Failed to generate QR code: $e';
         _isGeneratingQR = false;
       });
     }
+  }
+
+  void _showSessionExpiredDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.lock_clock_outlined, color: Colors.orange),
+            SizedBox(width: 8),
+            Text(
+              'Session Expired',
+              style: TextStyle(color: Colors.orange[700]),
+            ),
+          ],
+        ),
+        content: Text(
+          'Your session has expired for security reasons. Please log in again to continue.',
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              // Navigate to login screen - adjust this route as needed for your app
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/login',
+                    (route) => false,
+              );
+            },
+            child: const Text('Login Again'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -142,13 +235,19 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.error_outline,
+            _error!.contains('session') || _error!.contains('expired') || _error!.contains('log in')
+                ? Icons.lock_clock_outlined
+                : Icons.error_outline,
             size: 64,
-            color: Colors.red[300],
+            color: _error!.contains('session') || _error!.contains('expired') || _error!.contains('log in')
+                ? Colors.orange[300]
+                : Colors.red[300],
           ),
           const SizedBox(height: 16),
           Text(
-            'Unable to Generate QR Code',
+            _error!.contains('session') || _error!.contains('expired') || _error!.contains('log in')
+                ? 'Session Expired'
+                : 'Unable to Generate QR Code',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -161,9 +260,31 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _loadRedemptionStatus,
-            child: const Text('Try Again'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              if (!(_error!.contains('session') || _error!.contains('expired') || _error!.contains('log in')))
+                ElevatedButton(
+                  onPressed: _loadRedemptionStatus,
+                  child: const Text('Try Again'),
+                ),
+              if (_error!.contains('session') || _error!.contains('expired') || _error!.contains('log in'))
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close modal
+                    // Navigate to login screen
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/login',
+                          (route) => false,
+                    );
+                  },
+                  child: const Text('Login Again'),
+                ),
+            ],
           ),
         ],
       ),
