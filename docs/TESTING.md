@@ -1,362 +1,228 @@
-# Testing Guide
-
-> Comprehensive testing procedures and validation for MochaPoint platform
-
-## 📋 Table of Contents
-- [Testing Overview](#testing-overview)
-- [Backend API Testing](#backend-api-testing)
-- [Frontend Testing](#frontend-testing)
-- [Integration Testing](#integration-testing)
-- [End-to-End Testing](#end-to-end-testing)
-- [Performance Testing](#performance-testing)
-- [Security Testing](#security-testing)
-- [Automated Testing](#automated-testing)
-
----
-
-## Testing Overview
-
-### Testing Strategy
-- **Unit Tests**: Individual component testing
-- **Integration Tests**: API endpoint testing
-- **E2E Tests**: Complete user workflow testing
-- **Manual Tests**: User experience validation
-- **Performance Tests**: Load and stress testing
-- **Security Tests**: Authentication and authorization validation
-
-### Test Environment Setup
-```bash
-# Backend test server
-cd backend
-npm run dev
-
-# Frontend test app
-cd frontend
-flutter run
-
-# Test database (optional)
-createdb mocha_point_test
-```
-
----
-
-## Backend API Testing
-
-### Prerequisites
-```bash
-# Install testing tools
-npm install -g newman  # Postman CLI
-# OR use curl for manual testing
-```
-
-### Authentication Flow Testing
-
-#### 1. User Registration
-```bash
-curl -X POST http://localhost:8000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "testuser@example.com",
-    "password": "testpassword123"
-  }'
-```
-
-**Expected Response (201):**
-```json
-{
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "user": {
-    "id": 1,
-    "email": "testuser@example.com",
-    "role": "user",
-    "jokerCount": 3
-  }
-}
-```
-
-#### 2. User Login
-```bash
-curl -X POST http://localhost:8000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "testuser@example.com",
-    "password": "testpassword123"
-  }'
-```
-
-#### 3. Coffee Shop Registration
-```bash
-curl -X POST http://localhost:8000/api/auth/register-coffee-shop \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "shop@example.com",
-    "password": "shoppassword123",
-    "shopName": "Test Coffee Shop",
-    "address": "Test Street 123, 8010 Graz"
-  }'
-```
-
-#### 4. Admin Creation
-```bash
-curl -X POST http://localhost:8000/api/auth/create-admin \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@mochapoint.com",
-    "password": "adminpassword123",
-    "adminSecret": "your-admin-secret"
-  }'
-```
-
-### QR Redemption System Testing
-
-#### 1. Generate QR Token (User)
-```bash
-# Save user token from login
-export USER_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-
-# Generate subscription QR
-curl -X POST http://localhost:8000/api/redemptions/generate-qr \
-  -H "Authorization: Bearer $USER_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"redemptionType": "subscription"}'
-```
-
-**Expected Response (200):**
-```json
-{
-  "success": true,
-  "qrToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresAt": "2025-01-15T23:59:59.999Z",
-  "userInfo": {
-    "name": "Test User",
-    "email": "testuser@example.com",
-    "jokerCount": 3
-  }
-}
-```
-
-#### 2. Validate QR Token (Coffee Shop)
-```bash
-# Save coffee shop token
-export SHOP_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-export QR_TOKEN="qr-token-from-previous-step"
-
-curl -X POST http://localhost:8000/api/redemptions/validate-and-redeem \
-  -H "Authorization: Bearer $SHOP_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "qrToken": "'$QR_TOKEN'",
-    "coffeeType": "Cappuccino"
-  }'
-```
-
-### Monthly Statistics Testing
-
-#### 1. Get Monthly Stats
-```bash
-curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
-  -H "Authorization: Bearer $USER_TOKEN"
-```
-
-**Expected Response Structure:**
-```json
-{
-  "success": true,
-  "data": {
-    "month": "January 2025",
-    "redeemed": {
-      "total": 1,
-      "subscription": 1,
-      "joker": 0
-    },
-    "available": {
-      "total": 15,
-      "subscription": 12,
-      "jokers": 3
-    }
-  }
-}
-```
-
-### Coffee Shop Management Testing
-
-#### 1. Create Coffee Shop (Admin)
-```bash
-export ADMIN_TOKEN="admin-token-here"
-
-curl -X POST http://localhost:8000/api/coffee-shops \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Test Coffee Central",
-    "address": "Hauptplatz 1, 8010 Graz",
-    "latitude": 47.0707,
-    "longitude": 15.4395,
-    "subscriptionEnabled": true,
-    "jokerEnabled": true
-  }'
-```
-
-#### 2. Get Coffee Shop List
-```bash
-curl -X GET "http://localhost:8000/api/coffee-shops?lat=47.0707&lng=15.4395"
-```
-
-#### 3. Get Shop Statistics (Shop Owner)
-```bash
-curl -X GET http://localhost:8000/api/coffee-shops/1/stats \
-  -H "Authorization: Bearer $SHOP_TOKEN"
-```
-
-### Error Testing
-
-#### 1. Invalid Authentication
-```bash
-# No token
-curl -X GET http://localhost:8000/api/redemptions/monthly-stats
-
-# Expected: 401 Unauthorized
-
-# Invalid token
-curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
-  -H "Authorization: Bearer invalid-token"
-
-# Expected: 403 Forbidden
-```
-
-#### 2. Invalid QR Generation
-```bash
-# Invalid redemption type
-curl -X POST http://localhost:8000/api/redemptions/generate-qr \
-  -H "Authorization: Bearer $USER_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"redemptionType": "invalid"}'
-
-# Expected: 400 Bad Request
-```
-
-#### 3. Insufficient Permissions
-```bash
-# User trying to create coffee shop
-curl -X POST http://localhost:8000/api/coffee-shops \
-  -H "Authorization: Bearer $USER_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Test Shop"}'
-
-# Expected: 403 Forbidden
-```
-
----
-
-## Frontend Testing
-
-### Manual Testing Checklist
-
-#### Authentication Flow
-- [ ] **Splash Screen**: Shows for 3 seconds, then navigates
-- [ ] **Registration**: Email validation, password requirements
-- [ ] **Login**: Successful authentication, token storage
-- [ ] **Google Sign-In**: OAuth flow works correctly
-- [ ] **Auto-Login**: Remembers user between app restarts
-
-#### Home Screen (User)
-- [ ] **Statistics Card**: Loads monthly stats automatically
-- [ ] **Loading State**: Shows progress indicators
-- [ ] **Error Handling**: Retry button appears on network errors
-- [ ] **QR Generation**: Modal opens when tapping center button
-- [ ] **Coffee Shops List**: Shows nearby shops with ratings
-
-#### QR System
-- [ ] **QR Generation**: Creates valid QR codes
-- [ ] **QR Display**: Shows user info and expiration
-- [ ] **QR Scanner**: Scans and validates codes successfully
-- [ ] **Redemption Flow**: Complete user-to-shop workflow
-- [ ] **Error Messages**: Clear feedback for invalid/expired codes
-
-#### Coffee Shop Dashboard
-- [ ] **Analytics Display**: Shows real-time statistics
-- [ ] **Scanner Interface**: Camera opens and scans QR codes
-- [ ] **Customer Info**: Displays customer details during redemption
-- [ ] **Statistics Updates**: Live updates after redemptions
-
-#### Navigation & UI
-- [ ] **Role-based Navigation**: Different UI for users vs shop owners
-- [ ] **Smooth Transitions**: No lag between screens
-- [ ] **Responsive Design**: Works on different screen sizes
-- [ ] **Dark/Light Mode**: Consistent theming (if implemented)
-
-### Flutter Widget Testing
-
-#### Test Authentication Widget
+#### Test Enhanced Stats Card Widget
 ```dart
-// test/auth_test.dart
+// test/enhanced_stats_card_test.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mocha_point/screens/login_screen.dart';
-
-void main() {
-  testWidgets('Login screen has email and password fields', (WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(home: LoginScreen()));
-
-    expect(find.byType(TextFormField), findsNWidgets(2));
-    expect(find.text('Email'), findsOneWidget);
-    expect(find.text('Password'), findsOneWidget);
-    expect(find.byType(ElevatedButton), findsOneWidget);
-  });
-}
-```
-
-#### Test Stats Card Widget
-```dart
-// test/stats_card_test.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocha_point/widgets/coffee_stats_card.dart';
 
 void main() {
-  testWidgets('Stats card shows loading state initially', (WidgetTester tester) async {
-    await tester.pumpWidget(MaterialApp(home: CoffeeStatsCard()));
+  testWidgets('Stats card shows "Remaining" instead of "Available"', (WidgetTester tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: CoffeeStatsCard(
+        fallbackRemainingCount: 12, // Updated from fallbackAvailableCount
+        fallbackMonth: 'January 2025',
+        fallbackRedeemedCount: 8,
+        fallbackJokersCount: 3,
+      )
+    ));
 
-    expect(find.byType(CircularProgressIndicator), findsWidgets);
+    // Should show "Remaining" not "Available"
+    expect(find.text('Remaining'), findsOneWidget);
+    expect(find.text('Available'), findsNothing);
+    
+    // Should show remaining count
+    expect(find.text('12'), findsOneWidget);
   });
 
-  testWidgets('Stats card shows retry button on error', (WidgetTester tester) async {
-    // Mock network error
-    // Verify retry button appears
+  testWidgets('Stats card shows subscription plan name when available', (WidgetTester tester) async {
+    // Mock monthly stats with plan name
+    await tester.pumpWidget(MaterialApp(home: CoffeeStatsCard()));
+    
+    // Wait for async load
+    await tester.pumpAndSettle();
+    
+    // Should show plan name if subscription is active
+    expect(find.text('Premium Monthly Plan'), findsOneWidget);
+  });
+
+  testWidgets('Stats card shows grey icon when no remaining redemptions', (WidgetTester tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: CoffeeStatsCard(
+        fallbackRemainingCount: 0, // No remaining redemptions
+      )
+    ));
+
+    await tester.pumpAndSettle();
+    
+    // Icon should be grey when no redemptions remaining
+    final iconFinder = find.byIcon(Icons.coffee);
+    expect(iconFinder, findsOneWidget);
+    
+    final Icon icon = tester.widget(iconFinder);
+    expect(icon.color, equals(Colors.grey));
   });
 }
 ```
 
-### Device Testing Matrix
+#### Test Environment Configuration ⭐ NEW
+```dart
+// test/environment_config_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocha_point/config/app_config.dart';
+
+void main() {
+  group('AppConfig Environment Tests', () {
+    test('Should detect development environment correctly', () {
+      // This would need to be run with --dart-define=ENVIRONMENT=development
+      expect(AppConfig.isDevelopment, isTrue);
+      expect(AppConfig.enableLogging, isTrue);
+      expect(AppConfig.apiTimeout.inSeconds, equals(30));
+    });
+
+    test('Should use correct API URLs for each environment', () {
+      // Test development URL
+      if (AppConfig.isDevelopment) {
+        expect(AppConfig.apiBaseUrl, contains('192.168.1.109:8000'));
+      }
+      
+      // Test production URL
+      if (AppConfig.isProduction) {
+        expect(AppConfig.apiBaseUrl, equals('https://mochapoint.coffee/api'));
+      }
+    });
+
+    test('Should have appropriate timeout settings', () {
+      if (AppConfig.isDevelopment) {
+        expect(AppConfig.apiTimeout.inSeconds, equals(30));
+      } else {
+        expect(AppConfig.apiTimeout.inSeconds, equals(10));
+      }
+    });
+  });
+}
+```
+
+#### Test Enhanced Session Management ⭐ NEW
+```dart
+// test/session_management_test.dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocha_point/services/auth_service.dart';
+
+void main() {
+  group('Enhanced Session Management', () {
+    testWidgets('Should show session expired dialog on TOKEN_EXPIRED', (WidgetTester tester) async {
+      // Mock expired token response
+      // Test that session expired dialog appears
+      // Verify navigation to login screen
+    });
+
+    test('Should detect session expiry correctly', () async {
+      // Mock TOKEN_EXPIRED response from API
+      final result = await AuthService.isAuthenticatedDetailed();
+      
+      expect(result.isValid, isFalse);
+      expect(result.isExpired, isTrue);
+    });
+
+    test('Should clear token on session expiry', () async {
+      // Mock expired token
+      // Call AuthService method that triggers session expiry
+      // Verify token is cleared from storage
+      final token = await AuthService.getToken();
+      expect(token, isNull);
+    });
+  });
+}
+```
+
+### Device Testing Matrix ⭐ UPDATED
 
 #### Android Testing
-| Device Type | Screen Size | Android Version | Status |
-|-------------|-------------|-----------------|---------|
-| Phone | Small (5") | Android 10+ | ✅ |
-| Phone | Medium (6") | Android 11+ | ✅ |
-| Phone | Large (6.5"+) | Android 12+ | ✅ |
-| Tablet | 7-10" | Android 11+ | 🚧 |
+| Device Type | Screen Size | Android Version | Environment | Status |
+|-------------|-------------|-----------------|-------------|---------|
+| Phone | Small (5") | Android 10+ | Development | ✅ |
+| Phone | Medium (6") | Android 11+ | Development | ✅ |
+| Phone | Large (6.5"+) | Android 12+ | Development | ✅ |
+| Phone | Medium (6") | Android 11+ | Production | ✅ |
+| Tablet | 7-10" | Android 11+ | Development | 🚧 |
 
 #### iOS Testing
-| Device Type | Screen Size | iOS Version | Status |
-|-------------|-------------|-------------|---------|
-| iPhone SE | Small | iOS 14+ | ✅ |
-| iPhone 13/14 | Standard | iOS 15+ | ✅ |
-| iPhone Pro Max | Large | iOS 16+ | ✅ |
-| iPad | Tablet | iOS 14+ | 🚧 |
+| Device Type | Screen Size | iOS Version | Environment | Status |
+|-------------|-------------|-------------|-------------|---------|
+| iPhone SE | Small | iOS 14+ | Development | ✅ |
+| iPhone 13/14 | Standard | iOS 15+ | Development | ✅ |
+| iPhone Pro Max | Large | iOS 16+ | Development | ✅ |
+| iPhone 13/14 | Standard | iOS 15+ | Production | ✅ |
+| iPad | Tablet | iOS 14+ | Development | 🚧 |
+
+---
+
+## Environment Testing
+
+### Environment Configuration Testing ⭐ NEW
+
+#### Development Environment Testing
+```bash
+# Test development configuration
+flutter run --dart-define=ENVIRONMENT=development
+
+# Verify console output
+# Expected: "Environment: Development"
+# Expected: "API Base URL: http://192.168.1.109:8000/api"
+# Expected: "Debug Features: true"
+```
+
+**Test Checklist:**
+- [ ] **Console Logging**: Debug messages appear in console
+- [ ] **API URL**: Uses local development URL
+- [ ] **Timeouts**: 30-second API timeouts
+- [ ] **Debug Features**: Debug buttons/features visible
+- [ ] **Network Calls**: Can connect to local backend
+
+#### Production Environment Testing
+```bash
+# Test production configuration
+flutter run --dart-define=ENVIRONMENT=production
+
+# Verify console output  
+# Expected: "Environment: Production"
+# Expected: "API Base URL: https://mochapoint.coffee/api"
+# Expected: "Debug Features: false"
+```
+
+**Test Checklist:**
+- [ ] **Console Logging**: Minimal/no debug messages
+- [ ] **API URL**: Uses production URL
+- [ ] **Timeouts**: 10-second API timeouts
+- [ ] **Debug Features**: Debug buttons/features hidden
+- [ ] **Network Calls**: Can connect to production backend
+- [ ] **Performance**: Optimized for production use
+
+#### Environment Switching Testing ⭐ NEW
+```bash
+# Test switching between environments
+flutter run --dart-define=ENVIRONMENT=development
+# Stop app
+flutter run --dart-define=ENVIRONMENT=production
+
+# Verify environment changes without app rebuild
+# Check API calls go to correct endpoints
+# Verify different timeout behaviors
+```
+
+#### Build Testing by Environment
+```bash
+# Development build
+flutter build apk --dart-define=ENVIRONMENT=development
+
+# Production build  
+flutter build apk --release --dart-define=ENVIRONMENT=production
+
+# Verify APK uses correct configuration for each environment
+```
 
 ---
 
 ## Integration Testing
 
-### Complete User Journey Testing
+### Enhanced Complete User Journey Testing ⭐ UPDATED
 
-#### User Registration → First Redemption
+#### User Registration → Enhanced First Redemption
 ```bash
 #!/bin/bash
-# integration_test.sh
+# enhanced_integration_test.sh
 
-echo "=== Integration Test: User Journey ==="
+echo "=== Enhanced Integration Test: User Journey ==="
 
 # 1. Register user
 echo "1. Registering user..."
@@ -368,20 +234,28 @@ USER_RESPONSE=$(curl -s -X POST http://localhost:8000/api/auth/register \
   }')
 
 USER_TOKEN=$(echo $USER_RESPONSE | jq -r '.token')
-echo "User registered, token: ${USER_TOKEN:0:20}..."
+echo "User registered, 30-day token: ${USER_TOKEN:0:20}..."
 
-# 2. Generate QR
-echo "2. Generating QR token..."
+# 2. Check initial monthly stats
+echo "2. Checking initial monthly stats..."
+STATS_RESPONSE=$(curl -s -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer $USER_TOKEN")
+
+REMAINING_INITIAL=$(echo $STATS_RESPONSE | jq -r '.data.subscription.remainingMonthly')
+echo "Initial remaining redemptions: $REMAINING_INITIAL"
+
+# 3. Generate QR with monthly limit checking
+echo "3. Generating QR token with monthly limit..."
 QR_RESPONSE=$(curl -s -X POST http://localhost:8000/api/redemptions/generate-qr \
   -H "Authorization: Bearer $USER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"redemptionType": "joker"}')
+  -d '{"redemptionType": "subscription"}')
 
 QR_TOKEN=$(echo $QR_RESPONSE | jq -r '.qrToken')
 echo "QR generated: ${QR_TOKEN:0:20}..."
 
-# 3. Register coffee shop
-echo "3. Registering coffee shop..."
+# 4. Register coffee shop
+echo "4. Registering coffee shop..."
 SHOP_RESPONSE=$(curl -s -X POST http://localhost:8000/api/auth/register-coffee-shop \
   -H "Content-Type: application/json" \
   -d '{
@@ -392,10 +266,10 @@ SHOP_RESPONSE=$(curl -s -X POST http://localhost:8000/api/auth/register-coffee-s
   }')
 
 SHOP_TOKEN=$(echo $SHOP_RESPONSE | jq -r '.token')
-echo "Shop registered, token: ${SHOP_TOKEN:0:20}..."
+echo "Shop registered, 30-day token: ${SHOP_TOKEN:0:20}..."
 
-# 4. Validate redemption
-echo "4. Processing redemption..."
+# 5. Process redemption
+echo "5. Processing redemption..."
 REDEMPTION_RESPONSE=$(curl -s -X POST http://localhost:8000/api/redemptions/validate-and-redeem \
   -H "Authorization: Bearer $SHOP_TOKEN" \
   -H "Content-Type: application/json" \
@@ -404,52 +278,120 @@ REDEMPTION_RESPONSE=$(curl -s -X POST http://localhost:8000/api/redemptions/vali
     "coffeeType": "Integration Test Coffee"
   }')
 
-echo "Redemption result:"
-echo $REDEMPTION_RESPONSE | jq '.'
+REMAINING_AFTER=$(echo $REDEMPTION_RESPONSE | jq -r '.customer.subscriptionInfo.remainingMonthly')
+echo "Redemption result - Remaining after: $REMAINING_AFTER"
 
-# 5. Check monthly stats
-echo "5. Checking monthly statistics..."
-STATS_RESPONSE=$(curl -s -X GET http://localhost:8000/api/redemptions/monthly-stats \
+# 6. Check updated monthly stats
+echo "6. Checking updated monthly statistics..."
+FINAL_STATS_RESPONSE=$(curl -s -X GET http://localhost:8000/api/redemptions/monthly-stats \
   -H "Authorization: Bearer $USER_TOKEN")
 
-echo "Monthly stats:"
-echo $STATS_RESPONSE | jq '.data.redeemed'
+FINAL_REMAINING=$(echo $FINAL_STATS_RESPONSE | jq -r '.data.subscription.remainingMonthly')
+FINAL_REDEEMED=$(echo $FINAL_STATS_RESPONSE | jq -r '.data.redeemed.subscription')
 
-echo "=== Integration Test Complete ==="
+echo "Final stats:"
+echo "  - Remaining: $FINAL_REMAINING"
+echo "  - Subscription redeemed: $FINAL_REDEEMED"
+
+# 7. Test joker redemption doesn't affect subscription count
+echo "7. Testing joker redemption separation..."
+JOKER_QR_RESPONSE=$(curl -s -X POST http://localhost:8000/api/redemptions/generate-qr \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"redemptionType": "joker"}')
+
+JOKER_TOKEN=$(echo $JOKER_QR_RESPONSE | jq -r '.qrToken')
+
+curl -s -X POST http://localhost:8000/api/redemptions/validate-and-redeem \
+  -H "Authorization: Bearer $SHOP_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "qrToken": "'$JOKER_TOKEN'",
+    "coffeeType": "Joker Coffee"
+  }' > /dev/null
+
+# Check stats after joker redemption
+JOKER_STATS_RESPONSE=$(curl -s -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer $USER_TOKEN")
+
+JOKER_REMAINING=$(echo $JOKER_STATS_RESPONSE | jq -r '.data.subscription.remainingMonthly')
+TOTAL_REDEEMED=$(echo $JOKER_STATS_RESPONSE | jq -r '.data.redeemed.total')
+JOKER_REDEEMED=$(echo $JOKER_STATS_RESPONSE | jq -r '.data.redeemed.joker')
+
+echo "After joker redemption:"
+echo "  - Subscription remaining: $JOKER_REMAINING (should be same as before)"
+echo "  - Total redeemed: $TOTAL_REDEEMED"
+echo "  - Joker redeemed: $JOKER_REDEEMED"
+
+# 8. Test session expiry simulation
+echo "8. Testing session expiry detection..."
+EXPIRED_RESPONSE=$(curl -s -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer invalid-expired-token")
+
+ERROR_CODE=$(echo $EXPIRED_RESPONSE | jq -r '.errorCode')
+echo "Session expiry test - Error code: $ERROR_CODE"
+
+echo "=== Enhanced Integration Test Complete ==="
 ```
 
-### Cross-Platform Testing
+### Cross-Platform Environment Testing ⭐ NEW
 
-#### Flutter Integration Tests
+#### Flutter Integration Tests with Environment
 ```dart
-// integration_test/app_test.dart
+// integration_test/environment_test.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mocha_point/main.dart' as app;
+import 'package:mocha_point/config/app_config.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  group('App Integration Tests', () {
-    testWidgets('Complete user flow', (WidgetTester tester) async {
+  group('Environment Integration Tests', () {
+    testWidgets('App uses correct environment configuration', (WidgetTester tester) async {
       app.main();
       await tester.pumpAndSettle();
 
-      // Test splash screen
-      expect(find.text('Mocha Point'), findsOneWidget);
-
+      // Test splash screen shows environment info (in development)
+      if (AppConfig.isDevelopment) {
+        expect(find.text('Development'), findsOneWidget);
+      }
+      
       // Wait for navigation
       await tester.pumpAndSettle(Duration(seconds: 4));
 
       // Test login screen appears
       expect(find.text('Login'), findsOneWidget);
+      
+      // Test API calls use correct base URL
+      // This would require mocking or actual API testing
+    });
 
-      // Test navigation to registration
-      await tester.tap(find.text('Sign Up'));
+    testWidgets('Session expiry triggers correct flow', (WidgetTester tester) async {
+      app.main();
       await tester.pumpAndSettle();
 
-      expect(find.text('Register'), findsOneWidget);
+      // Navigate through app to trigger API call with expired token
+      // Verify session expired dialog appears
+      // Verify navigation to login screen
+      
+      // This test would require mocking expired token responses
+    });
+
+    testWidgets('Monthly stats show remaining count correctly', (WidgetTester tester) async {
+      app.main();
+      await tester.pumpAndSettle(Duration(seconds: 4));
+
+      // Login as test user
+      await tester.enterText(find.byType(TextFormField).first, 'test@example.com');
+      await tester.enterText(find.byType(TextFormField).last, 'password123');
+      await tester.tap(find.byType(ElevatedButton));
+      await tester.pumpAndSettle();
+
+      // Navigate to home and check stats card
+      expect(find.text('Remaining'), findsOneWidget);
+      expect(find.text('Available'), findsNothing);
     });
   });
 }
@@ -459,56 +401,87 @@ void main() {
 
 ## End-to-End Testing
 
-### Complete Redemption Workflow
+### Enhanced Complete Redemption Workflow ⭐ UPDATED
 
-#### Test Scenario: Subscription Redemption
-1. **Setup**: User with active subscription, Coffee shop with QR scanner
+#### Test Scenario: Subscription Redemption with Monthly Limits
+1. **Setup**: User with active subscription (25 monthly limit), Coffee shop with QR scanner
 2. **Action**: User generates subscription QR, shop scans and validates
-3. **Verification**: Redemption recorded, statistics updated, user notified
+3. **Verification**:
+    - Redemption recorded as subscription type
+    - Monthly remaining count decreases by 1
+    - Statistics updated correctly
+    - User notified of successful redemption
 
-#### Test Scenario: Daily Limit Enforcement
-1. **Setup**: User who already redeemed today
+#### Test Scenario: Monthly Limit Enforcement
+1. **Setup**: User who has reached monthly subscription limit (25/25)
 2. **Action**: Attempt to generate another subscription QR
-3. **Verification**: Error message, next available time shown
+3. **Verification**:
+    - Error message: "Monthly subscription limit reached"
+    - Next available date shown (next month)
+    - QR generation fails
+    - User can still generate joker QR
 
-#### Test Scenario: Expired QR Code
-1. **Setup**: Generated QR code from previous day
-2. **Action**: Coffee shop attempts to scan expired code
-3. **Verification**: Rejection message, no redemption recorded
+#### Test Scenario: Joker vs Subscription Separation
+1. **Setup**: User with 10 subscription redemptions and 5 joker redemptions this month
+2. **Action**: Check monthly stats display
+3. **Verification**:
+    - Total redeemed: 15
+    - Subscription redeemed: 10 (counts against monthly limit)
+    - Joker redeemed: 5 (doesn't count against monthly limit)
+    - Remaining monthly: 15 (25 - 10 subscription redemptions)
 
-### Multi-Device Testing
+#### Test Scenario: Enhanced Session Expiry
+1. **Setup**: User with expired 30-day JWT token
+2. **Action**: Attempt to access any authenticated endpoint
+3. **Verification**:
+    - Receives TOKEN_EXPIRED error code
+    - Session expired dialog appears with orange styling
+    - User redirected to login screen
+    - Stored token cleared from app
 
-#### Same User, Multiple Devices
+#### Test Scenario: Environment Switching
+1. **Setup**: App running in development environment
+2. **Action**: Switch to production environment and restart
+3. **Verification**:
+    - API calls go to production URL
+    - Debug logging disabled
+    - Shorter API timeouts applied
+    - UI performance optimized
+
+### Multi-Device Environment Testing ⭐ UPDATED
+
+#### Same User, Multiple Environments
 ```bash
-# Test user consistency across devices
-# Device 1: Generate QR
-# Device 2: Check monthly stats should show same data
-# Device 3: Login should sync properly
+# Test user consistency across environments
+# Device 1: Development environment - generate QR
+# Device 2: Production environment - check same user stats
+# Device 3: Development environment - verify consistency
 ```
 
-#### Concurrent Redemptions
+#### Concurrent Redemptions with Monthly Limits
 ```bash
-# Test race conditions
-# Multiple shops scanning same QR simultaneously
-# Should only allow one successful redemption
+# Test race conditions with monthly limit enforcement
+# Multiple users attempting to redeem when limit is near maximum
+# Should handle concurrent requests correctly
+# Monthly limit enforcement should be atomic
 ```
 
 ---
 
 ## Performance Testing
 
-### API Load Testing
+### Enhanced API Load Testing ⭐ UPDATED
 
-#### Using Artillery
+#### Using Artillery with Subscription Endpoints
 ```yaml
-# artillery-config.yml
+# enhanced_artillery_config.yml
 config:
   target: 'http://localhost:8000'
   phases:
     - duration: 60
       arrivalRate: 10
 scenarios:
-  - name: "API Load Test"
+  - name: "Enhanced API Load Test"
     requests:
       - get:
           url: "/health"
@@ -517,133 +490,302 @@ scenarios:
           json:
             email: "test@example.com"
             password: "password123"
+      - get:
+          url: "/api/redemptions/monthly-stats"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - get:
+          url: "/api/users/subscription"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - post:
+          url: "/api/redemptions/generate-qr"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            redemptionType: "subscription"
 ```
 
 ```bash
-# Run load test
+# Run enhanced load test
 npm install -g artillery
-artillery run artillery-config.yml
+artillery run enhanced_artillery_config.yml
 ```
 
-#### Using curl (Simple)
+#### Subscription System Load Testing
 ```bash
-# Concurrent requests test
+# Test monthly limit calculations under load
 for i in {1..100}; do
-  curl -s http://localhost:8000/api/coffee-shops > /dev/null &
+  curl -s http://localhost:8000/api/redemptions/monthly-stats \
+    -H "Authorization: Bearer $USER_TOKEN" > /dev/null &
 done
 wait
 
-echo "100 concurrent requests completed"
+# Test QR generation with monthly limit checking
+for i in {1..50}; do
+  curl -s -X POST http://localhost:8000/api/redemptions/generate-qr \
+    -H "Authorization: Bearer $USER_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"redemptionType": "subscription"}' > /dev/null &
+done
+wait
+
+echo "Load tests completed - check server performance"
 ```
 
-### Mobile App Performance
+### Enhanced Mobile App Performance ⭐ UPDATED
 
-#### Flutter Performance Testing
+#### Flutter Performance Testing with Environment
 ```dart
 // test/performance_test.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocha_point/config/app_config.dart';
 
 void main() {
-  testWidgets('Stats card loads within 3 seconds', (WidgetTester tester) async {
+  testWidgets('Enhanced stats card loads within environment-specific timeout', (WidgetTester tester) async {
     final stopwatch = Stopwatch()..start();
 
     await tester.pumpWidget(MaterialApp(home: CoffeeStatsCard()));
     await tester.pumpAndSettle();
 
     stopwatch.stop();
-    expect(stopwatch.elapsedMilliseconds, lessThan(3000));
+    
+    // Different expectations based on environment
+    if (AppConfig.isDevelopment) {
+      expect(stopwatch.elapsedMilliseconds, lessThan(5000)); // More lenient in dev
+    } else {
+      expect(stopwatch.elapsedMilliseconds, lessThan(3000)); // Stricter in prod
+    }
+  });
+
+  testWidgets('Environment configuration loads instantly', (WidgetTester tester) async {
+    final stopwatch = Stopwatch()..start();
+    
+    // Test AppConfig initialization
+    final apiUrl = AppConfig.apiBaseUrl;
+    final isLoggingEnabled = AppConfig.enableLogging;
+    
+    stopwatch.stop();
+    
+    expect(stopwatch.elapsedMilliseconds, lessThan(10)); // Should be instant
+    expect(apiUrl, isNotEmpty);
+    expect(isLoggingEnabled, isA<bool>());
   });
 }
 ```
 
-### Database Performance Testing
+#### Environment-Specific Performance Benchmarks
+```bash
+# Development environment - more lenient
+flutter run --dart-define=ENVIRONMENT=development --profile
+# Expected: Slower startup, more logging, debug features
 
-#### Query Performance
+# Production environment - optimized  
+flutter run --dart-define=ENVIRONMENT=production --profile
+# Expected: Faster startup, minimal logging, optimized performance
+```
+
+### Enhanced Database Performance Testing ⭐ UPDATED
+
+#### Subscription System Query Performance
 ```sql
--- Test monthly stats query performance
+-- Test enhanced monthly stats query performance
 EXPLAIN ANALYZE
 SELECT 
-  COUNT(*) as total,
+  COUNT(*) as total_redemptions,
   COUNT(*) FILTER (WHERE redemption_type = 'subscription') as subscription_count,
   COUNT(*) FILTER (WHERE redemption_type = 'joker') as joker_count
 FROM redemptions 
 WHERE user_id = 1 
   AND timestamp >= date_trunc('month', CURRENT_DATE)
   AND timestamp < date_trunc('month', CURRENT_DATE) + interval '1 month';
+
+-- Test subscription plan query performance  
+EXPLAIN ANALYZE
+SELECT sp.*, us.status 
+FROM subscription_plans sp
+JOIN user_subscriptions us ON sp.id = us.plan_id
+WHERE us.user_id = 1 AND us.status = 'active';
+
+-- Test monthly limit calculation performance
+EXPLAIN ANALYZE
+SELECT 
+  sp.monthly_coffee_limit,
+  COALESCE(COUNT(r.id) FILTER (WHERE r.redemption_type = 'subscription'), 0) as used_this_month,
+  sp.monthly_coffee_limit - COALESCE(COUNT(r.id) FILTER (WHERE r.redemption_type = 'subscription'), 0) as remaining
+FROM user_subscriptions us
+JOIN subscription_plans sp ON us.plan_id = sp.id  
+LEFT JOIN redemptions r ON r.user_id = us.user_id 
+  AND r.timestamp >= date_trunc('month', CURRENT_DATE)
+  AND r.timestamp < date_trunc('month', CURRENT_DATE) + interval '1 month'
+WHERE us.user_id = 1 AND us.status = 'active'
+GROUP BY sp.monthly_coffee_limit;
 ```
 
 ---
 
 ## Security Testing
 
-### Authentication Security
+### Enhanced Authentication Security ⭐ UPDATED
 
-#### JWT Token Testing
+#### JWT Token Testing with 30-day Expiry
 ```bash
-# Test token expiration
-# 1. Get valid token
-# 2. Wait for expiration
-# 3. Verify API rejects expired token
+# Test enhanced token lifecycle
+# 1. Generate 30-day token
+TOKEN_RESPONSE=$(curl -s -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "password"}')
 
-# Test token manipulation
-# 1. Modify token payload
-# 2. Verify API rejects modified token
+TOKEN=$(echo $TOKEN_RESPONSE | jq -r '.token')
 
-# Test role elevation
-# 1. User token trying admin endpoints
-# 2. Verify proper 403 responses
+# 2. Decode and verify 30-day expiry
+# Visit https://jwt.io and paste token
+# Verify 'exp' claim shows 30 days from now (current_time + 2592000 seconds)
+
+# 3. Test token validation over time
+# Day 1: Should work
+curl -X GET http://localhost:8000/api/users/profile \
+  -H "Authorization: Bearer $TOKEN"
+
+# Day 29: Should still work  
+# Day 31: Should return TOKEN_EXPIRED with errorCode
+
+# 4. Test session expiry detection
+curl -X GET http://localhost:8000/api/users/profile \
+  -H "Authorization: Bearer expired-token-here"
+
+# Expected response:
+# {
+#   "success": false,
+#   "error": "Token has expired", 
+#   "errorCode": "TOKEN_EXPIRED"
+# }
 ```
 
-#### OAuth Security Testing
+#### Enhanced OAuth Security Testing
 ```bash
-# Test Google OAuth flow
-# 1. Valid Google token → should succeed
-# 2. Invalid Google token → should fail
-# 3. Expired Google token → should fail
-
-# Test replay attacks
-# 1. Reuse QR code → should fail second time
-# 2. Reuse authentication tokens → should work until expiry
-```
-
-### Input Validation Testing
-
-#### SQL Injection Testing
-```bash
-# Test malicious input
-curl -X POST http://localhost:8000/api/auth/login \
+# Test Google OAuth with enhanced session management
+curl -X POST http://localhost:8000/api/auth/google \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "admin@test.com; DROP TABLE users; --",
-    "password": "password"
+    "googleId": "test-google-id",
+    "email": "test@gmail.com",
+    "accessToken": "valid-google-token"
   }'
+
+# Should return 30-day JWT token
+# Test Apple Sign-In with enhanced session
+curl -X POST http://localhost:8000/api/auth/apple \
+  -H "Content-Type: application/json" \
+  -d '{
+    "appleId": "test-apple-id", 
+    "email": "test@privaterelay.appleid.com",
+    "identityToken": "valid-apple-token"
+  }'
+
+# Should return 30-day JWT token
+```
+
+#### Enhanced QR Security Testing
+```bash
+# Test QR code security with monthly limits
+# 1. Generate QR with monthly limit checking
+QR_RESPONSE=$(curl -s -X POST http://localhost:8000/api/redemptions/generate-qr \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"redemptionType": "subscription"}')
+
+QR_TOKEN=$(echo $QR_RESPONSE | jq -r '.qrToken')
+
+# 2. Test replay attack prevention
+# Try to use same QR token twice
+curl -X POST http://localhost:8000/api/redemptions/validate-and-redeem \
+  -H "Authorization: Bearer $SHOP_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"qrToken": "'$QR_TOKEN'"}'
+
+# First use: Should succeed
+# Second use: Should fail with "QR code already used"
+
+# 3. Test QR expiry (daily)
+# Generate QR today, try to use tomorrow
+# Should fail with "Invalid or expired QR code"
+
+# 4. Test monthly limit security
+# User with 25/25 monthly redemptions tries to generate QR
+# Should fail with "Monthly subscription limit reached"
+```
+
+### Enhanced Input Validation Testing ⭐ UPDATED
+
+#### SQL Injection Testing with Subscription System
+```bash
+# Test subscription plan queries for SQL injection
+curl -X GET http://localhost:8000/api/users/subscription \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Malicious-Input: '; DROP TABLE subscription_plans; --"
+
+# Should not affect database
+
+# Test monthly stats with malicious input
+curl -X GET "http://localhost:8000/api/redemptions/monthly-stats?month='; DROP TABLE redemptions; --" \
+  -H "Authorization: Bearer $TOKEN"
 
 # Should return validation error, not SQL error
 ```
 
-#### XSS Testing
+#### Enhanced XSS Testing
 ```bash
-# Test script injection
+# Test coffee shop creation with script injection
 curl -X POST http://localhost:8000/api/coffee-shops \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "<script>alert('xss')</script>",
+    "name": "<script>alert(\"xss\")</script>Coffee Shop",
+    "description": "<img src=x onerror=alert(\"xss\")>",
     "address": "Test Address"
   }'
 
-# Should sanitize input
+# Should sanitize input and not execute scripts
+```
+
+#### Session Management Security ⭐ NEW
+```bash
+# Test session fixation prevention
+# 1. Get initial token
+TOKEN1=$(curl -s -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "password"}' | jq -r '.token')
+
+# 2. Login again  
+TOKEN2=$(curl -s -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "password"}' | jq -r '.token')
+
+# Tokens should be different (new session each login)
+echo "Token 1: ${TOKEN1:0:20}..."
+echo "Token 2: ${TOKEN2:0:20}..."
+
+# Test concurrent session handling
+# Both tokens should work simultaneously (stateless JWT)
+curl -X GET http://localhost:8000/api/users/profile \
+  -H "Authorization: Bearer $TOKEN1" &
+
+curl -X GET http://localhost:8000/api/users/profile \
+  -H "Authorization: Bearer $TOKEN2" &
+
+wait
 ```
 
 ---
 
 ## Automated Testing
 
-### GitHub Actions Workflow
+### Enhanced GitHub Actions Workflow ⭐ UPDATED
 ```yaml
-# .github/workflows/test.yml
-name: Test Suite
+# .github/workflows/enhanced_test.yml
+name: Enhanced Test Suite
 
 on: [push, pull_request]
 
@@ -673,7 +815,7 @@ jobs:
           cd backend
           npm ci
 
-      - name: Run tests
+      - name: Run enhanced tests
         run: |
           cd backend
           npm test
@@ -683,10 +825,25 @@ jobs:
           DB_NAME: mocha_point_test
           DB_USER: postgres
           DB_PASSWORD: postgres
-          JWT_SECRET: test-secret
+          JWT_SECRET: test-secret-256-chars-long
+          JWT_EXPIRY: 30d
+
+      - name: Test subscription system
+        run: |
+          cd backend
+          npm run test:subscription
+
+      - name: Test session management
+        run: |
+          cd backend
+          npm run test:session
 
   frontend-tests:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [development, production]
+    
     steps:
       - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
@@ -698,97 +855,457 @@ jobs:
           cd frontend
           flutter pub get
 
-      - name: Run tests
+      - name: Run environment-specific tests
         run: |
           cd frontend
-          flutter test
-```
+          flutter test --dart-define=ENVIRONMENT=${{ matrix.environment }}
 
-### Test Data Management
+      - name: Test environment configuration
+        run: |
+          cd frontend
+          flutter test test/environment_config_test.dart \
+            --dart-define=ENVIRONMENT=${{ matrix.environment }}
 
-#### Test Database Setup
-```sql
--- test_data.sql
-INSERT INTO users (email, password, role, joker_count) VALUES
-('testuser@example.com', '$2b$12$hashed_password', 'user', 5),
-('testshop@example.com', '$2b$12$hashed_password', 'coffee_shop', 0);
+      - name: Run enhanced widget tests
+        run: |
+          cd frontend
+          flutter test test/enhanced_stats_card_test.dart \
+            --dart-define=ENVIRONMENT=${{ matrix.environment }}
 
-INSERT INTO coffee_shops (name, address, latitude, longitude) VALUES
-('Test Coffee Shop', 'Test Address', 47.0707, 15.4395);
-```
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: [backen# Testing Guide
 
-#### Cleanup Script
+> Comprehensive testing procedures and validation for MochaPoint platform
+
+## 📋 Table of Contents
+- [Testing Overview](#testing-overview)
+- [Backend API Testing](#backend-api-testing)
+- [Frontend Testing](#frontend-testing)
+- [Environment Testing](#environment-testing)
+- [Integration Testing](#integration-testing)
+- [End-to-End Testing](#end-to-end-testing)
+- [Performance Testing](#performance-testing)
+- [Security Testing](#security-testing)
+- [Automated Testing](#automated-testing)
+
+---
+
+## Testing Overview
+
+### Enhanced Testing Strategy ⭐ UPDATED
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: API endpoint testing with subscription system
+- **E2E Tests**: Complete user workflow testing including session management
+- **Manual Tests**: User experience validation across environments
+- **Performance Tests**: Load and stress testing with subscription features
+- **Security Tests**: Authentication and authorization validation (30-day JWT)
+- **Environment Tests**: Development/production configuration validation
+
+### Enhanced Test Environment Setup ⭐ UPDATED
 ```bash
-#!/bin/bash
-# cleanup_test_data.sh
+# Backend test server
+cd backend
+npm run dev
 
-echo "Cleaning up test data..."
+# Frontend test app (development environment)
+cd frontend
+flutter run --dart-define=ENVIRONMENT=development
 
-# Remove test users
-psql -d mocha_point_test -c "DELETE FROM users WHERE email LIKE '%test%';"
+# Frontend test app (production environment) 
+flutter run --dart-define=ENVIRONMENT=production
 
-# Remove test coffee shops
-psql -d mocha_point_test -c "DELETE FROM coffee_shops WHERE name LIKE 'Test%';"
-
-# Remove test redemptions
-psql -d mocha_point_test -c "DELETE FROM redemptions WHERE id > 1000;"
-
-echo "Test data cleanup complete"
+# Test database (optional)
+createdb mocha_point_test
 ```
 
 ---
 
-## Test Results Documentation
+## Backend API Testing
 
-### Test Report Template
-
-#### Daily Test Results
-```markdown
-# Test Report - January 15, 2025
-
-## Summary
-- **Total Tests**: 127
-- **Passed**: 124
-- **Failed**: 3
-- **Success Rate**: 97.6%
-
-## Failed Tests
-1. **QR Expiration Test**: Intermittent failure on slow networks
-2. **Load Test**: 5% failure rate under 100 concurrent users
-3. **iOS Integration**: Camera permission issue
-
-## Performance Metrics
-- **Average API Response**: 145ms
-- **App Startup Time**: 2.3s
-- **QR Generation**: 180ms
-
-## Action Items
-- [ ] Fix QR expiration timing issue
-- [ ] Optimize database queries for load testing
-- [ ] Update iOS camera permission handling
+### Prerequisites
+```bash
+# Install testing tools
+npm install -g newman  # Postman CLI
+# OR use curl for manual testing
 ```
 
-### Continuous Monitoring
+### Enhanced Authentication Flow Testing ⭐ UPDATED
 
-#### Health Check Monitoring
+#### 1. User Registration with Extended JWT
 ```bash
-#!/bin/bash
-# health_monitor.sh
+curl -X POST http://localhost:8000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "testuser@example.com",
+    "password": "testpassword123"
+  }'
+```
 
-while true; do
-  RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/health)
-  
-  if [ $RESPONSE != "200" ]; then
-    echo "$(date): Health check failed - HTTP $RESPONSE"
-    # Send alert notification
-  else
-    echo "$(date): Health check passed"
-  fi
-  
-  sleep 60
-done
+**Expected Response (201):**
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", // 30-day expiry
+  "user": {
+    "id": 1,
+    "email": "testuser@example.com",
+    "role": "user",
+    "jokerCount": 3
+  }
+}
+```
+
+**Test JWT Expiry:**
+```bash
+# Decode token at https://jwt.io
+# Verify exp claim shows 30 days from now (2592000 seconds)
+```
+
+#### 2. Enhanced User Login Testing
+```bash
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "testuser@example.com",
+    "password": "testpassword123"
+  }'
+```
+
+#### 3. Session Expiry Testing ⭐ NEW
+```bash
+# Test with expired token
+curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer expired-token-here"
+
+# Expected Response (401):
+# {
+#   "success": false,
+#   "error": "Token has expired",
+#   "errorCode": "TOKEN_EXPIRED"
+# }
+```
+
+#### 4. Coffee Shop Registration
+```bash
+curl -X POST http://localhost:8000/api/auth/register-coffee-shop \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "shop@example.com",
+    "password": "shoppassword123",
+    "shopName": "Test Coffee Shop",
+    "address": "Test Street 123, 8010 Graz"
+  }'
+```
+
+#### 5. Admin Creation
+```bash
+curl -X POST http://localhost:8000/api/auth/create-admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@mochapoint.com",
+    "password": "adminpassword123",
+    "adminSecret": "your-admin-secret"
+  }'
+```
+
+### Enhanced QR Redemption System Testing ⭐ UPDATED
+
+#### 1. Test Redemption Status ⭐ NEW
+```bash
+# Save user token from login
+export USER_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+# Check redemption status before QR generation
+curl -X GET http://localhost:8000/api/redemptions/status \
+  -H "Authorization: Bearer $USER_TOKEN"
+```
+
+**Expected Response (200):**
+```json
+{
+  "success": true,
+  "status": {
+    "jokerCount": 3,
+    "subscriptionInfo": {
+      "hasSubscription": true,
+      "bundleName": "Premium Monthly",
+      "monthlyLimit": 25,
+      "remainingMonthly": 17,
+      "canRedeemSubscription": true
+    },
+    "canRedeemJoker": true
+  }
+}
+```
+
+#### 2. Generate QR Token with Monthly Limit Enforcement
+```bash
+# Generate subscription QR
+curl -X POST http://localhost:8000/api/redemptions/generate-qr \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"redemptionType": "subscription"}'
+```
+
+**Expected Response (200) - With Remaining Credits:**
+```json
+{
+  "success": true,
+  "qrToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresAt": "2025-01-15T23:59:59.999Z",
+  "userInfo": {
+    "name": "Test User",
+    "email": "testuser@example.com",
+    "subscriptionInfo": {
+      "remainingMonthly": 16
+    }
+  }
+}
+```
+
+**Expected Response (400) - Monthly Limit Reached:**
+```json
+{
+  "success": false,
+  "error": "Monthly subscription limit reached",
+  "errorCode": "MONTHLY_LIMIT_REACHED",
+  "nextAvailableAt": "2025-02-01T00:00:00.000Z"
+}
+```
+
+#### 3. Validate QR Token (Coffee Shop)
+```bash
+# Save coffee shop token
+export SHOP_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+export QR_TOKEN="qr-token-from-previous-step"
+
+curl -X POST http://localhost:8000/api/redemptions/validate-and-redeem \
+  -H "Authorization: Bearer $SHOP_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "qrToken": "'$QR_TOKEN'",
+    "coffeeType": "Cappuccino"
+  }'
+```
+
+**Expected Response - Enhanced with Remaining Count:**
+```json
+{
+  "success": true,
+  "customer": {
+    "subscriptionInfo": {
+      "remainingMonthly": 15
+    }
+  },
+  "redemption": {
+    "coffeeType": "Cappuccino"
+  }
+}
+```
+
+### Enhanced Monthly Statistics Testing ⭐ UPDATED
+
+#### 1. Get Enhanced Monthly Stats
+```bash
+curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer $USER_TOKEN"
+```
+
+**Expected Response Structure:**
+```json
+{
+  "success": true,
+  "data": {
+    "month": "January 2025",
+    "subscription": {
+      "hasActiveSubscription": true,
+      "planName": "Premium Monthly Plan",
+      "monthlyLimit": 25,
+      "usedThisMonth": 8,
+      "remainingMonthly": 17,
+      "canRedeemSubscription": true
+    },
+    "redeemed": {
+      "total": 10,
+      "subscription": 8,
+      "joker": 2
+    },
+    "available": {
+      "jokers": 3
+    }
+  }
+}
+```
+
+**Key Testing Points:**
+- ✅ `remainingMonthly` = `monthlyLimit` - `subscription redemptions only`
+- ✅ Joker redemptions don't count against subscription limit
+- ✅ `total` = `subscription` + `joker` redemptions
+
+#### 2. Test Subscription vs Joker Separation
+```bash
+# Redeem with joker
+curl -X POST http://localhost:8000/api/redemptions/generate-qr \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"redemptionType": "joker"}'
+
+# Check stats - remainingMonthly should stay same
+curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer $USER_TOKEN"
+
+# Redeem with subscription  
+curl -X POST http://localhost:8000/api/redemptions/generate-qr \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"redemptionType": "subscription"}'
+
+# Check stats - remainingMonthly should decrease by 1
+curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer $USER_TOKEN"
+```
+
+### Enhanced Subscription System Testing ⭐ NEW
+
+#### 1. Test User Subscription Endpoint
+```bash
+curl -X GET http://localhost:8000/api/users/subscription \
+  -H "Authorization: Bearer $USER_TOKEN"
+```
+
+**Expected Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "hasActiveSubscription": true,
+    "subscription": {
+      "planName": "Premium Monthly Plan",
+      "monthlyLimit": 25,
+      "usedThisMonth": 8,
+      "status": "active"
+    },
+    "accessibleShops": [
+      {
+        "id": 1,
+        "name": "Central Coffee Graz",
+        "isSubscriptionAccessible": true
+      }
+    ]
+  }
+}
+```
+
+### Error Testing ⭐ UPDATED
+
+#### 1. Enhanced Authentication Errors
+```bash
+# No token
+curl -X GET http://localhost:8000/api/redemptions/monthly-stats
+
+# Expected: 401 with errorCode: "TOKEN_MISSING"
+
+# Invalid token  
+curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer invalid-token"
+
+# Expected: 403 with errorCode: "TOKEN_INVALID"
+
+# Expired token (simulate)
+curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer expired-token"
+
+# Expected: 401 with errorCode: "TOKEN_EXPIRED"
+```
+
+#### 2. Enhanced QR Generation Errors
+```bash
+# Invalid redemption type
+curl -X POST http://localhost:8000/api/redemptions/generate-qr \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"redemptionType": "invalid"}'
+
+# Expected: 400 with errorCode: "VALIDATION_FAILED"
+
+# Test monthly limit enforcement
+# (After user reaches monthly limit)
+curl -X POST http://localhost:8000/api/redemptions/generate-qr \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"redemptionType": "subscription"}'
+
+# Expected: 400 with errorCode: "MONTHLY_LIMIT_REACHED"
+```
+
+#### 3. Insufficient Permissions
+```bash
+# User trying to create coffee shop
+curl -X POST http://localhost:8000/api/coffee-shops \
+  -H "Authorization: Bearer $USER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Test Shop"}'
+
+# Expected: 403 with errorCode: "INSUFFICIENT_PERMISSIONS"
 ```
 
 ---
 
-This comprehensive testing guide ensures MochaPoint maintains high quality and reliability across all features and platforms. Regular execution of these tests helps catch issues early and maintains user confidence in the platform.
+## Frontend Testing
+
+### Enhanced Manual Testing Checklist ⭐ UPDATED
+
+#### Environment Configuration Testing ⭐ NEW
+- [ ] **Development Environment**: App shows correct dev API URL in console
+- [ ] **Production Environment**: App shows correct prod API URL in console
+- [ ] **Environment Switching**: Can switch between dev/prod with dart-define
+- [ ] **Debug Logging**: Only shows in development environment
+- [ ] **API Timeouts**: Longer timeouts in development vs production
+
+#### Authentication Flow
+- [ ] **Splash Screen**: Shows for 3 seconds, then navigates
+- [ ] **Registration**: Email validation, password requirements
+- [ ] **Login**: Successful authentication, 30-day token storage
+- [ ] **Google Sign-In**: OAuth flow works correctly
+- [ ] **Auto-Login**: Remembers user between app restarts (30-day token)
+- [ ] **Session Expiry**: Shows session expired dialog on token expiry
+- [ ] **Auto-Logout**: Automatically logs out on session expiry
+
+#### Home Screen (User) ⭐ UPDATED
+- [ ] **Statistics Card**: Loads monthly stats showing "Remaining" count
+- [ ] **Remaining Count**: Shows subscription redemptions left (not total available)
+- [ ] **Loading State**: Shows progress indicators
+- [ ] **Error Handling**: Retry button appears on network errors
+- [ ] **Session Expiry**: Shows session expired dialog instead of generic error
+- [ ] **QR Generation**: Modal opens when tapping center button
+- [ ] **Coffee Shops List**: Shows nearby shops with subscription highlighting
+
+#### Enhanced QR System ⭐ UPDATED
+- [ ] **QR Generation**: Creates valid QR codes with monthly limit checking
+- [ ] **Monthly Limit**: Prevents QR generation when monthly limit reached
+- [ ] **QR Display**: Shows user info, remaining count, and expiration
+- [ ] **QR Scanner**: Scans and validates codes successfully
+- [ ] **Redemption Flow**: Complete user-to-shop workflow
+- [ ] **Error Messages**: Clear feedback for invalid/expired codes
+- [ ] **Session Handling**: Proper session expired messages in QR modal
+
+#### Coffee Shop Dashboard ⭐ UPDATED
+- [ ] **Analytics Display**: Shows real-time statistics
+- [ ] **Scanner Interface**: Camera opens and scans QR codes
+- [ ] **Customer Info**: Displays customer details with remaining count
+- [ ] **Statistics Updates**: Live updates after redemptions
+- [ ] **Session Management**: Handles session expiry gracefully
+
+#### Navigation & UI
+- [ ] **Role-based Navigation**: Different UI for users vs shop owners
+- [ ] **Environment Indicators**: Can identify current environment (dev/prod)
+- [ ] **Smooth Transitions**: No lag between screens
+- [ ] **Responsive Design**: Works on different screen sizes
+- [ ] **Session Expiry Dialog**: Orange styling, clear messaging, navigation to login
+
+### Enhanced Flutter Widget Testing ⭐ UPDATED
+
+#### Test Enhanced Stats Card Widget
+```dart
+// test/enhanced_stats_card_test

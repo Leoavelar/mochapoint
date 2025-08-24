@@ -8,6 +8,7 @@
 - [Database Schema](#database-schema)
 - [Backend Architecture](#backend-architecture)
 - [Frontend Architecture](#frontend-architecture)
+- [Environment Configuration](#environment-configuration)
 - [Security Architecture](#security-architecture)
 - [Performance Considerations](#performance-considerations)
 
@@ -19,20 +20,23 @@
 - **Runtime**: Node.js 18+
 - **Framework**: Express.js + TypeScript
 - **Database**: PostgreSQL 17+ with Sequelize ORM
-- **Authentication**: JWT + OAuth (Google/Apple)
+- **Authentication**: JWT (30-day expiry) + OAuth (Google/Apple)
 - **Security**: bcrypt password hashing
+- **Session Management**: Enhanced token validation with expiry detection
 
 ### Frontend
 - **Framework**: Flutter (Cross-platform iOS/Android)
 - **UI**: Material Design with custom components
 - **State Management**: StatefulWidget + Provider pattern
-- **HTTP Client**: dart:http with custom services
+- **HTTP Client**: Custom ApiService with environment configuration
+- **Configuration**: Environment-aware settings (dev/prod)
 
 ### Infrastructure
 - **API Architecture**: RESTful with JWT authentication
 - **QR System**: JWT-signed tokens with time validation
 - **Database**: ACID-compliant with proper indexing
 - **Security**: Role-based access control (RBAC)
+- **Environment Management**: Development/production configuration system
 
 ---
 
@@ -50,7 +54,8 @@
 │  │ • QR Generation │    │ • Authentication│    │ • Relationships │
 │  │ • Camera Scanner│    │ • Authorization │    │ • Constraints   │
 │  │ • Map Discovery │    │ • Validation    │    │ • Triggers      │
-│  │ • State Mgmt    │    │ • Rate Limiting │    │ • Indexing      │
+│  │ • Environment   │    │ • Session Mgmt  │    │ • Indexing      │
+│  │   Configuration │    │ • 30-day Tokens │    │ • Subscriptions │
 │  └─────────────────┘    └─────────────────┘    └─────────────────┘
 │           │                       │                       │        │
 │           │                       │                       │        │
@@ -61,6 +66,7 @@
 │  │ • Real-time UI  │    │ • Role Checking │    │ • Foreign Keys  │
 │  │ • Offline Cache │    │ • Input Valid.  │    │ • Auto Updates  │
 │  │ • Error Handling│    │ • CORS Config   │    │ • Backups       │
+│  │ • Config Mgmt   │    │ • Session Expiry│    │ • Performance   │
 │  └─────────────────┘    └─────────────────┘    └─────────────────┘
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -69,12 +75,15 @@
 ### Data Flow
 
 1. **User Action** → Flutter UI captures user interaction
-2. **Service Call** → Flutter service makes authenticated HTTP request
-3. **API Gateway** → Express middleware validates JWT and permissions
-4. **Business Logic** → Controller processes request and applies rules
-5. **Database Operation** → Sequelize ORM executes optimized queries
-6. **Response** → Structured JSON response with proper error handling
-7. **UI Update** → Flutter updates interface with new data
+2. **Environment Check** → AppConfig determines API endpoint and settings
+3. **Service Call** → Flutter service makes authenticated HTTP request
+4. **API Gateway** → Express middleware validates JWT and permissions
+5. **Session Validation** → Enhanced token validation with expiry detection
+6. **Business Logic** → Controller processes request and applies rules
+7. **Database Operation** → Sequelize ORM executes optimized queries
+8. **Response** → Structured JSON response with proper error handling
+9. **UI Update** → Flutter updates interface with new data
+10. **Error Handling** → Session expiry triggers automatic logout and re-authentication
 
 ---
 
@@ -185,7 +194,7 @@ CREATE TRIGGER trigger_update_rating
     FOR EACH ROW EXECUTE FUNCTION update_coffee_shop_rating();
 ```
 
-### Future Tables (Database Ready)
+### Subscription Tables (Production Ready)
 
 #### subscription_plans - Subscription plan definitions ✅ **IMPLEMENTED**
 ```sql
@@ -199,6 +208,7 @@ CREATE TABLE subscription_plans (
     price_cents INTEGER NOT NULL,
     currency VARCHAR(3) DEFAULT 'EUR',
     weekly_coffee_limit INTEGER NOT NULL,
+    monthly_coffee_limit INTEGER NOT NULL, -- ✅ ACTIVE: Used for remaining calculation
     description TEXT,
     features JSONB,
     is_active BOOLEAN DEFAULT true,
@@ -240,6 +250,9 @@ CREATE INDEX idx_redemptions_user_timestamp ON redemptions(user_id, timestamp);
 CREATE INDEX idx_redemptions_shop_timestamp ON redemptions(shop_id, timestamp);
 CREATE INDEX idx_coffee_shops_location ON coffee_shops(latitude, longitude);
 CREATE INDEX idx_ratings_shop_id ON ratings(shop_id);
+-- NEW: Subscription system indexes
+CREATE INDEX idx_user_subscriptions_active ON user_subscriptions(user_id, status) WHERE status = 'active';
+CREATE INDEX idx_subscription_plans_active ON subscription_plans(is_active) WHERE is_active = true;
 ```
 
 #### Foreign Key Constraints
@@ -251,6 +264,11 @@ ALTER TABLE redemptions ADD CONSTRAINT fk_redemptions_user
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 ALTER TABLE redemptions ADD CONSTRAINT fk_redemptions_shop 
     FOREIGN KEY (shop_id) REFERENCES coffee_shops(id) ON DELETE CASCADE;
+-- NEW: Subscription constraints
+ALTER TABLE user_subscriptions ADD CONSTRAINT fk_user_subscriptions_user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
+ALTER TABLE user_subscriptions ADD CONSTRAINT fk_user_subscriptions_plan
+    FOREIGN KEY (plan_id) REFERENCES subscription_plans(id);
 ```
 
 ---
@@ -265,27 +283,29 @@ backend/
 │   │   └── database.ts          # Database connection & config
 │   ├── controllers/             # Business logic
 │   │   ├── authController.ts    # Authentication endpoints
-│   │   ├── userController.ts    # User management
+│   │   ├── userController.ts    # User management + subscription API
 │   │   ├── coffeeShopController.ts # Shop operations
-│   │   ├── redemptionController.ts # QR system & stats
+│   │   ├── redemptionController.ts # QR system & enhanced stats
 │   │   └── ratingController.ts  # Rating system
 │   ├── middleware/              # Request processing
-│   │   ├── auth.ts             # JWT authentication
+│   │   ├── auth.ts             # Enhanced JWT authentication (30-day)
 │   │   ├── roleAuth.ts         # Role-based access control
 │   │   └── validation.ts       # Input validation (Joi)
 │   ├── models/                 # Sequelize models
 │   │   ├── User.ts
 │   │   ├── CoffeeShop.ts
 │   │   ├── Redemption.ts
-│   │   └── Rating.ts
+│   │   ├── Rating.ts
+│   │   ├── SubscriptionPlan.ts # ✅ ACTIVE
+│   │   └── UserSubscription.ts # ✅ ACTIVE
 │   ├── routes/                 # API endpoints
 │   │   ├── auth.ts             # Authentication routes
-│   │   ├── users.ts            # User management routes
+│   │   ├── users.ts            # User management + subscription routes
 │   │   ├── coffeeShops.ts      # Shop management routes
-│   │   ├── redemptions.ts      # QR & statistics routes
+│   │   ├── redemptions.ts      # QR & enhanced statistics routes
 │   │   └── ratings.ts          # Rating system routes
 │   └── utils/
-│       ├── jwt.ts              # JWT token operations
+│       ├── jwt.ts              # JWT token operations (30-day expiry)
 │       ├── validation.ts       # Joi validation schemas
 │       └── coffeeShopHelpers.ts # Time validation helpers
 ├── package.json
@@ -295,83 +315,96 @@ backend/
 
 ### Key Architectural Patterns
 
-#### Controller Pattern
+#### Enhanced JWT Management
 ```typescript
-// Business logic separated from routing
+// NEW: Extended JWT expiry and enhanced validation
+export const generateToken = (payload: any): string => {
+    return jwt.sign(payload, process.env.JWT_SECRET!, {
+        expiresIn: '30d', // UPDATED: Extended from default to 30 days
+        algorithm: 'HS256'
+    });
+};
+
+// Enhanced middleware with session expiry detection
+export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const token = authHeader && authHeader.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ 
+                error: 'Access token required',
+                errorCode: 'TOKEN_MISSING' 
+            });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+        
+        // Enhanced user validation
+        const user = await User.findByPk(decoded.userId);
+        if (!user || !user.isActive) {
+            return res.status(401).json({ 
+                error: 'Invalid token or user not found',
+                errorCode: 'TOKEN_INVALID'
+            });
+        }
+
+        req.user = { userId: user.id, email: user.email, role: user.role };
+        next();
+    } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ 
+                error: 'Token has expired',
+                errorCode: 'TOKEN_EXPIRED' 
+            });
+        }
+        return res.status(403).json({ 
+            error: 'Invalid or expired token',
+            errorCode: 'TOKEN_INVALID' 
+        });
+    }
+};
+```
+
+#### Enhanced Monthly Statistics Controller
+```typescript
+// UPDATED: Enhanced monthly stats with remaining redemptions
 export const getMonthlyRedemptionStats = async (req: Request, res: Response) => {
     try {
         const userId = req.user?.userId;
         
-        // Validation
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
+        // Get user's active subscription with plan details
+        const activeSubscription = await UserSubscription.findOne({
+            where: { user_id: userId, status: 'active' },
+            include: [{ 
+                model: SubscriptionPlan, 
+                as: 'subscriptionPlan' 
+            }]
+        });
 
-        // Business logic
-        const monthlyStats = await calculateMonthlyStats(userId);
+        const monthlyLimit = activeSubscription?.subscriptionPlan?.monthly_coffee_limit || 0;
         
-        // Response
+        // Count only subscription redemptions for monthly limit
+        const subscriptionRedeemed = redemptions.filter(r => r.redemption_type === 'subscription').length;
+        const remainingMonthly = Math.max(0, monthlyLimit - subscriptionRedeemed);
+
+        const monthlyStats = {
+            month: currentMonth,
+            subscription: {
+                hasActiveSubscription: !!activeSubscription,
+                planName: activeSubscription?.subscriptionPlan?.name,
+                monthlyLimit,
+                remainingMonthly, // NEW: Key metric for UI
+                canRedeemSubscription: remainingMonthly > 0
+            },
+            redeemed: { total: redemptions.length, subscription: subscriptionRedeemed, joker: jokerRedeemed },
+            available: { jokers: user.jokerCount }
+        };
+
         res.json({ success: true, data: monthlyStats });
     } catch (error) {
         console.error('Monthly stats error:', error);
         res.status(500).json({ error: 'Failed to get monthly statistics' });
     }
 };
-```
-
-#### Middleware Pattern
-```typescript
-// Composable request processing
-export const authenticateToken = async (req: Request, res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ error: 'Access token required' });
-    }
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-        req.user = decoded;
-        next();
-    } catch (error) {
-        return res.status(403).json({ error: 'Invalid token' });
-    }
-};
-
-// Role-based access control
-export const requireRole = (roles: string[]) => {
-    return (req: Request, res: Response, next: NextFunction) => {
-        if (!roles.includes(req.user?.role)) {
-            return res.status(403).json({ error: 'Insufficient permissions' });
-        }
-        next();
-    };
-};
-```
-
-#### Service Layer Pattern
-```typescript
-// Reusable business logic
-class RedemptionService {
-    static async generateQRToken(user: User, redemptionType: string): Promise<string> {
-        // Validation logic
-        const canRedeem = await this.checkUserCanRedeem(user, redemptionType);
-        if (!canRedeem.allowed) {
-            throw new Error(canRedeem.reason);
-        }
-
-        // Token generation
-        const qrPayload = {
-            userId: user.id,
-            redemptionType,
-            generatedAt: Date.now(),
-            nonce: crypto.randomBytes(16).toString('hex'),
-        };
-
-        return jwt.sign(qrPayload, process.env.JWT_SECRET!);
-    }
-}
 ```
 
 ---
@@ -381,25 +414,28 @@ class RedemptionService {
 ### Project Structure
 ```
 lib/
-├── main.dart                    # App entry point
+├── main.dart                    # App entry point + environment initialization
+├── config/                      # ✅ NEW: Environment configuration
+│   └── app_config.dart          # Centralized environment settings
+├── services/                    # API integration
+│   ├── api_service.dart         # ✅ NEW: Centralized HTTP service
+│   ├── auth_service.dart        # Enhanced authentication with session handling
+│   ├── redemption_service.dart  # Enhanced redemption + session detection
+│   ├── monthly_stats_service.dart # Environment-aware statistics
+│   └── subscription_service.dart # Subscription API integration
 ├── screens/                     # UI screens
 │   ├── home_screen.dart         # Customer dashboard
-│   ├── coffee_shop_home_screen.dart # Shop dashboard
+│   ├── coffee_shop_home_screen.dart # Enhanced shop dashboard
 │   ├── map_screen.dart          # Shop discovery
 │   ├── login_screen.dart        # Authentication
 │   ├── profile_screen.dart      # User profile
 │   └── coffee_shop_scanner_screen.dart # QR scanner
-├── services/                    # API integration
-│   ├── auth_service.dart        # Authentication API
-│   ├── monthly_stats_service.dart # Statistics API
-│   ├── redemption_service.dart  # Redemption API
-│   └── google_auth_webview.dart # OAuth integration
 ├── widgets/                     # Reusable components
 │   ├── app_header.dart          # Common header
 │   ├── coffee_bottom_nav.dart   # Role-aware navigation
-│   ├── coffee_stats_card.dart   # Statistics display
-│   ├── daily_coffee_card.dart   # Coffee availability
-│   ├── redemption_selection_modal.dart # QR generation
+│   ├── coffee_stats_card.dart   # Enhanced statistics display (remaining count)
+│   ├── daily_coffee_card.dart   # Coffee availability with subscription highlighting
+│   ├── redemption_selection_modal.dart # Enhanced QR generation with session handling
 │   └── overlapping_content_layout.dart # Layout component
 └── utils/                       # Helper functions
     └── admin_interface_helper.dart # Role detection
@@ -407,198 +443,321 @@ lib/
 
 ### Key Architectural Patterns
 
-#### Service Pattern
+#### Environment Configuration System ✅ **NEW**
 ```dart
-// API abstraction layer
-class MonthlyStatsService {
-  static const String baseUrl = 'http://192.168.1.109:8000/api';
+// lib/config/app_config.dart - Centralized configuration
+class AppConfig {
+  static const String _environment = String.fromEnvironment(
+    'ENVIRONMENT',
+    defaultValue: 'development',
+  );
 
-  static Future<MonthlyStatsData> getMonthlyStats() async {
+  // Environment detection
+  static bool get isDevelopment => _environment == 'development';
+  static bool get isProduction => _environment == 'production';
+
+  // API Configuration
+  static String get apiBaseUrl {
+    switch (_environment) {
+      case 'production':
+        return 'https://mochapoint.coffee/api';
+      case 'development':
+      default:
+        return 'http://192.168.1.109:8000/api'; // Local development
+    }
+  }
+
+  // Feature flags
+  static bool get enableLogging => isDevelopment;
+  static bool get enableDebugFeatures => isDevelopment;
+  static Duration get apiTimeout => isDevelopment 
+      ? const Duration(seconds: 30) 
+      : const Duration(seconds: 10);
+}
+```
+
+#### Enhanced API Service Pattern ✅ **NEW**
+```dart
+// lib/services/api_service.dart - Centralized HTTP handling
+class ApiService {
+  static Future<Map<String, dynamic>> get(String endpoint) async {
+    final url = '${AppConfig.apiBaseUrl}$endpoint';
     final headers = await AuthService.getAuthHeaders();
 
-    if (!headers.containsKey('Authorization')) {
-      throw Exception('No authentication token found');
+    if (AppConfig.enableLogging) {
+      print('🌐 ApiService GET: $url');
     }
 
-    final response = await http.get(
-      Uri.parse('$baseUrl/redemptions/monthly-stats'),
-      headers: headers,
-    );
-
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      return MonthlyStatsData.fromJson(jsonResponse);
-    } else {
-      throw Exception('Failed to load monthly stats');
-    }
-  }
-}
-```
-
-#### Widget State Management
-```dart
-// Stateful widgets with lifecycle management
-class CoffeeStatsCard extends StatefulWidget {
-  @override
-  State<CoffeeStatsCard> createState() => _CoffeeStatsCardState();
-}
-
-class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
-  MonthlyStatsData? _monthlyStats;
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMonthlyStats();
-  }
-
-  Future<void> _loadMonthlyStats() async {
     try {
-      if (!mounted) return; // Prevent memory leaks
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      ).timeout(AppConfig.apiTimeout);
 
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      final stats = await MonthlyStatsService.getMonthlyStats();
-
-      if (!mounted) return;
-
-      setState(() {
-        _monthlyStats = stats;
-        _isLoading = false;
-      });
+      return _handleResponse(response);
     } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
+      if (AppConfig.enableLogging) {
+        print('❌ ApiService Error: $e');
+      }
+      throw _handleError(e);
     }
+  }
+
+  // Enhanced error handling with session detection
+  static dynamic _handleError(dynamic error) {
+    if (error.toString().contains('TOKEN_EXPIRED')) {
+      return SessionExpiredException('Your session has expired. Please log in again.');
+    }
+    return NetworkException('Network error: $error');
   }
 }
 ```
 
-#### Role-based UI
+#### Enhanced Statistics Display ✅ **UPDATED**
 ```dart
-// Dynamic interface based on user role
-class CoffeeBottomNav extends StatefulWidget {
-  void _handleCenterButtonTap() {
-    final bool isCoffeeShopUser = _user?['role'] == 'coffee_shop';
+// lib/widgets/coffee_stats_card.dart - Shows remaining monthly redemptions
+class CoffeeStatsCard extends StatefulWidget {
+  final int? fallbackRemainingCount; // UPDATED: Was fallbackAvailableCount
+  final String? fallbackMonth;
+  final int? fallbackRedeemedCount;
+  final int? fallbackJokersCount;
 
-    if (isCoffeeShopUser) {
-      // Navigate to scanner screen
-      Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => CoffeeShopScannerScreen())
-      );
-    } else {
-      // Show QR generation modal
-      showModalBottomSheet(
-        context: context,
-        builder: (context) => RedemptionSelectionModal(),
-      );
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        children: [
+          // NEW: Shows subscription plan name if available
+          if (_monthlyStats?.subscriptionPlanName != null)
+            Text(_monthlyStats!.subscriptionPlanName!),
+          
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatItem(
+                'Remaining', // UPDATED: Was "Available" 
+                '${_monthlyStats?.remainingMonthly ?? fallbackRemainingCount ?? 0}',
+                Icons.coffee, // UPDATED: More specific icon
+                _monthlyStats?.remainingMonthly == 0 ? Colors.grey : null, // Visual feedback
+              ),
+              _buildStatItem('Redeemed', '${_monthlyStats?.totalRedeemed ?? 0}', Icons.check_circle),
+              _buildStatItem('Jokers', '${_monthlyStats?.jokersAvailable ?? 0}', Icons.stars),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+```
+
+#### Enhanced Session Management ✅ **NEW**
+```dart
+// lib/services/auth_service.dart - Session expiry handling
+class AuthService {
+  // Enhanced validation with detailed results
+  static Future<AuthValidationResult> isAuthenticatedDetailed() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        return AuthValidationResult(isValid: false, isExpired: false);
+      }
+
+      // Test token with API call
+      final response = await http.get(
+        Uri.parse('${AppConfig.apiBaseUrl}/users/profile'),
+        headers: await getAuthHeaders(),
+      ).timeout(AppConfig.apiTimeout);
+
+      if (response.statusCode == 401) {
+        final body = json.decode(response.body);
+        final isExpired = body['errorCode'] == 'TOKEN_EXPIRED';
+        
+        if (isExpired && AppConfig.enableLogging) {
+          print('🔒 AuthService: Token expired, clearing session');
+        }
+        
+        return AuthValidationResult(isValid: false, isExpired: isExpired);
+      }
+
+      return AuthValidationResult(isValid: response.statusCode == 200, isExpired: false);
+    } catch (e) {
+      if (AppConfig.enableLogging) {
+        print('❌ AuthService: Validation error: $e');
+      }
+      return AuthValidationResult(isValid: false, isExpired: false);
     }
   }
 }
+
+class AuthValidationResult {
+  final bool isValid;
+  final bool isExpired;
+  
+  AuthValidationResult({required this.isValid, required this.isExpired});
+}
+```
+
+---
+
+## Environment Configuration
+
+### Development vs Production Settings
+
+#### Environment Detection
+```dart
+// Automatic environment detection via dart-define
+flutter run --dart-define=ENVIRONMENT=development  # Development
+flutter run --dart-define=ENVIRONMENT=production   # Production
+```
+
+#### Configuration Matrix
+
+| Setting | Development | Production |
+|---------|-------------|------------|
+| **API Base URL** | `http://192.168.1.109:8000/api` | `https://mochapoint.coffee/api` |
+| **Debug Logging** | Enabled | Disabled |
+| **API Timeout** | 30 seconds | 10 seconds |
+| **Debug Features** | Enabled | Disabled |
+| **Error Reporting** | Console only | Crash reporting |
+| **JWT Expiry** | 30 days | 30 days |
+
+#### Build Configurations
+
+```bash
+# Development builds
+flutter run --dart-define=ENVIRONMENT=development
+
+# Production builds
+flutter build apk --release --dart-define=ENVIRONMENT=production
+flutter build appbundle --release --dart-define=ENVIRONMENT=production
+flutter build ios --release --dart-define=ENVIRONMENT=production
+```
+
+### Android Studio Integration
+
+```xml
+<!-- Android Studio Run Configurations -->
+Configuration: Development
+- Additional run args: --dart-define=ENVIRONMENT=development
+
+Configuration: Production  
+- Additional run args: --dart-define=ENVIRONMENT=production
+
+Configuration: Production Release
+- Additional run args: --dart-define=ENVIRONMENT=production
+- Build mode: release
 ```
 
 ---
 
 ## Security Architecture
 
-### Authentication Flow
+### Enhanced Authentication Flow
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Login    │───►│  JWT Generation │───►│ Token Storage   │
+│   User Login    │───►│  JWT Generation │───►│ Enhanced Storage│
 │                 │    │                 │    │                 │
 │ • Email/Pass    │    │ • User Claims   │    │ • SharedPrefs   │
-│ • Google OAuth  │    │ • Role Info     │    │ • Secure Store  │
-│ • Apple Sign-In │    │ • Expiration    │    │ • Auto Refresh  │
+│ • Google OAuth  │    │ • Role Info     │    │ • 30-day Expiry │
+│ • Apple Sign-In │    │ • 30-day Expiry │    │ • Auto Detection│
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Token Validation│    │ API Middleware  │    │ Role Authorization│
+│Enhanced Validation│   │ API Middleware  │    │Session Management│
 │                 │    │                 │    │                 │
-│ • JWT Verify    │    │ • Extract Token │    │ • Check Permissions│
-│ • Expiry Check  │    │ • Attach User   │    │ • Resource Access│
-│ • Signature Val │    │ • Error Handling│    │ • Admin Functions│
+│ • JWT Verify    │    │ • Extract Token │    │ • Expiry Detection│
+│ • Expiry Check  │    │ • Enhanced User │    │ • Auto Logout   │
+│ • User Active   │    │ • Error Codes   │    │ • Re-auth Flow  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### QR Code Security
+### QR Code Security (Enhanced)
 ```typescript
-// Multi-layer QR security
+// Multi-layer QR security with extended validation
 const qrPayload = {
     userId: user.id,
     redemptionType: 'subscription',
     generatedAt: Date.now(),
-    expiresAt: midnight.getTime(),
-    nonce: crypto.randomBytes(16).toString('hex'), // Prevent replay
+    expiresAt: midnight.getTime(), // Daily expiry
+    nonce: crypto.randomBytes(16).toString('hex'), // Prevent replay attacks
     shopId?: specificShopId, // Optional shop targeting
+    sessionId: generateSessionId(), // NEW: Session validation
 };
 
 const qrToken = jwt.sign(qrPayload, process.env.JWT_SECRET!, {
     expiresIn: timeUntilMidnight,
-    algorithm: 'HS256'
+    algorithm: 'HS256',
+    issuer: 'mochapoint-api', // NEW: Issuer validation
 });
 ```
 
-### Security Measures
+### Security Measures (Enhanced)
 - **Password Hashing**: bcrypt with 12 salt rounds
-- **JWT Tokens**: HS256 algorithm with role-based claims
+- **JWT Tokens**: HS256 algorithm with 30-day expiry and enhanced validation
+- **Session Management**: Automatic expiry detection and re-authentication
 - **CORS Configuration**: Restricted origins for API access
 - **Input Validation**: Joi schemas for all API inputs
 - **SQL Injection Prevention**: Sequelize ORM parameterized queries
 - **XSS Protection**: JSON response sanitization
-- **Rate Limiting**: API endpoint throttling (future)
+- **Environment Security**: Separate configurations for dev/prod
+- **Rate Limiting**: API endpoint throttling (planned)
 
 ---
 
 ## Performance Considerations
 
-### Database Optimization
+### Enhanced Database Optimization
 ```sql
--- Strategic indexing for high-frequency queries
+-- Strategic indexing for subscription system
 CREATE INDEX CONCURRENTLY idx_redemptions_user_month 
     ON redemptions(user_id, date_trunc('month', timestamp));
 
 CREATE INDEX CONCURRENTLY idx_coffee_shops_active_location 
     ON coffee_shops(is_active, latitude, longitude) WHERE is_active = true;
 
+-- NEW: Subscription-specific indexes
+CREATE INDEX CONCURRENTLY idx_user_subscriptions_active_user
+    ON user_subscriptions(user_id, status) WHERE status = 'active';
+
+CREATE INDEX CONCURRENTLY idx_subscription_plans_monthly_limit
+    ON subscription_plans(monthly_coffee_limit) WHERE is_active = true;
+
 -- Partial indexes for better performance
 CREATE INDEX CONCURRENTLY idx_users_active_email 
     ON users(email) WHERE is_active = true;
 ```
 
-### API Response Optimization
+### API Response Optimization (Enhanced)
 ```typescript
-// Efficient data serialization
+// Efficient data serialization with subscription data
 const optimizedShopData = {
     id: shop.id,
     name: shop.name,
     distance: calculateDistance(userLat, userLng, shop.latitude, shop.longitude),
     rating: Math.max(shop.app_rating, shop.google_rating || 0),
-    // Only include necessary fields
+    subscriptionEnabled: shop.subscription_enabled,
+    // NEW: Include subscription status for highlighting
+    isSubscriptionAccessible: userSubscription?.accessibleShopIds?.includes(shop.id),
 };
 
-// Pagination for large datasets
-const { limit = 20, offset = 0 } = req.query;
-const shops = await CoffeeShop.findAndCountAll({
-    limit: Number(limit),
-    offset: Number(offset),
-    order: [['created_at', 'DESC']]
-});
+// Enhanced monthly stats calculation
+const monthlyStatsOptimized = {
+    month: currentMonth,
+    subscription: {
+        hasActiveSubscription: !!activeSubscription,
+        planName: activeSubscription?.subscriptionPlan?.name,
+        monthlyLimit: activeSubscription?.subscriptionPlan?.monthly_coffee_limit || 0,
+        remainingMonthly: Math.max(0, monthlyLimit - subscriptionRedeemed), // Key optimization
+    }
+};
 ```
 
-### Frontend Performance
+### Frontend Performance (Enhanced)
 ```dart
-// Efficient widget rebuilding
+// Efficient widget rebuilding with environment awareness
 class OptimizedStatsCard extends StatefulWidget {
   @override
   Widget build(BuildContext context) {
@@ -608,27 +767,121 @@ class OptimizedStatsCard extends StatefulWidget {
         if (snapshot.hasData) {
           return _buildStatsDisplay(snapshot.data!);
         }
+        if (snapshot.hasError) {
+          // Enhanced error handling
+          if (snapshot.error is SessionExpiredException) {
+            return _buildSessionExpiredWidget();
+          }
+          return _buildErrorState();
+        }
         return _buildLoadingState();
       },
     );
   }
 }
 
-// Memory management
+// Memory management with environment awareness
 @override
 void dispose() {
   _timer?.cancel(); // Prevent memory leaks
   _animationController.dispose();
+  if (AppConfig.enableLogging) {
+    print('🗑️ Disposing OptimizedStatsCard');
+  }
   super.dispose();
 }
 ```
 
-### Caching Strategy
-- **Database**: Query result caching for static data
-- **API**: Response caching with appropriate TTL
-- **Mobile**: SharedPreferences for user data
+### Caching Strategy (Enhanced)
+- **Database**: Query result caching for static data with subscription awareness
+- **API**: Response caching with subscription-specific TTL
+- **Mobile**: SharedPreferences for user data and subscription status
 - **Images**: Network image caching for shop logos
+- **Environment**: Configuration caching to prevent repeated environment checks
+- **Session**: Token validation caching with expiry detection
+
+### Performance Monitoring
+```dart
+// Environment-aware performance monitoring
+class PerformanceMonitor {
+  static void logApiCall(String endpoint, Duration duration) {
+    if (AppConfig.enableLogging) {
+      print('⏱️ API Call: $endpoint took ${duration.inMilliseconds}ms');
+      
+      if (duration.inMilliseconds > 5000) {
+        print('⚠️ Slow API call detected: $endpoint');
+      }
+    }
+  }
+  
+  static void logScreenLoad(String screenName, Duration duration) {
+    if (AppConfig.enableLogging) {
+      print('📱 Screen Load: $screenName took ${duration.inMilliseconds}ms');
+    }
+  }
+}
+```
 
 ---
 
-This architecture provides a solid foundation for MochaPoint's growth, with clear separation of concerns, security best practices, and performance optimization built-in from the ground up.
+## Deployment Architecture
+
+### Environment-Specific Deployments
+
+#### Development Environment
+```yaml
+# Development deployment configuration
+environment: development
+api_url: http://localhost:8000/api
+features:
+  - debug_logging: true
+  - debug_features: true
+  - extended_timeouts: true
+monitoring:
+  - console_logging: enabled
+  - crash_reporting: disabled
+```
+
+#### Production Environment
+```yaml
+# Production deployment configuration
+environment: production
+api_url: https://mochapoint.coffee/api
+features:
+  - debug_logging: false
+  - debug_features: false
+  - optimized_timeouts: true
+monitoring:
+  - console_logging: errors_only
+  - crash_reporting: enabled
+  - analytics: enabled
+```
+
+### CI/CD Pipeline Integration
+```yaml
+# GitHub Actions example
+name: Build and Deploy
+on:
+  push:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Build Development
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          flutter build apk --dart-define=ENVIRONMENT=development
+          
+      - name: Build Production
+        if: github.ref == 'refs/heads/main'
+        run: |
+          flutter build appbundle --release --dart-define=ENVIRONMENT=production
+```
+
+---
+
+This enhanced architecture provides a robust foundation for MochaPoint's continued growth, with environment management, enhanced security, session handling, and subscription system integration built-in from the ground up. The system now handles both development and production deployments seamlessly while maintaining high performance and security standards.

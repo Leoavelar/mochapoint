@@ -30,11 +30,13 @@ MochaPoint is a mobile-first coffee subscription platform that connects coffee l
 - **🔐 Multi-Authentication**: Email, Google, Apple Sign-In
 - **📱 QR Redemption**: Secure coffee redemptions via QR codes
 - **📍 Shop Discovery**: Map-based coffee shop finding
-- **📊 Real-time Stats**: Monthly redemption tracking
+- **📊 Real-time Stats**: Monthly redemption tracking with remaining coffee count
 - **⭐ Rating System**: Community-driven shop ratings
 - **👥 Role-based Access**: Different interfaces for users and coffee shop owners
 - **🎫 Subscription Integration**: Visual highlighting of subscribed coffee shops
 - **📈 Subscription Dashboard**: Shows subscription plan details and accessible shops
+- **🌍 Environment Management**: Development/production configuration system
+- **🔄 Session Management**: Enhanced token handling with 30-day expiry
 
 ## 📚 Documentation
 
@@ -57,10 +59,13 @@ MochaPoint is a mobile-first coffee subscription platform that connects coffee l
 │ • QR Generation │    │ • JWT Auth      │    │ • User Data     │
 │ • Camera Scanner│    │ • Role Validation│    │ • Redemptions   │
 │ • Map Discovery │    │ • Business Logic│    │ • Coffee Shops  │
+│ • Environment   │    │ • Session Mgmt  │    │ • Subscriptions │
+│   Config        │    │ • 30-day Tokens │    │ • Plans & Access│
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
 **Tech Stack**: Node.js + Express + TypeScript + PostgreSQL + Flutter
+**Environment Management**: Development/Production configuration system
 
 ## 📊 Current Status
 
@@ -69,14 +74,15 @@ MochaPoint is a mobile-first coffee subscription platform that connects coffee l
 - **QR Redemption System**: Secure token generation and validation
 - **Coffee Shop Management**: CRUD operations with real-time analytics
 - **Mobile App**: Cross-platform iOS/Android with role-based UI
-- **Monthly Statistics**: Real-time redemption tracking and breakdowns
+- **Monthly Statistics**: Real-time redemption tracking with remaining coffee count
 - **Rating System**: Dual-source ratings (app + Google) with aggregation
 - **🆕 Subscription Integration**: Complete subscription system with shop highlighting
 - **🆕 User Subscription API**: Backend endpoint for subscription details
 - **🆕 Enhanced UI**: Visual subscription indicators and accessible shop highlighting
+- **🆕 Environment Configuration**: Development/production config management
+- **🆕 Session Management**: Enhanced JWT tokens with 30-day expiry and session expiry handling
 
 ### 🚧 In Development (Database Ready)
-- **Subscription System**: Monthly coffee plans and billing
 - **Payment Processing**: Stripe integration for subscriptions
 - **Advanced Analytics**: Business intelligence and user insights
 - **Referral System**: User referral codes and reward management
@@ -88,7 +94,7 @@ MochaPoint is a mobile-first coffee subscription platform that connects coffee l
 2. **Discover** → Find nearby coffee shops on the map
 3. **Generate QR** → Create secure QR code for redemption
 4. **Redeem** → Show QR to coffee shop for free coffee
-5. **Track** → View monthly statistics and redemption history
+5. **Track** → View monthly statistics showing remaining monthly redemptions
 
 ### For Coffee Shop Owners
 1. **Register** → Create coffee shop business account
@@ -126,7 +132,12 @@ MochaPoint is a mobile-first coffee subscription platform that connects coffee l
    ```bash
    cd frontend
    flutter pub get
-   flutter run
+   
+   # Development environment
+   flutter run --dart-define=ENVIRONMENT=development
+   
+   # Production environment
+   flutter run --dart-define=ENVIRONMENT=production
    ```
 
 4. **Initial Data**
@@ -147,6 +158,10 @@ curl http://localhost:8000/health
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "password": "password"}'
+
+# Test Monthly Stats (with remaining redemptions)
+curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Want comprehensive testing?** → [Testing Guide](docs/TESTING.md)
@@ -160,13 +175,71 @@ curl -X POST http://localhost:8000/api/redemptions/generate-qr \
   -d '{"redemptionType": "subscription"}'
 ```
 
-### Get Monthly Statistics
+### Get Monthly Statistics (Updated)
 ```bash
 curl -X GET http://localhost:8000/api/redemptions/monthly-stats \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
+**Response includes remaining monthly redemptions:**
+```json
+{
+  "success": true,
+  "data": {
+    "month": "January 2025",
+    "subscription": {
+      "hasActiveSubscription": true,
+      "planName": "Premium Monthly Plan",
+      "monthlyLimit": 25,
+      "remainingMonthly": 18
+    },
+    "redeemed": {
+      "total": 7,
+      "subscription": 7,
+      "joker": 0
+    }
+  }
+}
+```
+
+### Get User Subscription Status
+```bash
+curl -X GET http://localhost:8000/api/users/subscription \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
 **Need complete API docs?** → [API Reference](docs/API.md)
+
+## 🔧 Environment Configuration
+
+MochaPoint now features a robust environment management system:
+
+### Development Environment
+```bash
+# Run in development mode
+flutter run --dart-define=ENVIRONMENT=development
+
+# Uses: http://localhost:8000/api (or your local IP)
+# Features: Debug logging, shorter timeouts, development features
+```
+
+### Production Environment
+```bash
+# Run in production mode
+flutter run --dart-define=ENVIRONMENT=production
+
+# Uses: https://mochapoint.coffee/api
+# Features: Optimized performance, error-only logging
+```
+
+### Build for Distribution
+```bash
+# Production APK
+flutter build apk --release --dart-define=ENVIRONMENT=production
+
+# Production App Bundle
+flutter build appbundle --release --dart-define=ENVIRONMENT=production
+```
 
 ## 🤝 Contributing
 
@@ -182,23 +255,26 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 - **Documentation**: Keep docs in sync with code changes
 - **Testing**: Add tests for new features
 - **Code Style**: Follow existing patterns and conventions
+- **Environment**: Use development environment for testing
 
 ## 📈 Roadmap
 
-### Q1 2025: Core Subscription System
-- [ ] Subscription plan management
-- [ ] User subscription lifecycle
-- [ ] Payment integration (Stripe)
+### Q1 2025: Payment Integration
+- [ ] Stripe payment processing for subscriptions
+- [ ] Payment method management
+- [ ] Billing history and invoices
 
 ### Q2 2025: Business Intelligence
 - [ ] Advanced analytics dashboard
 - [ ] User behavior insights
 - [ ] Coffee shop performance metrics
+- [ ] Revenue tracking and reporting
 
 ### Q3 2025: Social Features
-- [ ] Referral system
-- [ ] Social sharing
-- [ ] Community features
+- [ ] Referral system with rewards
+- [ ] Social sharing capabilities
+- [ ] Community features and reviews
+- [ ] Loyalty program enhancements
 
 ## 🔗 Links
 
@@ -223,4 +299,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **MochaPoint** - Built with ❤️ for the coffee community in Graz, Austria ☕️
 
-*Ready to get started? Check out the [Setup Guide](docs/SETUP.md)!*~~
+*Ready to get started? Check out the [Setup Guide](docs/SETUP.md)!*
