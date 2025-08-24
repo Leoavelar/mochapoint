@@ -1,11 +1,12 @@
-// lib/services/auth_service.dart - Compatible version with both methods
+// lib/services/auth_service.dart - Updated with AppConfig
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../config/app_config.dart'; // ADD THIS IMPORT
 
 class AuthService {
-  static const String baseUrl = 'http://192.168.1.109:8000/api';
+  // REMOVE THIS LINE: static const String baseUrl = 'http://192.168.1.109:8000/api';
   static const String _tokenKey = 'jwt_token';
   static const String _userKey = 'user_data';
 
@@ -20,7 +21,9 @@ class AuthService {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(_tokenKey);
     } catch (e) {
-      print('Error getting token: $e');
+      if (AppConfig.enableLogging) {
+        print('Error getting token: $e');
+      }
       return null;
     }
   }
@@ -31,7 +34,9 @@ class AuthService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, token);
     } catch (e) {
-      print('Error storing token: $e');
+      if (AppConfig.enableLogging) {
+        print('Error storing token: $e');
+      }
     }
   }
 
@@ -45,7 +50,9 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Error getting user: $e');
+      if (AppConfig.enableLogging) {
+        print('Error getting user: $e');
+      }
       return null;
     }
   }
@@ -56,7 +63,9 @@ class AuthService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_userKey, json.encode(user));
     } catch (e) {
-      print('Error storing user: $e');
+      if (AppConfig.enableLogging) {
+        print('Error storing user: $e');
+      }
     }
   }
 
@@ -76,7 +85,9 @@ class AuthService {
       // Also sign out from Google
       await _googleSignIn.signOut();
     } catch (e) {
-      print('Error during logout: $e');
+      if (AppConfig.enableLogging) {
+        print('Error during logout: $e');
+      }
     }
   }
 
@@ -84,13 +95,13 @@ class AuthService {
   static Future<AuthResult> login(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/login'), // CHANGED: Use AppConfig
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
           'password': password,
         }),
-      );
+      ).timeout(AppConfig.apiTimeout); // ADDED: Use AppConfig timeout
 
       final data = json.decode(response.body);
 
@@ -113,13 +124,13 @@ class AuthService {
   static Future<AuthResult> register(String email, String password) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/register'), // CHANGED: Use AppConfig
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'email': email,
           'password': password,
         }),
-      );
+      ).timeout(AppConfig.apiTimeout); // ADDED: Use AppConfig timeout
 
       final data = json.decode(response.body);
 
@@ -141,27 +152,34 @@ class AuthService {
   // Clean Google Sign-In using the official package
   static Future<AuthResult> signInWithGoogle() async {
     try {
-      print('Starting Google Sign-In...');
+      if (AppConfig.enableLogging) {
+        print('Starting Google Sign-In...');
+      }
 
       // Trigger the Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        print('User cancelled Google Sign-In');
+        if (AppConfig.enableLogging) {
+          print('User cancelled Google Sign-In');
+        }
         return AuthResult(success: false, error: 'Sign-in cancelled');
       }
 
-      print('Google Sign-In successful! User: ${googleUser.email}');
+      if (AppConfig.enableLogging) {
+        print('Google Sign-In successful! User: ${googleUser.email}');
+      }
 
       // Get the authentication details from the request
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
-      print('Got Google auth tokens. Access token: ${googleAuth.accessToken?.substring(0, 20)}...');
+      if (AppConfig.enableLogging) {
+        print('Got Google auth tokens. Access token: ${googleAuth.accessToken?.substring(0, 20)}...');
+        print('Sending data to backend...');
+      }
 
-      // Send Google user data to your backend
-      print('Sending data to backend...');
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/google'),
+        Uri.parse('${AppConfig.apiBaseUrl}/auth/google'), // CHANGED: Use AppConfig
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'googleId': googleUser.id,
@@ -170,27 +188,35 @@ class AuthService {
           'photoUrl': googleUser.photoUrl,
           'accessToken': googleAuth.accessToken,
         }),
-      );
+      ).timeout(AppConfig.apiTimeout); // ADDED: Use AppConfig timeout
 
-      print('Backend response status: ${response.statusCode}');
-      print('Backend response body: ${response.body}');
+      if (AppConfig.enableLogging) {
+        print('Backend response status: ${response.statusCode}');
+        print('Backend response body: ${response.body}');
+      }
 
       final data = json.decode(response.body);
 
       if (response.statusCode == 200) {
         await setToken(data['token']);
         await setUser(data['user']);
-        print('Successfully stored user data');
+        if (AppConfig.enableLogging) {
+          print('Successfully stored user data');
+        }
         return AuthResult(success: true, user: data['user']);
       } else {
-        print('Backend error: ${data}');
+        if (AppConfig.enableLogging) {
+          print('Backend error: ${data}');
+        }
         return AuthResult(
           success: false,
           error: data['error'] ?? data['message'] ?? 'Google sign-in failed',
         );
       }
     } catch (e) {
-      print('Google Sign-In error: $e');
+      if (AppConfig.enableLogging) {
+        print('Google Sign-In error: $e');
+      }
       return AuthResult(success: false, error: 'Google sign-in failed: $e');
     }
   }
@@ -211,16 +237,18 @@ class AuthService {
       if (token == null) return false;
 
       final response = await http.get(
-        Uri.parse('$baseUrl/users/profile'),
+        Uri.parse('${AppConfig.apiBaseUrl}/users/profile'), // CHANGED: Use AppConfig
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-      );
+      ).timeout(AppConfig.apiTimeout); // ADDED: Use AppConfig timeout
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Token validation error: $e');
+      if (AppConfig.enableLogging) {
+        print('Token validation error: $e');
+      }
       return false;
     }
   }
@@ -242,12 +270,12 @@ class AuthService {
       }
 
       final response = await http.get(
-        Uri.parse('$baseUrl/users/profile'),
+        Uri.parse('${AppConfig.apiBaseUrl}/users/profile'), // CHANGED: Use AppConfig
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-      );
+      ).timeout(AppConfig.apiTimeout); // ADDED: Use AppConfig timeout
 
       if (response.statusCode == 200) {
         return AuthValidationResult(isValid: true, needsLogin: false);
@@ -282,7 +310,9 @@ class AuthService {
         return AuthValidationResult(isValid: false, needsLogin: false);
       }
     } catch (e) {
-      print('Token validation error: $e');
+      if (AppConfig.enableLogging) {
+        print('Token validation error: $e');
+      }
       return AuthValidationResult(
           isValid: false,
           needsLogin: false,
@@ -330,7 +360,9 @@ class AuthService {
     }
 
     // Token is invalid, need to re-authenticate
-    print('Token is invalid, user needs to log in again');
+    if (AppConfig.enableLogging) {
+      print('Token is invalid, user needs to log in again');
+    }
     await logout(); // Clear invalid token
     return null;
   }

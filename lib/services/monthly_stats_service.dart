@@ -1,7 +1,8 @@
-// lib/services/monthly_stats_service.dart
+// lib/services/monthly_stats_service.dart - Updated to use ApiService
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'auth_service.dart';
+
+import '../config/app_config.dart';
+import 'api_service.dart';
 
 class MonthlyStatsData {
   final String month;
@@ -9,8 +10,6 @@ class MonthlyStatsData {
   final int subscriptionRedeemed;
   final int jokerRedeemed;
   final int jokersAvailable;
-
-  // New subscription-related fields
   final bool hasActiveSubscription;
   final String? subscriptionPlanName;
   final int monthlyLimit;
@@ -53,27 +52,13 @@ class MonthlyStatsData {
     );
   }
 
-  // Helper getters for backward compatibility
   int get totalAvailable => remainingMonthly + jokersAvailable;
-
-  // New getter for remaining monthly redemptions
   int get monthlyRemaining => remainingMonthly;
 }
 
 class MonthlyStatsService {
-  static const String baseUrl = 'http://192.168.1.109:8000/api';
-
   static Future<MonthlyStatsData> getMonthlyStats() async {
-    final headers = await AuthService.getAuthHeaders();
-
-    if (!headers.containsKey('Authorization')) {
-      throw Exception('No authentication token found');
-    }
-
-    final response = await http.get(
-      Uri.parse('$baseUrl/redemptions/monthly-stats'),
-      headers: headers,
-    );
+    final response = await ApiService.get('/redemptions/monthly-stats');
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(response.body);

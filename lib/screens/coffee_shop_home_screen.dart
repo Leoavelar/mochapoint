@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../services/auth_service.dart';
+import '../config/app_config.dart'; // ADD THIS IMPORT
 import '../widgets/app_header.dart';
 import '../widgets/overlapping_content_layout.dart';
 import 'coffee_shop_scanner_screen.dart';
@@ -106,7 +107,7 @@ class _CoffeeShopHomeScreenState extends State<CoffeeShopHomeScreen> {
       final token = await AuthService.getToken();
       print('Using valid token for API call');
 
-      final fullUrl = '${AuthService.baseUrl}/users/profile';
+      final fullUrl = '${AppConfig.apiBaseUrl}/users/profile'; // CHANGED: Use AppConfig instead of AuthService.baseUrl
       print('Fetching fresh user profile from: $fullUrl');
 
       final response = await http.get(
@@ -163,7 +164,7 @@ class _CoffeeShopHomeScreenState extends State<CoffeeShopHomeScreen> {
     try {
       final token = await AuthService.getToken();
       final response = await http.get(
-        Uri.parse('${AuthService.baseUrl}/api/coffee-shops/$shopId?includeStatus=true'),
+        Uri.parse('${AppConfig.apiBaseUrl}/api/coffee-shops/$shopId?includeStatus=true'), // CHANGED: Use AppConfig instead of AuthService.baseUrl
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -184,7 +185,7 @@ class _CoffeeShopHomeScreenState extends State<CoffeeShopHomeScreen> {
     try {
       final token = await AuthService.getToken();
       final response = await http.get(
-        Uri.parse('${AuthService.baseUrl}/api/coffee-shops/$shopId/stats'),
+        Uri.parse('${AppConfig.apiBaseUrl}/api/coffee-shops/$shopId/stats'), // CHANGED: Use AppConfig instead of AuthService.baseUrl
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -205,7 +206,7 @@ class _CoffeeShopHomeScreenState extends State<CoffeeShopHomeScreen> {
     try {
       final token = await AuthService.getToken();
       final response = await http.get(
-        Uri.parse('${AuthService.baseUrl}/api/coffee-shops/$shopId/redemptions?limit=5'),
+        Uri.parse('${AppConfig.apiBaseUrl}/api/coffee-shops/$shopId/redemptions?limit=5'), // CHANGED: Use AppConfig instead of AuthService.baseUrl
         headers: {
           'Authorization': 'Bearer $token',
         },

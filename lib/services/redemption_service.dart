@@ -1,11 +1,10 @@
-// lib/services/redemption_service.dart - Enhanced with session handling
+// lib/services/redemption_service.dart - Updated with environment config + session handling
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/app_config.dart';
 import 'auth_service.dart';
 
 class RedemptionService {
-  static const String baseUrl = 'http://192.168.1.109:8000/api';
-
   // Helper method to handle API responses with session expiry detection
   static Map<String, dynamic> _handleApiResponse(http.Response response) {
     try {
@@ -50,10 +49,15 @@ class RedemptionService {
   // Generate QR token for redemption
   static Future<Map<String, dynamic>> generateQRToken(String redemptionType) async {
     try {
-      print('🔍 RedemptionService: Generating QR token for $redemptionType');
+      if (AppConfig.enableLogging) {
+        print('🔍 RedemptionService: Generating QR token for $redemptionType');
+        print('🌐 Using API base URL: ${AppConfig.apiBaseUrl}');
+      }
 
       final headers = await AuthService.getAuthHeaders();
-      print('📋 RedemptionService: Headers = $headers');
+      if (AppConfig.enableLogging) {
+        print('📋 RedemptionService: Headers = $headers');
+      }
 
       if (!headers.containsKey('Authorization')) {
         return {
@@ -64,8 +68,10 @@ class RedemptionService {
         };
       }
 
-      final url = '$baseUrl/redemptions/generate-qr';
-      print('📞 RedemptionService: Calling $url');
+      final url = '${AppConfig.apiBaseUrl}/redemptions/generate-qr';
+      if (AppConfig.enableLogging) {
+        print('📞 RedemptionService: Calling $url');
+      }
 
       final response = await http.post(
         Uri.parse(url),
@@ -73,21 +79,27 @@ class RedemptionService {
         body: jsonEncode({
           'redemptionType': redemptionType,
         }),
-      );
+      ).timeout(AppConfig.apiTimeout);
 
-      print('📊 RedemptionService: Response status = ${response.statusCode}');
-      print('📊 RedemptionService: Response body = ${response.body}');
+      if (AppConfig.enableLogging) {
+        print('📊 RedemptionService: Response status = ${response.statusCode}');
+        print('📊 RedemptionService: Response body = ${response.body}');
+      }
 
       final result = _handleApiResponse(response);
 
       // Handle session expiry
       if (result['isSessionExpired'] == true) {
         await AuthService.logout();
-        print('🔒 Session expired, user logged out');
+        if (AppConfig.enableLogging) {
+          print('🔒 Session expired, user logged out');
+        }
       }
 
       if (result['success']) {
-        print('✅ RedemptionService: QR generation successful');
+        if (AppConfig.enableLogging) {
+          print('✅ RedemptionService: QR generation successful');
+        }
         return {
           'success': true,
           'qrToken': result['qrToken'],
@@ -95,7 +107,9 @@ class RedemptionService {
           'userInfo': result['userInfo'],
         };
       } else {
-        print('❌ RedemptionService: QR generation failed - ${result['error']}');
+        if (AppConfig.enableLogging) {
+          print('❌ RedemptionService: QR generation failed - ${result['error']}');
+        }
         return {
           'success': false,
           'error': result['error'],
@@ -105,7 +119,9 @@ class RedemptionService {
         };
       }
     } catch (e) {
-      print('💥 RedemptionService: QR generation exception - $e');
+      if (AppConfig.enableLogging) {
+        print('💥 RedemptionService: QR generation exception - $e');
+      }
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
@@ -117,10 +133,15 @@ class RedemptionService {
   // Get user's redemption status
   static Future<Map<String, dynamic>> getRedemptionStatus() async {
     try {
-      print('🔍 RedemptionService: Getting redemption status');
+      if (AppConfig.enableLogging) {
+        print('🔍 RedemptionService: Getting redemption status');
+        print('🌐 Using API base URL: ${AppConfig.apiBaseUrl}');
+      }
 
       final headers = await AuthService.getAuthHeaders();
-      print('📋 RedemptionService: Status headers = $headers');
+      if (AppConfig.enableLogging) {
+        print('📋 RedemptionService: Status headers = $headers');
+      }
 
       if (!headers.containsKey('Authorization')) {
         return {
@@ -131,33 +152,43 @@ class RedemptionService {
         };
       }
 
-      final url = '$baseUrl/redemptions/status';
-      print('📞 RedemptionService: Calling $url');
+      final url = '${AppConfig.apiBaseUrl}/redemptions/status';
+      if (AppConfig.enableLogging) {
+        print('📞 RedemptionService: Calling $url');
+      }
 
       final response = await http.get(
         Uri.parse(url),
         headers: headers,
-      );
+      ).timeout(AppConfig.apiTimeout);
 
-      print('📊 RedemptionService: Status response status = ${response.statusCode}');
-      print('📊 RedemptionService: Status response body = ${response.body}');
+      if (AppConfig.enableLogging) {
+        print('📊 RedemptionService: Status response status = ${response.statusCode}');
+        print('📊 RedemptionService: Status response body = ${response.body}');
+      }
 
       final result = _handleApiResponse(response);
 
       // Handle session expiry
       if (result['isSessionExpired'] == true) {
         await AuthService.logout();
-        print('🔒 Session expired, user logged out');
+        if (AppConfig.enableLogging) {
+          print('🔒 Session expired, user logged out');
+        }
       }
 
       if (result['success']) {
-        print('✅ RedemptionService: Status retrieval successful');
+        if (AppConfig.enableLogging) {
+          print('✅ RedemptionService: Status retrieval successful');
+        }
         return {
           'success': true,
           'status': result['status'],
         };
       } else {
-        print('❌ RedemptionService: Status retrieval failed - ${result['error']}');
+        if (AppConfig.enableLogging) {
+          print('❌ RedemptionService: Status retrieval failed - ${result['error']}');
+        }
         return {
           'success': false,
           'error': result['error'],
@@ -166,7 +197,9 @@ class RedemptionService {
         };
       }
     } catch (e) {
-      print('💥 RedemptionService: Status exception - $e');
+      if (AppConfig.enableLogging) {
+        print('💥 RedemptionService: Status exception - $e');
+      }
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
@@ -178,7 +211,10 @@ class RedemptionService {
   // Coffee shop validates and redeems QR code
   static Future<Map<String, dynamic>> validateAndRedeem(String qrToken, {String? coffeeType}) async {
     try {
-      print('🔍 RedemptionService: Validating QR token');
+      if (AppConfig.enableLogging) {
+        print('🔍 RedemptionService: Validating QR token');
+        print('🌐 Using API base URL: ${AppConfig.apiBaseUrl}');
+      }
 
       final headers = await AuthService.getAuthHeaders();
 
@@ -190,8 +226,10 @@ class RedemptionService {
         };
       }
 
-      final url = '$baseUrl/redemptions/validate-and-redeem';
-      print('📞 RedemptionService: Calling $url');
+      final url = '${AppConfig.apiBaseUrl}/redemptions/validate-and-redeem';
+      if (AppConfig.enableLogging) {
+        print('📞 RedemptionService: Calling $url');
+      }
 
       final response = await http.post(
         Uri.parse(url),
@@ -200,17 +238,21 @@ class RedemptionService {
           'qrToken': qrToken,
           'coffeeType': coffeeType,
         }),
-      );
+      ).timeout(AppConfig.apiTimeout);
 
-      print('📊 RedemptionService: Validation response status = ${response.statusCode}');
-      print('📊 RedemptionService: Validation response body = ${response.body}');
+      if (AppConfig.enableLogging) {
+        print('📊 RedemptionService: Validation response status = ${response.statusCode}');
+        print('📊 RedemptionService: Validation response body = ${response.body}');
+      }
 
       final result = _handleApiResponse(response);
 
       // Handle session expiry
       if (result['isSessionExpired'] == true) {
         await AuthService.logout();
-        print('🔒 Session expired, user logged out');
+        if (AppConfig.enableLogging) {
+          print('🔒 Session expired, user logged out');
+        }
       }
 
       if (result['success']) {
@@ -229,7 +271,9 @@ class RedemptionService {
         };
       }
     } catch (e) {
-      print('💥 RedemptionService: Validation exception - $e');
+      if (AppConfig.enableLogging) {
+        print('💥 RedemptionService: Validation exception - $e');
+      }
       return {
         'success': false,
         'error': 'Network error: ${e.toString()}',
@@ -251,12 +295,12 @@ class RedemptionService {
         };
       }
 
-      final url = '$baseUrl/redemptions/history?limit=$limit&offset=$offset';
+      final url = '${AppConfig.apiBaseUrl}/redemptions/history?limit=$limit&offset=$offset';
 
       final response = await http.get(
         Uri.parse(url),
         headers: headers,
-      );
+      ).timeout(AppConfig.apiTimeout);
 
       final result = _handleApiResponse(response);
 

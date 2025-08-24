@@ -1,13 +1,14 @@
-// Path: lib/widgets/nearest_shops_widget.dart
-
+// lib/widgets/nearest_shops_widget.dart - Updated with AppConfig
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mocha_point/main.dart';
 
+import '../config/app_config.dart'; // ADD THIS IMPORT
 import '../services/subscription_service.dart';
 
+// ... (CoffeeShop, UserSubscriptionStatus classes remain the same)
 class CoffeeShop {
   final int id;
   final String name;
@@ -25,8 +26,8 @@ class CoffeeShop {
   final String? logoUrl;
   final List<String> supportedDrinkTiers;
   final bool isActive;
-  final double? distance; // Calculated distance from user location
-  final String? walkingTime; // Calculated walking time
+  final double? distance;
+  final String? walkingTime;
 
   CoffeeShop({
     required this.id,
@@ -64,7 +65,7 @@ class CoffeeShop {
       description: json['description'],
       phone: json['phone'],
       hours: json['hours'],
-      logoUrl: json['logoFilename'],  // ✅ Using logoFilename (camelCase from backend)
+      logoUrl: json['logoFilename'],
       supportedDrinkTiers: List<String>.from(json['supportedDrinkTiers'] ?? []),
       isActive: json['is_active'] ?? true,
       distance: json['distance']?.toDouble(),
@@ -100,8 +101,8 @@ class UserSubscriptionStatus {
 }
 
 class ApiService {
-  // Update this IP address to your backend server's LAN IP
-  static const String baseUrl = 'http://192.168.1.109:8000/api';
+  // REMOVE THESE LINES:
+  // static const String baseUrl = 'http://192.168.1.109:8000/api';
   // static const String baseUrl = 'https://mochapoint.coffee/api';
 
   static Future<Map<String, dynamic>> getCoffeeShops({
@@ -110,7 +111,7 @@ class ApiService {
     double? radius,
   }) async {
     try {
-      String url = '$baseUrl/coffee-shops';
+      String url = '${AppConfig.apiBaseUrl}/coffee-shops'; // CHANGED: Use AppConfig
 
       // Add location-based filtering if coordinates are provided
       if (latitude != null && longitude != null) {
@@ -120,15 +121,27 @@ class ApiService {
         }
       }
 
+      if (AppConfig.enableLogging) {
+        print('🔍 ApiService: Getting coffee shops from $url');
+      }
+
       final response = await http.get(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
         },
-      ).timeout(const Duration(seconds: 10));
+      ).timeout(AppConfig.apiTimeout); // CHANGED: Use AppConfig timeout
+
+      if (AppConfig.enableLogging) {
+        print('📊 ApiService: Coffee shops response status = ${response.statusCode}');
+      }
 
       if (response.statusCode == 200) {
         final dynamic responseData = json.decode(response.body);
+
+        if (AppConfig.enableLogging) {
+          print('📊 ApiService: Response data type = ${responseData.runtimeType}');
+        }
 
         // Handle different response formats
         List<dynamic> jsonData;
@@ -154,6 +167,10 @@ class ApiService {
 
         final List<CoffeeShop> shops = jsonData.map((shop) => CoffeeShop.fromJson(shop)).toList();
 
+        if (AppConfig.enableLogging) {
+          print('✅ ApiService: Successfully loaded ${shops.length} coffee shops');
+        }
+
         // Return both the shops and the raw JSON for debugging
         return {
           'shops': shops,
@@ -161,36 +178,59 @@ class ApiService {
           'parsedData': responseData,
         };
       } else {
+        if (AppConfig.enableLogging) {
+          print('❌ ApiService: Failed to load coffee shops: ${response.statusCode} - ${response.body}');
+        }
         throw Exception('Failed to load coffee shops: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      print('API Error: $e'); // Debug log
+      if (AppConfig.enableLogging) {
+        print('💥 ApiService: API Error: $e');
+      }
       throw Exception('Network error: $e');
     }
   }
 
   static Future<UserSubscriptionStatus> getUserSubscriptionStatus(String token) async {
     try {
+      if (AppConfig.enableLogging) {
+        print('🔍 ApiService: Getting user subscription status');
+      }
+
       final response = await http.get(
-        Uri.parse('$baseUrl/users/subscription-status'),
+        Uri.parse('${AppConfig.apiBaseUrl}/users/subscription-status'), // CHANGED: Use AppConfig
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-      ).timeout(const Duration(seconds: 10));
+      ).timeout(AppConfig.apiTimeout); // CHANGED: Use AppConfig timeout
+
+      if (AppConfig.enableLogging) {
+        print('📊 ApiService: Subscription status response = ${response.statusCode}');
+      }
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
+        if (AppConfig.enableLogging) {
+          print('✅ ApiService: Successfully loaded subscription status');
+        }
         return UserSubscriptionStatus.fromJson(jsonData);
       } else {
+        if (AppConfig.enableLogging) {
+          print('❌ ApiService: Failed to load subscription status: ${response.statusCode}');
+        }
         throw Exception('Failed to load subscription status: ${response.statusCode}');
       }
     } catch (e) {
+      if (AppConfig.enableLogging) {
+        print('💥 ApiService: Network error: $e');
+      }
       throw Exception('Network error: $e');
     }
   }
 }
 
+// ... (Rest of the widget code remains exactly the same)
 class NearestShopsWidget extends StatefulWidget {
   final double? userLatitude;
   final double? userLongitude;
@@ -212,12 +252,12 @@ class NearestShopsWidget extends StatefulWidget {
 class _NearestShopsWidgetState extends State<NearestShopsWidget> {
   List<CoffeeShop> shops = [];
   UserSubscriptionStatus? subscriptionStatus;
-  UserSubscriptionData? _subscriptionData; // NEW: Add subscription data
+  UserSubscriptionData? _subscriptionData;
   bool isLoading = true;
   String? errorMessage;
   String? debugRawJson;
   Map<String, dynamic>? debugParsedData;
-  bool _isDisposed = false; // Track disposal state
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -227,12 +267,11 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
   @override
   void dispose() {
-    _isDisposed = true; // Mark as disposed
+    _isDisposed = true;
     super.dispose();
   }
 
   Future<void> _loadData() async {
-    // Check if widget is still mounted and not disposed
     if (!mounted || _isDisposed) return;
 
     setState(() {
@@ -248,7 +287,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         radius: widget.searchRadius,
       );
 
-      // Check again after async operation
       if (!mounted || _isDisposed) return;
 
       // Load user subscription status if token provided
@@ -264,31 +302,30 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         );
       }
 
-      // Check again after async operation
       if (!mounted || _isDisposed) return;
 
-      // NEW: Load subscription data to know which shops user is subscribed to
+      // Load subscription data to know which shops user is subscribed to
       UserSubscriptionData? subscriptionData;
       try {
         subscriptionData = await SubscriptionService.getUserSubscription();
       } catch (e) {
-        print('Error loading subscription data: $e');
+        if (AppConfig.enableLogging) {
+          print('Error loading subscription data: $e');
+        }
         subscriptionData = null;
       }
 
-      // Final check before setState
       if (!mounted || _isDisposed) return;
 
       setState(() {
         shops = shopData['shops'] as List<CoffeeShop>;
         subscriptionStatus = userStatus;
-        _subscriptionData = subscriptionData; // NEW: Store subscription data
+        _subscriptionData = subscriptionData;
         debugRawJson = shopData['rawJson'] as String;
         debugParsedData = shopData['parsedData'] as Map<String, dynamic>?;
         isLoading = false;
       });
     } catch (e) {
-      // Check if widget is still mounted before calling setState
       if (!mounted || _isDisposed) return;
 
       setState(() {
@@ -302,7 +339,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     await _loadData();
   }
 
-  // NEW: Helper method to check if shop is subscribed
   bool _isUserSubscribedToShop(int shopId) {
     if (_subscriptionData?.hasActiveSubscription != true) {
       return false;
@@ -311,7 +347,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     return _subscriptionData!.accessibleShops.any((shop) => shop.id == shopId);
   }
 
-  // NEW: Get subscription type for shop
   String? _getSubscriptionType(int shopId) {
     if (_subscriptionData?.hasActiveSubscription != true) {
       return null;
@@ -347,18 +382,14 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       onRefresh: _refresh,
       child: Column(
         children: [
-          // NEW: Show subscription info summary if user has active subscription
           if (_subscriptionData?.hasActiveSubscription == true)
             _buildSubscriptionSummary(),
-
-          // Coffee shops list
           ...shops.map((shop) => _buildShopItem(context, shop)).toList(),
         ],
       ),
     );
   }
 
-  // NEW: Build subscription summary widget
   Widget _buildSubscriptionSummary() {
     final subscription = _subscriptionData!.subscription!;
     final accessibleShopsCount = _subscriptionData!.accessibleShops.length;
@@ -500,20 +531,15 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     final coffeeBean = Theme.of(context).colorScheme.secondary;
     const coffeeGreen = Color(0xFF4CAF50);
 
-    // Check if user is subscribed to this shop
     final bool isSubscribed = _isUserSubscribedToShop(shop.id);
     final String? subscriptionType = _getSubscriptionType(shop.id);
 
-    // Determine if user can use subscription at this shop
     final bool canUseSubscription = subscriptionStatus?.hasActiveSubscription == true &&
         shop.subscriptionEnabled &&
         (subscriptionStatus?.weeklyUsageCount ?? 0) < (subscriptionStatus?.weeklyLimit ?? 0) &&
-        isSubscribed; // NEW: Add subscription check
+        isSubscribed;
 
-    // Simple check: does the shop accept jokers?
     final bool shopAcceptsJokers = shop.jokerEnabled;
-
-    // Use the better rating for display (Google vs User Average)
     final double displayRating = shop.googleRating > 0 ? shop.googleRating : shop.userAverageRating;
 
     return Card(
@@ -524,13 +550,11 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        // NEW: Add colored border for subscribed shops
         side: isSubscribed
             ? BorderSide(color: MyApp.coffeeBean, width: 2.0)
             : BorderSide.none,
       ),
       child: Container(
-        // NEW: Add subtle background color for subscribed shops
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: isSubscribed
@@ -541,7 +565,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // NEW: Add subscription badge at the top
               if (isSubscribed)
                 Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -575,14 +598,12 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
               Row(
                 children: [
-                  // Shop logo
                   Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      // NEW: Add border for subscribed shops
                       border: isSubscribed
                           ? Border.all(color: MyApp.coffeeBean, width: 2)
                           : null,
@@ -612,7 +633,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                   ),
                   const SizedBox(width: 16),
 
-                  // Shop details
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -625,7 +645,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
-                                  // NEW: Highlight subscribed shop names
                                   color: isSubscribed ? MyApp.coffeeBean : Colors.black,
                                 ),
                               ),
@@ -697,7 +716,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                             ),
                             const SizedBox(width: 16),
 
-                            // Subscription or Joker indicator with enhanced styling
                             if (canUseSubscription)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -771,14 +789,12 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                     ),
                   ),
 
-                  // Directions button with enhanced styling for subscribed shops
                   Container(
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
                       color: isSubscribed ? MyApp.coffeeBean : coffeeBean,
                       borderRadius: BorderRadius.circular(8),
-                      // NEW: Add glow effect for subscribed shops
                       boxShadow: isSubscribed ? [
                         BoxShadow(
                           color: MyApp.coffeeBean.withOpacity(0.3),

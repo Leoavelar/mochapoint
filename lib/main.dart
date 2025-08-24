@@ -1,5 +1,7 @@
+// lib/main.dart - Updated with AppConfig integration
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'config/app_config.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -7,10 +9,14 @@ import 'services/auth_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+  AppConfig.printConfig();
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
   runApp(const MyApp());
 }
 
@@ -19,13 +25,13 @@ class MyApp extends StatelessWidget {
 
   // Colors based on the updated design
   static const Color coffeeBean = Color(0xFFA6623A); // Brown for coffee bean
-  // static const Color background = Color(0xFFF9F5F1); // Light cream background
   static const Color background = Color(0xFFF0F1F5); // Light cream background
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Mocha Point',
-      debugShowCheckedModeBanner: false,
+      title: AppConfig.appName,
+      debugShowCheckedModeBanner: AppConfig.enableDebugFeatures,
       theme: ThemeData(
         primaryColor: coffeeBean,
         scaffoldBackgroundColor: background,
@@ -89,6 +95,11 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const AuthWrapper(),
+      // Add routes for better navigation handling
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }
