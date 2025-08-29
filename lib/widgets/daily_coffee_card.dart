@@ -231,8 +231,8 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                       const TextSpan(
                         text: 'Your Coffee is ',
                         style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
                             color: Colors.black,
                             height: 1.1,
                             fontFamily: "ClashDisplay"
@@ -241,8 +241,8 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                       const TextSpan(
                         text: 'Ready!',
                         style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
                           fontFamily: "ClashDisplay",
                           color: Color(0xFF4CAF50),
                           height: 1.1,
@@ -269,8 +269,8 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                 Text(
                   _getTimeUntilMidnight(),
                   style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
                       color: Colors.black,
                       height: 1.1,
                       fontFamily: "ClashDisplay"
@@ -341,9 +341,10 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                 Text(
                   _selectedShop!.name,
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                    fontFamily: "ClashDisplay",
+                    color: Colors.black,
+                    fontWeight: FontWeight.w600,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
