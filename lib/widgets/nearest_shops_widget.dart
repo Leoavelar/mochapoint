@@ -546,7 +546,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
       color: Colors.white,
-      shadowColor: Colors.black26,
+      shadowColor: Colors.black,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),

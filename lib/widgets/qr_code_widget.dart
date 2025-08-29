@@ -15,7 +15,7 @@ class QRCodeWidget extends StatelessWidget {
         margin: EdgeInsets.zero,
         elevation: 2,
         color: Colors.white,
-        shadowColor: Colors.black26, // Add this line
+        shadowColor: Colors.black, // Add this line
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),

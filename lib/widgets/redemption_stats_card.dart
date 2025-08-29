@@ -71,7 +71,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
     return Card(
       elevation: 2,
       color: Colors.white,
-      shadowColor: Colors.black26,
+      shadowColor: Colors.black,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),

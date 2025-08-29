@@ -474,7 +474,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             child: Center(
               child: Card(
                 elevation: 8,
-                shadowColor: Colors.black26,
+                shadowColor: Colors.black,
                 surfaceTintColor: Colors.transparent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),

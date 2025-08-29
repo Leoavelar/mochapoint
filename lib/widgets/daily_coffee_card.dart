@@ -4,6 +4,39 @@ import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
 import '../services/subscription_service.dart';
 
+// Add this class to handle shop data
+class CoffeeShop {
+  final int id;
+  final String name;
+  final String? brand;
+  final String address;
+  final double latitude;
+  final double longitude;
+  final String? logoUrl;
+
+  CoffeeShop({
+    required this.id,
+    required this.name,
+    this.brand,
+    required this.address,
+    required this.latitude,
+    required this.longitude,
+    this.logoUrl,
+  });
+
+  factory CoffeeShop.fromJson(Map<String, dynamic> json) {
+    return CoffeeShop(
+      id: json['id'],
+      name: json['name'],
+      brand: json['brand'],
+      address: json['address'],
+      latitude: json['latitude'].toDouble(),
+      longitude: json['longitude'].toDouble(),
+      logoUrl: json['logoFilename'],
+    );
+  }
+}
+
 class DailyCoffeeCard extends StatefulWidget {
   final VoidCallback? onRedeem;
 
@@ -21,6 +54,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
   int availableCoffees = 1;
   UserSubscriptionData? _subscriptionData;
   bool _isLoadingSubscription = true;
+  CoffeeShop? _selectedShop; // Add shop data
 
   void _toggleAvailability() {
     setState(() {
@@ -46,6 +80,21 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
         setState(() {
           _subscriptionData = subscriptionData;
           _isLoadingSubscription = false;
+
+          // Get the first accessible shop as the selected one
+          if (subscriptionData?.accessibleShops.isNotEmpty == true) {
+            final firstShop = subscriptionData!.accessibleShops.first;
+            _selectedShop = CoffeeShop(
+              id: firstShop.id,
+              name: firstShop.name,
+              address: '',
+              // You might need to add this to AccessibleShop
+              latitude: 0.0,
+              longitude: 0.0,
+              logoUrl:
+                  null, // AccessibleShop doesn't have logoUrl, we'll handle this differently
+            );
+          }
         });
       }
     } catch (e) {
@@ -64,15 +113,16 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
     return Card(
       elevation: 2,
       color: Colors.white,
-      shadowColor: Colors.black26,
+      shadowColor: Colors.black,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.black, width: 1.0),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: isAvailableToday ? _buildAvailableView(context) : _buildRedeemedView(context),
+        padding: const EdgeInsets.all(10.0),
+        child: isAvailableToday
+            ? _buildAvailableView(context)
+            : _buildRedeemedView(context),
       ),
     );
   }
@@ -84,134 +134,248 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  hasCoffees ? Icons.local_cafe : Icons.coffee_maker_outlined,
-                  color: MyApp.coffeeBean,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                // Dynamic title based on coffee availability
-                hasCoffees
-                    ? RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Your Coffee is ',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                      TextSpan(
-                        text: 'Ready!',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: coffeeGreen,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-                    : Text(
-                  'Coffee Coming Soon',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
-            ),
-            // Coffee count badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: hasCoffees ? coffeeGreen : Colors.grey.shade400,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+        // Keep the original top section unchanged
+        Padding(
+          padding: const EdgeInsets.only(left: 10.0, top: 5, right: 10.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
-                  const Icon(
-                    Icons.local_cafe,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    availableCoffees.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
+                  // Icon(
+                  //   hasCoffees ? Icons.local_cafe : Icons.coffee_maker_outlined,
+                  //   color: MyApp.coffeeBean,
+                  //   size: 24,
+                  // ),
+                  const SizedBox(width: 8),
+                  // Dynamic title based on coffee availability
+                  hasCoffees
+                      ? RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Your Coffee is ',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Ready!',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: coffeeGreen,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                      : Text(
+                    'Coffee Coming Soon',
+                    style:
+                    Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      color: Colors.black,
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // Subscription Shop Information
-        _buildSubscriptionInfo(),
-
-        const SizedBox(height: 12),
-        Text(
-          _getAvailableMessage(),
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.black87,
+              // Coffee count badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: hasCoffees ? coffeeGreen : Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.local_cafe,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      availableCoffees.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
-        Center(
-          child: ElevatedButton(
-            onPressed: () {
-              _toggleAvailability();
-              if (widget.onRedeem != null) {
-                widget.onRedeem!();
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: hasCoffees ? Colors.white : Colors.grey.shade200,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+
+        // New container section with background image (matching the design)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            image: const DecorationImage(
+              image: AssetImage('assets/images/header_2.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(1.0),
+                  Colors.black.withOpacity(0.0),
+                ],
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            padding: const EdgeInsets.all(10),
+            // Remove extra padding since parent already has it
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                hasCoffees
-                    ? Image.asset(
-                  'assets/images/redeem.png',
-                  width: 28,
-                  height: 28,
-                )
-                    : Icon(
-                  Icons.hourglass_empty,
-                  color: Colors.grey.shade600,
-                  size: 24,
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  hasCoffees ? 'Redeem Now' : 'Wait for Refill',
-                  style: TextStyle(
-                    color: hasCoffees ? Colors.black : Colors.grey.shade600,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
+                // Main message
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      const TextSpan(
+                        text: 'Head to ',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
+                            fontFamily: 'ClashDisplay'),
+                      ),
+                      TextSpan(
+                        text:
+                            _selectedShop?.name ?? 'your favorite coffee shop',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
+                            fontFamily: 'ClashDisplay'),
+                      ),
+                      const TextSpan(
+                        text: ' and redeem your free coffee!',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            height: 1.2,
+                            fontFamily: 'ClashDisplay'),
+                      ),
+                    ],
                   ),
+                ),
+                const SizedBox(height: 20),
+
+                // Bottom row with button and logo
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // View directions button
+                    ElevatedButton(
+                      onPressed: () {
+                        // TODO: Add functionality to open maps
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Opening directions - Coming soon!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Redeem Now',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward, size: 18),
+                        ],
+                      ),
+                    ),
+
+                    // Shop logo
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: MyApp.coffeeBean,
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipOval(
+                        child: _selectedShop?.logoUrl != null
+                            ? Image.asset(
+                                'assets/images/shops/${_selectedShop!.logoUrl}',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
+                                    'assets/images/shops/default_coffee_logo.png',
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return _buildFallbackLogo();
+                                    },
+                                  );
+                                },
+                              )
+                            : _buildFallbackLogo(),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildFallbackLogo() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: MyApp.coffeeBean,
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(
+        Icons.coffee,
+        color: Colors.white,
+        size: 30,
+      ),
     );
   }
 
@@ -291,28 +455,28 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
             if (accessibleShops.isNotEmpty) ...[
               const SizedBox(height: 8),
               ...accessibleShops.take(2).map((shop) => Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.store,
-                      color: MyApp.coffeeBean,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        shop.name,
-                        style: TextStyle(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.store,
                           color: MyApp.coffeeBean,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                          size: 14,
                         ),
-                      ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            shop.name,
+                            style: TextStyle(
+                              color: MyApp.coffeeBean,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              )),
+                  )),
               if (accessibleShops.length > 2)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
@@ -382,15 +546,16 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
                 Text(
                   'Coffee Break Enjoyed!',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: coffeeBean,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: coffeeBean,
+                      ),
                 ),
               ],
             ),
             if (availableCoffees > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(10),
@@ -421,8 +586,8 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
         Text(
           'Hope you enjoyed your coffee today! Your next free coffee will be available tomorrow. Until then, keep collecting those coffee points!',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.black87,
-          ),
+                color: Colors.black87,
+              ),
         ),
         const SizedBox(height: 12),
         Center(
@@ -454,29 +619,5 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard> {
         ),
       ],
     );
-  }
-
-  String _getAvailableMessage() {
-    if (_subscriptionData?.hasActiveSubscription == true) {
-      final subscription = _subscriptionData!.subscription!;
-      final remaining = subscription.weeklyLimit - subscription.usedThisWeek;
-
-      if (remaining <= 0) {
-        return 'You\'ve used all your subscription coffees this week. Try again next week or use a joker!';
-      } else if (remaining == 1) {
-        return 'You have 1 subscription coffee remaining this week. Visit any of your subscribed coffee shops!';
-      } else {
-        return 'You have $remaining subscription coffees remaining this week. Visit any of your subscribed coffee shops!';
-      }
-    }
-
-    // Fallback for no subscription
-    if (availableCoffees <= 0) {
-      return 'You\'ve redeemed all your coffees for today. Check back tomorrow for a fresh refill!';
-    } else if (availableCoffees == 1) {
-      return 'Time for a delicious coffee break! Head to your favorite coffee shop and redeem your free coffee today.';
-    } else {
-      return 'You have $availableCoffees coffees ready to redeem! Head to your favorite coffee shop and enjoy a well-deserved break today.';
-    }
   }
 }
