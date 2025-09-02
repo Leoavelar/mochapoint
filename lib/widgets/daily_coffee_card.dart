@@ -127,7 +127,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
   }
 
   Future<void> _launchSubscriptionWebsite() async {
-    const url = 'https://mochapoint.coffee'; // Replace with your actual subscription URL
+    const url = 'https://mochapoint.coffee/'; // Replace with your actual subscription URL
 
     try {
       final uri = Uri.parse(url);
@@ -351,19 +351,28 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
       children: [
         // Header with coffee icon
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start, // Align to top
           children: [
-            Container(
+            Image.asset(
+              'assets/icons/mocha_icon_active.png',
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                gradient: coffeeGradient,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.local_cafe,
-                color: Colors.white,
-                size: 20,
-              ),
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to original icon if image fails to load
+                return Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: coffeeGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.local_cafe,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                );
+              },
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -374,7 +383,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                     'Start Your Coffee Journey!',
                     style: const TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       color: Colors.black,
                       fontFamily: "ClashDisplay",
                     ),
@@ -399,12 +408,8 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.orange.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.orange.shade200,
-              width: 1,
-            ),
+            color: MyApp.coffeeBean.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,14 +419,14 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.orange.shade800,
+                  color: MyApp.coffeeBean,
                 ),
               ),
               const SizedBox(height: 8),
               _buildBenefitRow('🎯', 'Daily free coffee at your favorite shops'),
               _buildBenefitRow('⚡', 'Skip the line with QR redemption'),
               _buildBenefitRow('🌟', 'Access to premium coffee selections'),
-              _buildBenefitRow('📍', 'Multiple locations across Graz'),
+              _buildBenefitRow('📍', 'Multiple locations across your city'),
             ],
           ),
         ),
@@ -467,7 +472,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
         // Subtitle
         Center(
           child: Text(
-            'Choose from our partner coffee shops in Graz',
+            'Choose from our partner coffee shops in your city',
             style: TextStyle(
               fontSize: 12,
               color: Colors.grey.shade600,
