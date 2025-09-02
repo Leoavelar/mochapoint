@@ -439,11 +439,12 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
           child: ElevatedButton(
             onPressed: _launchSubscriptionWebsite,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B4513),
+              // backgroundColor: const Color(0xFF8B4513),
+              backgroundColor: MyApp.coffeeBean,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(50),
               ),
               elevation: 2,
             ),
@@ -453,7 +454,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                 const Icon(Icons.coffee, size: 20),
                 const SizedBox(width: 8),
                 const Text(
-                  'Explore Coffee Subscriptions',
+                  'Explore Subscriptions',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
