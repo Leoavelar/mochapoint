@@ -11,7 +11,6 @@
 - [Rating System](#rating-system)
 - [Error Handling](#error-handling)
 - [Testing Examples](#testing-examples)
-- [Webhook Support (Future)](#webhook-support-future)
 - [Environment Configuration Integration](#environment-configuration-integration)
 - [SDKs and Client Libraries](#sdks-and-client-libraries)
 - [API Versioning (Future)](#api-versioning-future)
@@ -24,474 +23,7 @@
 
 ---
 
-## Environment Configuration Integration
-
-### API Base URLs by Environment
-
-| Environment | Base URL | Usage |
-|-------------|----------|--------|
-| Development | `http://localhost:8000/api` | Local development, debug logging |
-| Production | `https://mochapoint.coffee/api` | Live production, optimized performance |
-
-### Client Configuration
-Flutter clients automatically detect environment and use appropriate base URL:
-
-```dart
-// Development
-flutter run --dart-define=ENVIRONMENT=development
-
-// Production  
-flutter run --dart-define=ENVIRONMENT=production
-```
-
-### Request Headers by Environment
-```http
-# Development - includes debug information
-X-Environment: development
-X-Debug-Mode: true
-
-# Production - optimized headers
-X-Environment: production
-```
-
----
-
-## SDKs and Client Libraries
-
-### Flutter Client (Included) ⭐ ENHANCED
-```dart
-// Example usage with environment configuration
-final stats = await MonthlyStatsService.getMonthlyStats();
-final remainingCoffees = stats.subscription?.remainingMonthly ?? 0;
-
-// Enhanced QR generation with session handling
-try {
-  final qrToken = await RedemptionService.generateQRToken('subscription');
-} on SessionExpiredException {
-  // Automatically handled - shows session expired dialog
-} on NetworkException {
-  // Network error handling
-}
-
-// Environment-aware API calls
-final coffeeShops = await ApiService.get('/coffee-shops');
-```
-
-### JavaScript/Node.js Client (Future)
-```javascript
-// Future SDK
-const mochapoint = new MochaPointAPI(apiKey);
-const stats = await mochapoint.redemptions.getMonthlyStats();
-const remaining = stats.subscription.remainingMonthly;
-```
-
----
-
-## API Versioning (Future)
-
-### Current Version
-- **Version**: v1 (default)
-- **Base URL**: `/api/` (no version prefix)
-
-### Future Versioning Strategy
-```
-/api/v1/redemptions/monthly-stats  # Explicit versioning
-/api/v2/redemptions/monthly-stats  # Future version with enhanced features
-
-# Headers approach (alternative)
-X-API-Version: v1
-```
-
----
-
-## Security Considerations
-
-### Enhanced API Security Checklist ⭐ UPDATED
-- ✅ **HTTPS Only**: All production traffic encrypted
-- ✅ **JWT Authentication**: Secure 30-day token-based auth
-- ✅ **Role-based Access**: Granular permission system
-- ✅ **Input Validation**: Joi schema validation
-- ✅ **SQL Injection Prevention**: Sequelize ORM protection
-- ✅ **Session Management**: Enhanced expiry detection and automatic logout
-- ✅ **Error Code System**: Specific error codes for client handling
-- 🚧 **Rate Limiting**: Future implementation
-- 🚧 **API Key Management**: Future enhancement for third-party access
-- 🚧 **Request Logging**: Future audit trail
-
-### Enhanced Best Practices for Clients
-1. **Store JWT securely**: Use secure storage (Keychain/SharedPreferences)
-2. **Handle session expiry**: Automatic logout on TOKEN_EXPIRED
-3. **Environment configuration**: Use proper API endpoints per environment
-4. **Validate responses**: Check response structure and error codes
-5. **Implement retry logic**: Handle network failures gracefully
-6. **Use HTTPS**: Always use encrypted connections
-7. **Monitor performance**: Log API call durations in development
-
-### Subscription System Security
-- **Monthly Limits**: Server-side enforcement prevents over-redemption
-- **QR Code Security**: Daily expiry with nonce to prevent replay attacks
-- **Redemption Validation**: Separate tracking of subscription vs joker redemptions
-- **Access Control**: Subscription-based shop access validation
-
----
-
-## Migration Notes
-
-### Changes from Previous Version
-
-#### API Changes ⭐ NEW
-- Extended JWT expiry from default to 30 days
-- Added error codes for enhanced client-side handling
-- Enhanced monthly stats endpoint with remaining redemptions
-- Added redemption status endpoint
-- Enhanced user subscription endpoint
-
-#### Database Changes ⭐ NEW
-- Added `monthly_coffee_limit` column to `subscription_plans`
-- Enhanced subscription system with active status tracking
-- Improved indexing for subscription-related queries
-
-#### Client Changes ⭐ NEW
-- Environment configuration system implemented
-- Enhanced session management with automatic logout
-- Updated statistics display (Available → Remaining)
-- Session expiry dialog and navigation
-
-### Breaking Changes
-None - all changes are backwards compatible additions.
-
----
-
-## Advanced Features
-
-### Subscription Management ⭐ NEW
-
-#### Create Subscription Plan (Admin Only)
-```http
-POST /subscription-plans
-Authorization: Bearer <ADMIN_JWT_TOKEN>
-```
-
-**Request Body:**
-```json
-{
-  "name": "Premium Monthly Plan",
-  "shopId": 1,
-  "planType": "shop",
-  "durationMonths": 1,
-  "priceCents": 2500,
-  "currency": "EUR",
-  "weeklyLimit": 5,
-  "monthlyLimit": 25,
-  "description": "Unlimited coffee at Central Coffee Graz",
-  "features": ["Daily coffee", "Skip lines", "Premium support"],
-  "isActive": true
-}
-```
-
-#### Create User Subscription (Admin Only)
-```http
-POST /user-subscriptions
-Authorization: Bearer <ADMIN_JWT_TOKEN>
-```
-
-**Request Body:**
-```json
-{
-  "userId": 1,
-  "planId": 1,
-  "status": "active",
-  "startDate": "2025-01-01",
-  "endDate": "2025-01-31",
-  "autoRenew": true
-}
-```
-
-### Analytics Endpoints ⭐ ENHANCED
-
-#### Get User Analytics
-```http
-GET /analytics/user/:userId
-Authorization: Bearer <ADMIN_JWT_TOKEN>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "userId": 1,
-    "totalRedemptions": 45,
-    "subscriptionRedemptions": 35,
-    "jokerRedemptions": 10,
-    "favoriteShops": [
-      {
-        "shopId": 1,
-        "shopName": "Central Coffee",
-        "visitCount": 15,
-        "averageRating": 4.8
-      }
-    ],
-    "monthlyTrends": [
-      {
-        "month": "2025-01",
-        "redemptions": 12,
-        "subscriptionUsage": 10,
-        "jokerUsage": 2
-      }
-    ]
-  }
-}
-```
-
-#### Get Shop Analytics
-```http
-GET /analytics/shop/:shopId
-Authorization: Bearer <SHOP_OWNER_JWT_TOKEN>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "shopId": 1,
-    "totalCustomers": 234,
-    "subscriptionCustomers": 189,
-    "avgRedemptionsPerCustomer": 3.2,
-    "peakRedemptionTimes": [
-      { "hour": 8, "count": 45, "percentage": 15.2 },
-      { "hour": 14, "count": 38, "percentage": 12.8 }
-    ],
-    "monthlyGrowth": {
-      "customerGrowth": 12.5,
-      "redemptionGrowth": 8.3,
-      "ratingImprovement": 0.2
-    }
-  }
-}
-```
-
-### Bulk Operations ⭐ NEW
-
-#### Bulk Add Jokers
-```http
-POST /users/bulk-add-jokers
-Authorization: Bearer <ADMIN_JWT_TOKEN>
-```
-
-**Request Body:**
-```json
-{
-  "users": [
-    { "userId": 1, "count": 5 },
-    { "userId": 2, "count": 3 },
-    { "userId": 3, "count": 10 }
-  ]
-}
-```
-
-#### Bulk Update Shop Status
-```http
-POST /coffee-shops/bulk-update
-Authorization: Bearer <ADMIN_JWT_TOKEN>
-```
-
-**Request Body:**
-```json
-{
-  "shops": [
-    { "shopId": 1, "isActive": true },
-    { "shopId": 2, "isActive": false }
-  ]
-}
-```
-
----
-
-## Development & Testing APIs
-
-### Test Data Endpoints (Development Only)
-
-#### Create Test User
-```http
-POST /dev/create-test-user
-Authorization: Bearer <ADMIN_JWT_TOKEN>
-X-Environment: development
-```
-
-**Request Body:**
-```json
-{
-  "email": "testuser@mochapoint.dev",
-  "jokerCount": 10,
-  "subscriptionPlan": "premium-monthly"
-}
-```
-
-#### Reset User Stats
-```http
-POST /dev/reset-user-stats/:userId
-Authorization: Bearer <ADMIN_JWT_TOKEN>
-X-Environment: development
-```
-
-### Health & Status Endpoints
-
-#### Detailed Health Check
-```http
-GET /health/detailed
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "timestamp": "2025-01-15T10:30:00.000Z",
-  "services": {
-    "database": {
-      "status": "healthy",
-      "responseTime": 12,
-      "activeConnections": 5
-    },
-    "subscriptionSystem": {
-      "status": "healthy",
-      "activeSubscriptions": 234,
-      "monthlyRedemptions": 1567
-    },
-    "qrSystem": {
-      "status": "healthy",
-      "activeTokens": 45,
-      "dailyGenerations": 123
-    }
-  },
-  "performance": {
-    "averageResponseTime": 128,
-    "requestsPerMinute": 45,
-    "errorRate": 0.02
-  }
-}
-```
-
-#### System Status
-```http
-GET /status
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "system": {
-    "version": "1.2.0",
-    "environment": "production",
-    "uptime": 172800,
-    "lastDeployment": "2025-01-10T15:30:00.000Z"
-  },
-  "features": {
-    "subscriptionSystem": true,
-    "enhancedSessionManagement": true,
-    "monthlyLimitEnforcement": true,
-    "environmentConfiguration": true
-  }
-}
-```
-
----
-
-## Error Recovery & Resilience
-
-### Circuit Breaker Pattern (Future)
-```http
-GET /redemptions/monthly-stats
-X-Circuit-Breaker: enabled
-```
-
-**Response when circuit is open:**
-```json
-{
-  "success": false,
-  "error": "Service temporarily unavailable",
-  "errorCode": "CIRCUIT_BREAKER_OPEN",
-  "retryAfter": 30
-}
-```
-
-### Graceful Degradation
-When subscription service is unavailable, the API still provides basic functionality:
-
-```json
-{
-  "success": true,
-  "data": {
-    "month": "January 2025",
-    "subscription": {
-      "hasActiveSubscription": false,
-      "error": "Subscription service temporarily unavailable"
-    },
-    "redeemed": {
-      "total": 8,
-      "joker": 8
-    },
-    "available": {
-      "jokers": 3
-    }
-  },
-  "warnings": ["Subscription data unavailable"]
-}
-```
-
----
-
-## Real-time Features (Future)
-
-### WebSocket API (Planned)
-```javascript
-// Future WebSocket connection
-const ws = new WebSocket('wss://api.mochapoint.coffee/ws');
-
-// Real-time redemption notifications
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  if (data.type === 'REDEMPTION_COMPLETED') {
-    // Update UI with new stats
-    updateMonthlyStats(data.newStats);
-  }
-};
-
-// Real-time shop capacity updates
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  if (data.type === 'SHOP_CAPACITY_UPDATE') {
-    // Update shop availability
-    updateShopCapacity(data.shopId, data.capacity);
-  }
-};
-```
-
-### Push Notifications (Future)
-```http
-POST /notifications/send
-Authorization: Bearer <ADMIN_JWT_TOKEN>
-```
-
-**Request Body:**
-```json
-{
-  "userId": 1,
-  "type": "MONTHLY_LIMIT_RESET",
-  "title": "New Month, Fresh Coffee!",
-  "body": "Your monthly coffee limit has been reset. Time for your first cup!",
-  "data": {
-    "monthlyLimit": 25,
-    "remainingMonthly": 25
-  }
-}
-```
-
----
-
-This enhanced API reference provides comprehensive documentation for all MochaPoint backend services, including the new environment configuration system, enhanced session management, subscription system integration, and future-ready features. For additional help or questions, please refer to the [GitHub repository](../../) or contact our support team. Base Configuration
+## Base Configuration
 
 ### URLs
 ```
@@ -635,7 +167,7 @@ POST /auth/login
 }
 ```
 
-### Enhanced Session Expiry Handling ⭐ NEW
+### Enhanced Session Expiry Handling ✅ **IMPLEMENTED**
 
 **Response (401) - Token Expired:**
 ```json
@@ -647,6 +179,151 @@ POST /auth/login
 ```
 
 This triggers automatic logout and session expired dialog in the mobile app.
+
+#### Client-Side Session Management
+
+The Flutter client now includes comprehensive session expiry detection and handling:
+
+##### Exception Classes
+```dart
+// lib/utils/exceptions.dart
+class SessionExpiredException implements Exception {
+  final String message;
+  SessionExpiredException(this.message);
+  
+  @override
+  String toString() => 'SessionExpiredException: $message';
+}
+
+class NetworkException implements Exception {
+  final String message;
+  NetworkException(this.message);
+  
+  @override
+  String toString() => 'NetworkException: $message';
+}
+```
+
+##### Enhanced Service Pattern
+All API services now follow this pattern for session handling:
+
+```dart
+// Example from MonthlyStatsService
+static Future<MonthlyStatsData> getMonthlyStats() async {
+  try {
+    final headers = await AuthService.getAuthHeaders();
+    
+    if (!headers.containsKey('Authorization')) {
+      throw SessionExpiredException('No authentication token available');
+    }
+
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiBaseUrl}/redemptions/monthly-stats'),
+      headers: headers,
+    ).timeout(AppConfig.apiTimeout);
+
+    final result = _handleApiResponse(response);
+
+    // Handle session expiry
+    if (result['isSessionExpired'] == true) {
+      await AuthService.logout();
+      throw SessionExpiredException(result['error'] ?? 'Your session has expired.');
+    }
+
+    if (result['success']) {
+      return MonthlyStatsData.fromJson(result);
+    } else {
+      throw Exception(result['error'] ?? 'Failed to load data');
+    }
+  } catch (e) {
+    if (e is SessionExpiredException) {
+      rethrow; // Preserve session expiry exceptions
+    }
+    throw NetworkException('Network error: ${e.toString()}');
+  }
+}
+```
+
+#### UI Session Expiry Handling ✅ **IMPLEMENTED**
+
+Widgets now catch and handle session expiry gracefully:
+
+```dart
+// Example from CoffeeStatsCard
+Future<void> _loadMonthlyStats() async {
+  try {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final stats = await MonthlyStatsService.getMonthlyStats();
+
+    if (!mounted) return;
+
+    setState(() {
+      _monthlyStats = stats;
+      _isLoading = false;
+    });
+  } on SessionExpiredException catch (e) {
+    if (!mounted) return;
+    _handleSessionExpired(e.message); // Shows dialog and redirects
+  } catch (e) {
+    if (!mounted) return;
+    setState(() {
+      _errorMessage = e.toString();
+      _isLoading = false;
+    });
+  }
+}
+
+void _handleSessionExpired(String message) {
+  if (!mounted) return;
+
+  setState(() {
+    _isLoading = false;
+    _errorMessage = null;
+  });
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text(
+          'Session Expired',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF8B4513), // Coffee brown
+          ),
+        ),
+        content: Text(message),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _redirectToLogin();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B4513),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Log In Again'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _redirectToLogin() {
+  if (!mounted) return;
+  Navigator.of(context).pushNamedAndRemoveUntil(
+    '/login',
+    (route) => false,
+  );
+}
+```
 
 ### Google OAuth
 ```http
@@ -1321,15 +998,52 @@ GET /ratings/shop/:shopId
 }
 ```
 
-### Client-Side Error Handling
+### Client-Side Error Handling ✅ **IMPLEMENTED**
 
 The Flutter app now automatically handles these error codes:
 
-- **TOKEN_EXPIRED**: Shows session expired dialog → redirects to login
-- **TOKEN_MISSING/TOKEN_INVALID**: Clears stored token → redirects to login
+- **TOKEN_EXPIRED**: Triggers `SessionExpiredException` → Shows session expired dialog → Redirects to login
+- **TOKEN_MISSING/TOKEN_INVALID**: Clears stored token → Redirects to login
 - **MONTHLY_LIMIT_REACHED**: Shows specific message with next available date
 - **NO_JOKERS_AVAILABLE**: Prompts user to purchase more jokers
 - **DAILY_LIMIT_REACHED**: Shows countdown to next redemption
+
+#### Implementation Status
+
+| Component | Status | Description |
+|-----------|---------|-------------|
+| **Exception Classes** | ✅ Implemented | Shared exception classes in `utils/exceptions.dart` |
+| **MonthlyStatsService** | ✅ Enhanced | Session expiry detection and proper exception handling |
+| **RedemptionService** | ✅ Enhanced | Updated imports for exception classes |
+| **CoffeeStatsCard** | ✅ Enhanced | Session expiry dialog and login redirect |
+| **Session Dialog** | ✅ Implemented | User-friendly coffee-themed dialog |
+| **Auto-logout** | ✅ Implemented | Automatic token clearing and logout |
+| **Navigation Handling** | ✅ Implemented | Clears navigation stack on session expiry |
+
+#### Testing Session Expiry ✅ **READY**
+
+To test the enhanced session handling:
+
+1. **Login to app**: Authenticate and receive 30-day JWT token
+2. **Expire token**: Either wait for expiry or manually invalidate token
+3. **Navigate to stats**: Open screen with `CoffeeStatsCard`
+4. **Observe behavior**:
+    - Console shows session expiry logs
+    - User sees professional session expired dialog
+    - Clicking "Log In Again" redirects to login screen
+    - Navigation stack is cleared (no back button to authenticated screens)
+
+#### Development vs Production Behavior
+
+##### Development Environment
+- Detailed console logging of session expiry flow
+- Extended API timeouts for easier testing
+- Debug information in error messages
+
+##### Production Environment
+- Minimal logging (errors only)
+- Optimized API timeouts
+- Clean user-facing error messages only
 
 ---
 
@@ -1502,43 +1216,6 @@ curl -X GET http://localhost:8000/api/redemptions/monthly-stats
 
 ---
 
-## Rate Limiting & Performance
-
-### Current Limits
-- **General API**: No rate limiting implemented (future enhancement)
-- **QR Generation**: 1 subscription token per day + monthly limit enforcement
-- **Authentication**: No login attempt limiting (future enhancement)
-- **Session Management**: 30-day JWT tokens with automatic expiry detection
-
-### Performance Notes
-- **Response Times**: Target < 200ms for most endpoints
-- **Database Queries**: Optimized with strategic indexing for subscription system
-- **Pagination**: Available on history endpoints (limit/offset)
-- **Caching**: Future enhancement for static data
-- **Monthly Stats**: Optimized calculation using database aggregations
-
----
-
-## Webhook Support (Future)
-
-### Planned Webhooks
-```http
-POST /webhooks/stripe
-Content-Type: application/json
-Stripe-Signature: t=1234567890,v1=signature
-
-# For subscription payment events
-```
-
-### Webhook Events (Future)
-- `subscription.created`
-- `subscription.cancelled`
-- `subscription.payment_succeeded`
-- `subscription.payment_failed`
-- `monthly_limit.reset` (first day of month)
-
----
-
 ## Environment Configuration Integration
 
 ### API Base URLs by Environment
@@ -1672,8 +1349,25 @@ X-API-Version: v1
 - Updated statistics display (Available → Remaining)
 - Session expiry dialog and navigation
 
+#### Migration Notes ✅ **COMPLETED**
+
+##### Changes Made
+- Added shared exception classes in `lib/utils/exceptions.dart`
+- Enhanced `MonthlyStatsService` with proper session handling
+- Updated `CoffeeStatsCard` with session expiry dialog
+- Added import to `RedemptionService` for exception classes
+- Implemented user-friendly session expiry workflow
+
 ### Breaking Changes
 None - all changes are backwards compatible additions.
+
+##### Client Integration
+All services now follow the same session handling pattern:
+1. Detect session expiry from API response
+2. Call `AuthService.logout()` to clear local session
+3. Throw `SessionExpiredException` with user-friendly message
+4. UI catches exception and shows session expired dialog
+5. User clicks "Log In Again" and is redirected to login screen
 
 ---
 
