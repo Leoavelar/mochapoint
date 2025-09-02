@@ -1,8 +1,9 @@
-// lib/widgets/redemption_stats_card.dart
+// lib/widgets/redemption_stats_card.dart - Updated with session handling
 
 import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
 import '../services/monthly_stats_service.dart';
+import '../utils/exceptions.dart';
 
 class CoffeeStatsCard extends StatefulWidget {
   // Optional parameters for fallback/loading states
@@ -51,6 +52,13 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
         _monthlyStats = stats;
         _isLoading = false;
       });
+    } on SessionExpiredException catch (e) {
+      if (!mounted) return; // Check if widget is still mounted
+
+      // Handle session expiry - show dialog and redirect to login
+      if (mounted) {
+        _handleSessionExpired(e.message);
+      }
     } catch (e) {
       if (!mounted) return; // Check if widget is still mounted
 
@@ -60,6 +68,71 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       });
       print('Error loading monthly stats: $e');
     }
+  }
+
+  // New method to handle session expiry
+  void _handleSessionExpired(String message) {
+    if (!mounted) return;
+
+    // Clear any loading states
+    setState(() {
+      _isLoading = false;
+      _errorMessage = null; // Don't show generic error for session expiry
+    });
+
+    // Show session expired dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'Session Expired',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF8B4513), // Coffee brown color
+            ),
+          ),
+          content: Text(
+            message.isNotEmpty
+                ? message
+                : 'Your session has expired. Please log in again to continue.',
+            style: const TextStyle(fontSize: 16),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+                _redirectToLogin();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B4513), // Coffee brown
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              child: const Text('Log In Again'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Method to redirect to login screen
+  void _redirectToLogin() {
+    if (!mounted) return;
+
+    // Navigate to login screen and clear navigation stack
+    Navigator.of(context).pushNamedAndRemoveUntil(
+      '/login', // Update with your login route name
+          (route) => false, // Remove all previous routes
+    );
+
+    // Alternative if you're not using named routes:
+    // Navigator.of(context).pushAndRemoveUntil(
+    //   MaterialPageRoute(builder: (context) => const LoginScreen()),
+    //   (route) => false,
+    // );
   }
 
   Future<void> _refresh() async {

@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
+import '../utils/exceptions.dart';  // ADD THIS IMPORT
 import 'auth_service.dart';
 
 class RedemptionService {
