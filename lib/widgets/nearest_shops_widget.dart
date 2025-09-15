@@ -380,7 +380,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
+              color: isSubscribed ? MyApp.coffeeBean : Colors.black,
             ),
           ),
           const SizedBox(width: 2),
@@ -388,15 +388,11 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             '(${shop.googleRatingCount})',
             style: TextStyle(
               fontSize: 12,
-              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.black54,
             ),
           ),
           const SizedBox(width: 4),
-          Icon(
-            Icons.public, // Changed from Icons.google to Icons.public
-            size: 12,
-            color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
-          ),
+
         ],
       );
     } else if (hasAppRating) {
