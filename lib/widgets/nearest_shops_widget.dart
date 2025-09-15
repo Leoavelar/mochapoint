@@ -1,14 +1,13 @@
-// lib/widgets/nearest_shops_widget.dart - Updated with AppConfig
+// lib/widgets/nearest_shops_widget.dart - Updated with AppConfig and Google Rating Count
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mocha_point/main.dart';
 
-import '../config/app_config.dart'; // ADD THIS IMPORT
+import '../config/app_config.dart';
 import '../services/subscription_service.dart';
 
-// ... (CoffeeShop, UserSubscriptionStatus classes remain the same)
 class CoffeeShop {
   final int id;
   final String name;
@@ -19,7 +18,9 @@ class CoffeeShop {
   final bool subscriptionEnabled;
   final bool jokerEnabled;
   final double userAverageRating;
+  final int userRatingCount;
   final double googleRating;
+  final int googleRatingCount; // NEW: Added for Google ratings count
   final String? description;
   final String? phone;
   final String? hours;
@@ -39,7 +40,9 @@ class CoffeeShop {
     required this.subscriptionEnabled,
     required this.jokerEnabled,
     required this.userAverageRating,
+    required this.userRatingCount,
     required this.googleRating,
+    required this.googleRatingCount, // NEW: Added parameter
     this.description,
     this.phone,
     this.hours,
@@ -60,8 +63,10 @@ class CoffeeShop {
       longitude: json['longitude'].toDouble(),
       subscriptionEnabled: json['subscription_enabled'] ?? true,
       jokerEnabled: json['joker_enabled'] ?? true,
-      userAverageRating: (json['average_rating'] ?? 0.0).toDouble(),
+      userAverageRating: (json['app_rating'] ?? 0.0).toDouble(),
+      userRatingCount: json['app_rating_count'] ?? 0, // NEW: Added field
       googleRating: (json['google_rating'] ?? 0.0).toDouble(),
+      googleRatingCount: json['google_rating_count'] ?? 0, // NEW: Added field
       description: json['description'],
       phone: json['phone'],
       hours: json['hours'],
@@ -101,17 +106,13 @@ class UserSubscriptionStatus {
 }
 
 class ApiService {
-  // REMOVE THESE LINES:
-  // static const String baseUrl = 'http://192.168.1.109:8000/api';
-  // static const String baseUrl = 'https://mochapoint.coffee/api';
-
   static Future<Map<String, dynamic>> getCoffeeShops({
     double? latitude,
     double? longitude,
     double? radius,
   }) async {
     try {
-      String url = '${AppConfig.apiBaseUrl}/coffee-shops'; // CHANGED: Use AppConfig
+      String url = '${AppConfig.apiBaseUrl}/coffee-shops';
 
       // Add location-based filtering if coordinates are provided
       if (latitude != null && longitude != null) {
@@ -130,7 +131,7 @@ class ApiService {
         headers: {
           'Content-Type': 'application/json',
         },
-      ).timeout(AppConfig.apiTimeout); // CHANGED: Use AppConfig timeout
+      ).timeout(AppConfig.apiTimeout);
 
       if (AppConfig.enableLogging) {
         print('📊 ApiService: Coffee shops response status = ${response.statusCode}');
@@ -198,12 +199,12 @@ class ApiService {
       }
 
       final response = await http.get(
-        Uri.parse('${AppConfig.apiBaseUrl}/users/subscription-status'), // CHANGED: Use AppConfig
+        Uri.parse('${AppConfig.apiBaseUrl}/users/subscription-status'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-      ).timeout(AppConfig.apiTimeout); // CHANGED: Use AppConfig timeout
+      ).timeout(AppConfig.apiTimeout);
 
       if (AppConfig.enableLogging) {
         print('📊 ApiService: Subscription status response = ${response.statusCode}');
@@ -230,7 +231,6 @@ class ApiService {
   }
 }
 
-// ... (Rest of the widget code remains exactly the same)
 class NearestShopsWidget extends StatefulWidget {
   final double? userLatitude;
   final double? userLongitude;
@@ -357,6 +357,102 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         .firstOrNull;
 
     return accessibleShop?.subscriptionType;
+  }
+
+  // NEW: Helper method to build rating display with count
+  Widget _buildRatingDisplay(CoffeeShop shop, bool isSubscribed) {
+    // Determine which rating to display (prioritize Google rating if available)
+    final bool hasGoogleRating = shop.googleRating > 0 && shop.googleRatingCount > 0;
+    final bool hasAppRating = shop.userAverageRating > 0 && shop.userRatingCount > 0;
+
+    if (hasGoogleRating) {
+      // Display Google rating
+      return Row(
+        children: [
+          const Icon(
+            Icons.star,
+            size: 14,
+            color: Colors.amber,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            shop.googleRating.toStringAsFixed(1),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
+            ),
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '(${shop.googleRatingCount})',
+            style: TextStyle(
+              fontSize: 12,
+              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.public, // Changed from Icons.google to Icons.public
+            size: 12,
+            color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+          ),
+        ],
+      );
+    } else if (hasAppRating) {
+      // Display app rating as fallback
+      return Row(
+        children: [
+          const Icon(
+            Icons.star,
+            size: 14,
+            color: Colors.amber,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            shop.userAverageRating.toStringAsFixed(1),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
+            ),
+          ),
+          const SizedBox(width: 2),
+          Text(
+            '(${shop.userRatingCount})',
+            style: TextStyle(
+              fontSize: 12,
+              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.coffee,
+            size: 12,
+            color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+          ),
+        ],
+      );
+    } else {
+      // No ratings available
+      return Row(
+        children: [
+          Icon(
+            Icons.star_border,
+            size: 14,
+            color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.5) : Colors.grey,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'No ratings',
+            style: TextStyle(
+              fontSize: 12,
+              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+            ),
+          ),
+        ],
+      );
+    }
   }
 
   @override
@@ -540,7 +636,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         isSubscribed;
 
     final bool shopAcceptsJokers = shop.jokerEnabled;
-    final double displayRating = shop.googleRating > 0 ? shop.googleRating : shop.userAverageRating;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -701,19 +796,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(
-                              Icons.star,
-                              size: 14,
-                              color: Colors.amber,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              displayRating.toStringAsFixed(1),
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
-                              ),
-                            ),
+                            // UPDATED: Use the new rating display method
+                            _buildRatingDisplay(shop, isSubscribed),
                             const SizedBox(width: 16),
 
                             if (canUseSubscription)
@@ -754,7 +838,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'Accepts Joker',
+                                    'Joker',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: coffeeBean,

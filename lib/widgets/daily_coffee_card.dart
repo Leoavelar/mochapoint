@@ -251,7 +251,9 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                     subscriptionEnabled: true,
                     jokerEnabled: true,
                     userAverageRating: 0.0,
+                    userRatingCount: 0, // FIXED: Added missing parameter
                     googleRating: 0.0,
+                    googleRatingCount: 0, // FIXED: Added missing parameter
                     supportedDrinkTiers: [],
                     isActive: true,
                     logoUrl: null,
@@ -273,7 +275,9 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                   subscriptionEnabled: true,
                   jokerEnabled: true,
                   userAverageRating: 0.0,
+                  userRatingCount: 0, // FIXED: Added missing parameter
                   googleRating: 0.0,
+                  googleRatingCount: 0, // FIXED: Added missing parameter
                   supportedDrinkTiers: [],
                   isActive: true,
                   logoUrl: null,
