@@ -1,9 +1,10 @@
-// lib/widgets/nearest_shops_widget.dart - Updated with AppConfig and Google Rating Count
+// lib/widgets/nearest_shops_widget.dart - Complete file with location integration
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:mocha_point/main.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../config/app_config.dart';
 import '../services/subscription_service.dart';
@@ -20,7 +21,7 @@ class CoffeeShop {
   final double userAverageRating;
   final int userRatingCount;
   final double googleRating;
-  final int googleRatingCount; // NEW: Added for Google ratings count
+  final int googleRatingCount;
   final String? description;
   final String? phone;
   final String? hours;
@@ -42,7 +43,7 @@ class CoffeeShop {
     required this.userAverageRating,
     required this.userRatingCount,
     required this.googleRating,
-    required this.googleRatingCount, // NEW: Added parameter
+    required this.googleRatingCount,
     this.description,
     this.phone,
     this.hours,
@@ -54,26 +55,55 @@ class CoffeeShop {
   });
 
   factory CoffeeShop.fromJson(Map<String, dynamic> json) {
+    // Helper function to safely parse numbers
+    double safeParseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      if (value is String) {
+        try {
+          return double.parse(value);
+        } catch (e) {
+          return 0.0;
+        }
+      }
+      return 0.0;
+    }
+
+    int safeParseInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is double) return value.toInt();
+      if (value is String) {
+        try {
+          return int.parse(value);
+        } catch (e) {
+          return 0;
+        }
+      }
+      return 0;
+    }
+
     return CoffeeShop(
       id: json['id'],
       name: json['name'],
       brand: json['brand'],
       address: json['address'],
-      latitude: json['latitude'].toDouble(),
-      longitude: json['longitude'].toDouble(),
+      latitude: safeParseDouble(json['latitude']),
+      longitude: safeParseDouble(json['longitude']),
       subscriptionEnabled: json['subscription_enabled'] ?? true,
       jokerEnabled: json['joker_enabled'] ?? true,
-      userAverageRating: (json['app_rating'] ?? 0.0).toDouble(),
-      userRatingCount: json['app_rating_count'] ?? 0, // NEW: Added field
-      googleRating: (json['google_rating'] ?? 0.0).toDouble(),
-      googleRatingCount: json['google_rating_count'] ?? 0, // NEW: Added field
+      userAverageRating: safeParseDouble(json['app_rating']),
+      userRatingCount: safeParseInt(json['app_rating_count']),
+      googleRating: safeParseDouble(json['google_rating']),
+      googleRatingCount: safeParseInt(json['google_rating_count']),
       description: json['description'],
       phone: json['phone'],
       hours: json['hours'],
       logoUrl: json['logoFilename'],
       supportedDrinkTiers: List<String>.from(json['supportedDrinkTiers'] ?? []),
       isActive: json['is_active'] ?? true,
-      distance: json['distance']?.toDouble(),
+      distance: safeParseDouble(json['distance']),
       walkingTime: json['walkingTime'],
     );
   }
@@ -106,21 +136,9 @@ class UserSubscriptionStatus {
 }
 
 class ApiService {
-  static Future<Map<String, dynamic>> getCoffeeShops({
-    double? latitude,
-    double? longitude,
-    double? radius,
-  }) async {
+  static Future<Map<String, dynamic>> getCoffeeShops() async {
     try {
       String url = '${AppConfig.apiBaseUrl}/coffee-shops';
-
-      // Add location-based filtering if coordinates are provided
-      if (latitude != null && longitude != null) {
-        url += '?lat=$latitude&lng=$longitude';
-        if (radius != null) {
-          url += '&radius=$radius';
-        }
-      }
 
       if (AppConfig.enableLogging) {
         print('🔍 ApiService: Getting coffee shops from $url');
@@ -148,10 +166,8 @@ class ApiService {
         List<dynamic> jsonData;
 
         if (responseData is List) {
-          // Direct array response
           jsonData = responseData;
         } else if (responseData is Map<String, dynamic>) {
-          // Object response - check common patterns
           if (responseData.containsKey('data')) {
             jsonData = responseData['data'] as List<dynamic>;
           } else if (responseData.containsKey('coffeeShops')) {
@@ -159,7 +175,6 @@ class ApiService {
           } else if (responseData.containsKey('shops')) {
             jsonData = responseData['shops'] as List<dynamic>;
           } else {
-            // If it's a single shop object, wrap it in a list
             jsonData = [responseData];
           }
         } else {
@@ -172,7 +187,6 @@ class ApiService {
           print('✅ ApiService: Successfully loaded ${shops.length} coffee shops');
         }
 
-        // Return both the shops and the raw JSON for debugging
         return {
           'shops': shops,
           'rawJson': response.body,
@@ -241,7 +255,7 @@ class NearestShopsWidget extends StatefulWidget {
     super.key,
     this.userLatitude,
     this.userLongitude,
-    this.searchRadius = 5.0,
+    this.searchRadius = 10.0,
     this.userToken,
   });
 
@@ -259,16 +273,88 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
   Map<String, dynamic>? debugParsedData;
   bool _isDisposed = false;
 
+  // Location-related state
+  Position? _currentPosition;
+  bool _locationPermissionGranted = false;
+  bool _isLoadingLocation = false;
+  String _orderBy = 'distance';
+
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _initializeLocation();
   }
 
   @override
   void dispose() {
     _isDisposed = true;
     super.dispose();
+  }
+
+  Future<void> _initializeLocation() async {
+    if (!mounted || _isDisposed) return;
+
+    setState(() {
+      _isLoadingLocation = true;
+    });
+
+    try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (AppConfig.enableLogging) {
+          print('Location services are disabled');
+        }
+        await _loadData();
+        return;
+      }
+
+      // Check location permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (AppConfig.enableLogging) {
+            print('Location permissions are denied');
+          }
+          await _loadData();
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (AppConfig.enableLogging) {
+          print('Location permissions are permanently denied');
+        }
+        await _loadData();
+        return;
+      }
+
+      // Get current position
+      _currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      _locationPermissionGranted = true;
+
+      if (AppConfig.enableLogging && _currentPosition != null) {
+        print('📍 Got location: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
+      }
+
+      await _loadData();
+    } catch (e) {
+      if (AppConfig.enableLogging) {
+        print('Error getting location: $e');
+      }
+      await _loadData();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingLocation = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadData() async {
@@ -280,14 +366,70 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     });
 
     try {
-      // Load coffee shops
-      final shopData = await ApiService.getCoffeeShops(
-        latitude: widget.userLatitude,
-        longitude: widget.userLongitude,
-        radius: widget.searchRadius,
-      );
+      // Load coffee shops WITHOUT location parameters (Flutter-only solution)
+      final shopData = await ApiService.getCoffeeShops();
 
       if (!mounted || _isDisposed) return;
+
+      // Calculate distances on Flutter side using geolocator
+      List<CoffeeShop> shopsWithDistances = [];
+
+      for (var shop in shopData['shops'] as List<CoffeeShop>) {
+        double? distance;
+        String? walkingTime;
+
+        // Calculate distance using geolocator if we have current position
+        if (_currentPosition != null) {
+          final distanceInMeters = Geolocator.distanceBetween(
+            _currentPosition!.latitude,
+            _currentPosition!.longitude,
+            shop.latitude,
+            shop.longitude,
+          );
+
+          distance = distanceInMeters / 1000; // Convert to kilometers
+          walkingTime = _calculateWalkingTime(distance);
+        }
+
+        // Create new CoffeeShop with calculated distance
+        shopsWithDistances.add(CoffeeShop(
+          id: shop.id,
+          name: shop.name,
+          brand: shop.brand,
+          address: shop.address,
+          latitude: shop.latitude,
+          longitude: shop.longitude,
+          subscriptionEnabled: shop.subscriptionEnabled,
+          jokerEnabled: shop.jokerEnabled,
+          userAverageRating: shop.userAverageRating,
+          userRatingCount: shop.userRatingCount,
+          googleRating: shop.googleRating,
+          googleRatingCount: shop.googleRatingCount,
+          description: shop.description,
+          phone: shop.phone,
+          hours: shop.hours,
+          logoUrl: shop.logoUrl,
+          supportedDrinkTiers: shop.supportedDrinkTiers,
+          isActive: shop.isActive,
+          distance: distance, // Flutter-calculated distance
+          walkingTime: walkingTime, // Flutter-calculated walking time
+        ));
+      }
+
+      // Sort by distance or rating based on user preference
+      if (_currentPosition != null && _orderBy == 'distance') {
+        shopsWithDistances.sort((a, b) {
+          final distanceA = a.distance ?? double.infinity;
+          final distanceB = b.distance ?? double.infinity;
+          return distanceA.compareTo(distanceB);
+        });
+      } else if (_orderBy == 'rating') {
+        shopsWithDistances.sort((a, b) {
+          final ratingA = (a.googleRating > 0) ? a.googleRating : a.userAverageRating;
+          final ratingB = (b.googleRating > 0) ? b.googleRating : b.userAverageRating;
+          return ratingB.compareTo(ratingA);
+        });
+      }
 
       // Load user subscription status if token provided
       UserSubscriptionStatus? userStatus;
@@ -318,7 +460,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       if (!mounted || _isDisposed) return;
 
       setState(() {
-        shops = shopData['shops'] as List<CoffeeShop>;
+        shops = shopsWithDistances; // Use Flutter-calculated distances
         subscriptionStatus = userStatus;
         _subscriptionData = subscriptionData;
         debugRawJson = shopData['rawJson'] as String;
@@ -335,8 +477,30 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     }
   }
 
+  // Helper method to calculate walking time
+  String _calculateWalkingTime(double distanceKm) {
+    const walkingSpeedKmh = 5.0; // Average walking speed
+    final minutes = (distanceKm / walkingSpeedKmh * 60).round();
+
+    if (minutes < 1) return "< 1 min";
+    if (minutes < 60) return "$minutes min";
+
+    final hours = minutes ~/ 60;
+    final remainingMinutes = minutes % 60;
+    return remainingMinutes > 0 ? "${hours}h ${remainingMinutes}m" : "${hours}h";
+  }
+
   Future<void> _refresh() async {
-    await _loadData();
+    await _initializeLocation();
+  }
+
+  void _changeOrderBy(String newOrderBy) {
+    if (_orderBy != newOrderBy) {
+      setState(() {
+        _orderBy = newOrderBy;
+      });
+      _loadData();
+    }
   }
 
   bool _isUserSubscribedToShop(int shopId) {
@@ -359,14 +523,11 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     return accessibleShop?.subscriptionType;
   }
 
-  // NEW: Helper method to build rating display with count
   Widget _buildRatingDisplay(CoffeeShop shop, bool isSubscribed) {
-    // Determine which rating to display (prioritize Google rating if available)
     final bool hasGoogleRating = shop.googleRating > 0 && shop.googleRatingCount > 0;
     final bool hasAppRating = shop.userAverageRating > 0 && shop.userRatingCount > 0;
 
     if (hasGoogleRating) {
-      // Display Google rating
       return Row(
         children: [
           const Icon(
@@ -380,7 +541,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: isSubscribed ? MyApp.coffeeBean : Colors.black,
+              color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
             ),
           ),
           const SizedBox(width: 2),
@@ -388,15 +549,18 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             '(${shop.googleRatingCount})',
             style: TextStyle(
               fontSize: 12,
-              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.black54,
+              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
             ),
           ),
           const SizedBox(width: 4),
-
+          Icon(
+            Icons.public,
+            size: 12,
+            color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+          ),
         ],
       );
     } else if (hasAppRating) {
-      // Display app rating as fallback
       return Row(
         children: [
           const Icon(
@@ -430,7 +594,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         ],
       );
     } else {
-      // No ratings available
       return Row(
         children: [
           Icon(
@@ -454,10 +617,17 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(32.0),
-          child: CircularProgressIndicator(),
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(_isLoadingLocation ? 'Getting your location...' : 'Loading coffee shops...'),
+            ],
+          ),
         ),
       );
     }
@@ -474,10 +644,88 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       onRefresh: _refresh,
       child: Column(
         children: [
+          _buildLocationHeader(),
+
           if (_subscriptionData?.hasActiveSubscription == true)
             _buildSubscriptionSummary(),
+
           ...shops.map((shop) => _buildShopItem(context, shop)).toList(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLocationHeader() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _currentPosition != null ? Icons.location_on : Icons.location_off,
+                size: 16,
+                color: _currentPosition != null ? Colors.green : Colors.orange,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _currentPosition != null
+                      ? 'Showing nearest coffee shops'
+                      : 'Location unavailable - showing all shops',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          if (_currentPosition != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _buildSortButton('Distance', 'distance'),
+                const SizedBox(width: 8),
+                _buildSortButton('Rating', 'rating'),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSortButton(String label, String value) {
+    final isSelected = _orderBy == value;
+    return GestureDetector(
+      onTap: () => _changeOrderBy(value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? MyApp.coffeeBean : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? MyApp.coffeeBean : Colors.grey.shade400,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isSelected ? Colors.white : Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
@@ -728,6 +976,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Shop name and brand (unchanged)
                         Row(
                           children: [
                             Expanded(
@@ -753,118 +1002,120 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                           ),
                         ],
                         const SizedBox(height: 6),
+
+                        // Rating (left) and Walking Distance (right)
                         Row(
                           children: [
+                            // Rating on the left
+                            _buildRatingDisplay(shop, isSubscribed),
+
+                            const SizedBox(width: 16), // Fixed spacing instead of Spacer()
+
+                            // Walking distance with better spacing
                             if (shop.distance != null) ...[
                               Icon(
                                 Icons.directions_walk,
                                 size: 14,
-                                color: isSubscribed ? MyApp.coffeeBean : MyApp.coffeeBean,
+                                color: Colors.black, // Changed to Colors.black as requested
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${(shop.distance! * 1000).round()}m',
-                                style: TextStyle(
+                                shop.distance! < 1
+                                    ? '${(shop.distance! * 1000).round()}m'
+                                    : '${shop.distance!.toStringAsFixed(1)}km',
+                                style: const TextStyle(
                                   fontSize: 14,
-                                  color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
+                                  color: Colors.black54,
                                 ),
                               ),
-                              const SizedBox(width: 16),
                             ],
-                            if (shop.walkingTime != null) ...[
+                            if (shop.walkingTime != null && shop.distance == null) ...[
                               Icon(
                                 Icons.access_time,
                                 size: 14,
-                                color: isSubscribed ? MyApp.coffeeBean : MyApp.coffeeBean,
+                                color: Colors.black, // Changed to Colors.black as requested
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 shop.walkingTime!,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 14,
-                                  color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
+                                  color: Colors.black54,
                                 ),
                               ),
-                              const SizedBox(width: 16),
                             ],
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            // UPDATED: Use the new rating display method
-                            _buildRatingDisplay(shop, isSubscribed),
-                            const SizedBox(width: 16),
+                        const SizedBox(height: 6),
 
-                            if (canUseSubscription)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: coffeeGreen,
-                                  borderRadius: BorderRadius.circular(12),
+                        // Joker acceptance status below
+                        if (canUseSubscription)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: coffeeGreen,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.local_cafe,
+                                  size: 12,
+                                  color: Colors.white,
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.local_cafe,
-                                      size: 12,
-                                      color: Colors.white,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      'Free Coffee',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Free Coffee',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              )
-                            else if (shopAcceptsJokers)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.card_giftcard,
-                                    size: 14,
-                                    color: coffeeBean,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Joker',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: coffeeBean,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            else
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.payments,
-                                    size: 14,
-                                    color: Colors.grey,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'No Joker',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
+                              ],
+                            ),
+                          )
+                        else if (shopAcceptsJokers)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.card_giftcard,
+                                size: 14,
+                                color: coffeeBean,
                               ),
-                          ],
-                        ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Accepts Joker',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: coffeeBean,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.payments,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'No Joker',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
