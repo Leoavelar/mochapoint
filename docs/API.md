@@ -497,21 +497,23 @@ GET /coffee-shops?lat=47.0707&lng=15.4395&radius=10
   "success": true,
   "data": [
     {
-      "id": 1,
-      "name": "Central Coffee",
-      "brand": "Central",
-      "address": "Hauptplatz 1, 8010 Graz",
-      "latitude": 47.0707,
-      "longitude": 15.4395,
-      "subscriptionEnabled": true,
-      "jokerEnabled": true,
-      "appRating": 4.5,
-      "googleRating": 4.3,
-      "distance": 0.5,
-      "walkingTime": "6 min",
-      "isOpen": true,
-      "redemptionsAllowed": true,
-      "isSubscriptionAccessible": true // NEW: For subscription highlighting
+       "id": 1,
+       "name": "Central Coffee",
+       "brand": "Central",
+       "address": "Hauptplatz 1, 8010 Graz",
+       "latitude": 47.0707,
+       "longitude": 15.4395,
+       "subscription_enabled": true,
+       "joker_enabled": true,
+       "app_rating": 4.5,
+       "app_rating_count": 127,
+       "google_rating": 4.3,
+       "google_rating_count": 245,
+       "distance": 0.5,
+       "walkingTime": "6 min",
+       "isOpen": true,
+       "redemptionsAllowed": true,
+       "isSubscriptionAccessible": true
     }
   ]
 }
@@ -1179,6 +1181,26 @@ curl -X GET http://localhost:8000/api/coffee-shops/1/stats \
   -H "Authorization: Bearer $SHOP_OWNER_TOKEN"
 ```
 
+### Enhanced Rating Display
+Coffee shops now return both app ratings and Google ratings with proper count information:
+
+**Response Fields:**
+- `app_rating`: Internal app rating (0.0-5.0)
+- `app_rating_count`: Number of internal ratings
+- `google_rating`: Google Places rating (0.0-5.0)
+- `google_rating_count`: Number of Google ratings
+
+**Field Format:**
+All rating values are returned as numbers (not strings) to ensure proper client-side processing:
+```json
+{
+   "app_rating": 4.5,        
+   "app_rating_count": 127,  
+   "google_rating": 4.3,     
+   "google_rating_count": 245
+}
+```
+
 ### Rating System Testing
 ```bash
 # 1. Submit rating
@@ -1537,6 +1559,22 @@ X-Environment: development
   "subscriptionPlan": "premium-monthly"
 }
 ```
+
+### Location-Based Features (Client-Side)
+
+**Important**: Location-based ordering and distance calculations are handled entirely on the client side using Flutter's geolocator package. The backend does not process location parameters.
+
+**Client Implementation:**
+- Flutter app requests location permissions
+- Calculates distances using `Geolocator.distanceBetween()`
+- Sorts coffee shops by proximity
+- Displays walking time estimates
+
+**API Behavior:**
+- Backend returns all coffee shops without location filtering
+- No location parameters are sent to `/coffee-shops` endpoint
+- Distance and walking time calculations performed in Flutter
+
 
 #### Reset User Stats
 ```http
