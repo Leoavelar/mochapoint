@@ -358,7 +358,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
           crossAxisAlignment: CrossAxisAlignment.start, // Align to top
           children: [
             Image.asset(
-              'assets/icons/mocha_icon_active.png',
+              'assets/icons/mocha_icon_coffeebean.png',
               width: 40,
               height: 40,
               errorBuilder: (context, error, stackTrace) {

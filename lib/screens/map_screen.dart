@@ -483,7 +483,7 @@ class _MapScreenState extends State<MapScreen> {
           padding: const EdgeInsets.all(4),
           child: Image.asset(
             isSubscription
-                ? 'assets/icons/mocha_icon_active.png'
+                ? 'assets/icons/mocha_icon_coffeebean.png'
                 : 'assets/icons/mocha_icon_black.png',
             fit: BoxFit.contain,
           ),
