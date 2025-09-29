@@ -749,12 +749,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
   Widget _buildLocationHeader() {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
+      padding: const EdgeInsets.all(2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -817,6 +812,80 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             fontWeight: FontWeight.w500,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionSummary() {
+    final subscription = _subscriptionData!.subscription!;
+    final accessibleShopsCount = _subscriptionData!.accessibleShops.length;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: MyApp.coffeeBean.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: MyApp.coffeeBean.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.card_membership,
+                color: MyApp.coffeeBean,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  subscription.planName,
+                  style: TextStyle(
+                    color: MyApp.coffeeBean,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: MyApp.coffeeBean,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${subscription.usedThisWeek}/${subscription.weeklyLimit}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                Icons.store,
+                color: MyApp.coffeeBean,
+                size: 16,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '$accessibleShopsCount subscribed ${accessibleShopsCount == 1 ? 'shop' : 'shops'} nearby',
+                style: TextStyle(
+                  color: MyApp.coffeeBean,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -906,271 +975,209 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        side: isSubscribed
-            ? BorderSide(color: MyApp.coffeeBean, width: 2.0)
-            : BorderSide.none,
       ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: isSubscribed
-              ? MyApp.coffeeBean.withOpacity(0.05)
-              : Colors.white,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              if (isSubscribed)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: MyApp.coffeeBean,
-                    borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: shop.logoUrl != null
+                    ? Image.asset(
+                  'assets/images/shops/${shop.logoUrl}',
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/images/shops/default_coffee_logo.png',
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildFallbackLogo(coffeeBean);
+                      },
+                    );
+                  },
+                )
+                    : _buildFallbackLogo(coffeeBean),
+              ),
+            ),
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Shop name
+                  Text(
+                    shop.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  if (shop.brand != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      shop.brand!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 6),
+
+                  // Rating (left) and Walking Distance (right)
+                  Row(
                     children: [
-                      const Icon(
-                        Icons.star,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        subscriptionType == 'brand-wide'
-                            ? 'Brand Subscription'
-                            : 'Your Subscribed Shop',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
+                      // Rating on the left
+                      _buildRatingDisplay(shop, false),
+
+                      const SizedBox(width: 16),
+
+                      // Walking distance
+                      if (shop.distance != null) ...[
+                        const Icon(
+                          Icons.directions_walk,
+                          size: 14,
+                          color: Colors.black,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        Text(
+                          shop.distance! < 1
+                              ? '${(shop.distance! * 1000).round()}m'
+                              : '${shop.distance!.toStringAsFixed(1)}km',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                      if (shop.walkingTime != null && shop.distance == null) ...[
+                        const Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: Colors.black,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          shop.walkingTime!,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
-                ),
+                  const SizedBox(height: 6),
 
-              Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: isSubscribed
-                          ? Border.all(color: MyApp.coffeeBean, width: 2)
-                          : null,
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: shop.logoUrl != null
-                          ? Image.asset(
-                        'assets/images/shops/${shop.logoUrl}',
-                        width: 48,
-                        height: 48,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            'assets/images/shops/default_coffee_logo.png',
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return _buildFallbackLogo(coffeeBean);
-                            },
-                          );
-                        },
-                      )
-                          : _buildFallbackLogo(coffeeBean),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Shop name and brand
+                  // Subscription status and Joker acceptance (separate rows)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (isSubscribed)
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Expanded(
-                              child: Text(
-                                shop.name,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: isSubscribed ? MyApp.coffeeBean : Colors.black,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (shop.brand != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            shop.brand!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.8) : Colors.grey,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 6),
-
-                        // Rating (left) and Walking Distance (right)
-                        Row(
-                          children: [
-                            // Rating on the left
-                            _buildRatingDisplay(shop, isSubscribed),
-
-                            const SizedBox(width: 16),
-
-                            // Walking distance
-                            if (shop.distance != null) ...[
-                              Icon(
-                                Icons.directions_walk,
-                                size: 14,
-                                color: Colors.black,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                shop.distance! < 1
-                                    ? '${(shop.distance! * 1000).round()}m'
-                                    : '${shop.distance!.toStringAsFixed(1)}km',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
-                            if (shop.walkingTime != null && shop.distance == null) ...[
-                              Icon(
-                                Icons.access_time,
-                                size: 14,
-                                color: Colors.black,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                shop.walkingTime!,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-
-                        // Joker acceptance status below
-                        if (canUseSubscription)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
+                            const Icon(
+                              Icons.verified,
+                              size: 14,
                               color: coffeeGreen,
-                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.local_cafe,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'Free Coffee',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            const SizedBox(width: 4),
+                            Text(
+                              'Subscribed',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: coffeeGreen,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          )
-                        else if (shopAcceptsJokers)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.card_giftcard,
-                                size: 14,
-                                color: coffeeBean,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Accepts Joker',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: coffeeBean,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          )
-                        else
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.payments,
-                                size: 14,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'No Joker',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isSubscribed ? MyApp.coffeeBean : coffeeBean,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: isSubscribed ? [
-                        BoxShadow(
-                          color: MyApp.coffeeBean.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          ],
                         ),
-                      ] : null,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.directions,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Directions to ${shop.name} coming soon!'),
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                    ),
+                      if (isSubscribed && shopAcceptsJokers)
+                        const SizedBox(height: 4),
+                      if (shopAcceptsJokers)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.card_giftcard,
+                              size: 14,
+                              color: coffeeBean,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Accepts Joker',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: coffeeBean,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (!isSubscribed && !shopAcceptsJokers)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.payments,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'No Joker',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: coffeeBean,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: IconButton(
+                icon: const Icon(
+                  Icons.directions,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Directions to ${shop.name} coming soon!'),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
