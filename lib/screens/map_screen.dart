@@ -10,6 +10,7 @@ import 'package:mocha_point/config/app_config.dart';
 import 'package:mocha_point/utils/exceptions.dart';
 import 'package:mocha_point/utils/location_utils.dart';
 import 'package:mocha_point/widgets/profile_avatar.dart';
+import 'package:mocha_point/widgets/redemption_selection_modal.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({Key? key}) : super(key: key);
@@ -162,7 +163,6 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // NEW: Determine shop category based on user's subscription status and shop capabilities
   ShopCategory _getShopCategory(CoffeeShop shop) {
     // Priority 1: User has subscription AND shop is accessible with subscription
     if (_hasActiveSubscription && _accessibleShopIds.contains(shop.id)) {
@@ -541,23 +541,16 @@ class _MapScreenState extends State<MapScreen> {
 
   Widget _buildCustomMarker(BuildContext context, ShopCategory category) {
     String iconPath;
-    Color backgroundColor;
 
     switch (category) {
       case ShopCategory.subscription:
-      // User has subscription and shop accepts it - green icon
         iconPath = 'assets/icons/mocha_icon_green.png';
-        backgroundColor = const Color(0xFF4CAF50);
         break;
       case ShopCategory.joker:
-      // User has jokers and shop accepts them - coffee bean icon
         iconPath = 'assets/icons/mocha_icon_coffeebean.png';
-        backgroundColor = Theme.of(context).colorScheme.secondary;
         break;
       case ShopCategory.unavailable:
-      // No redemption options available - black/grey icon
         iconPath = 'assets/icons/mocha_icon_black.png';
-        backgroundColor = Colors.grey;
         break;
     }
 
@@ -792,12 +785,7 @@ class _MapScreenState extends State<MapScreen> {
               ElevatedButton(
                 onPressed: category == ShopCategory.unavailable ? null : () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('$actionText at ${shop.name}'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
+                  _openRedemptionModal(category);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: category == ShopCategory.unavailable ? Colors.grey : color,
@@ -862,11 +850,33 @@ class _MapScreenState extends State<MapScreen> {
       },
     );
   }
+
+  void _openRedemptionModal(ShopCategory category) {
+    String? initialType;
+
+    if (category == ShopCategory.subscription) {
+      initialType = 'subscription';
+    } else if (category == ShopCategory.joker) {
+      initialType = 'joker';
+    }
+
+    if (AppConfig.enableLogging) {
+      print('🎫 MapScreen: Opening redemption modal with type: $initialType');
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => RedemptionSelectionModal(
+        initialRedemptionType: initialType,
+      ),
+    );
+  }
 }
 
-// NEW: Enum to clearly define shop categories
 enum ShopCategory {
-  subscription,  // User can use subscription here
-  joker,        // User can use jokers here
-  unavailable   // No redemption options available
+  subscription,
+  joker,
+  unavailable
 }
