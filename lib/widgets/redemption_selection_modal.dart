@@ -2,10 +2,15 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/redemption_service.dart';
-import '../services/auth_service.dart';
+import '../config/app_config.dart';
 
 class RedemptionSelectionModal extends StatefulWidget {
-  const RedemptionSelectionModal({Key? key}) : super(key: key);
+  final String? initialRedemptionType; // 'subscription' or 'joker' or null for selection
+
+  const RedemptionSelectionModal({
+    Key? key,
+    this.initialRedemptionType,
+  }) : super(key: key);
 
   @override
   State<RedemptionSelectionModal> createState() => _RedemptionSelectionModalState();
@@ -26,7 +31,9 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   }
 
   Future<void> _loadRedemptionStatus() async {
-    print('🔍 Starting to load redemption status...');
+    if (AppConfig.enableLogging) {
+      print('🔍 RedemptionModal: Loading redemption status');
+    }
 
     setState(() {
       _isLoading = true;
@@ -34,33 +41,30 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     });
 
     try {
-      print('📞 Calling RedemptionService.getRedemptionStatus()...');
-
       final result = await RedemptionService.getRedemptionStatus();
 
-      print('📊 Raw result: $result');
-
       if (result['success']) {
-        print('✅ Success! Status data: ${result['status']}');
         setState(() {
           _redemptionStatus = result['status'];
           _isLoading = false;
         });
+
+        // If initial redemption type is provided, generate QR immediately
+        if (widget.initialRedemptionType != null && mounted) {
+          _generateQRCode(widget.initialRedemptionType!);
+        }
       } else {
-        print('❌ Failed! Error: ${result['error']}');
+        if (AppConfig.enableLogging) {
+          print('❌ RedemptionModal: Failed to load status');
+        }
 
         // Check if this is a session expiry
         if (result['isSessionExpired'] == true ||
             result['errorCode'] == 'SESSION_EXPIRED' ||
             result['errorCode'] == 'TOKEN_EXPIRED') {
-
-          // Close the modal and navigate to login
           Navigator.of(context).pop();
-
-          // Show session expired dialog
           _showSessionExpiredDialog();
-
-          return; // Don't update the error state since we're navigating away
+          return;
         }
 
         setState(() {
@@ -68,9 +72,10 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           _isLoading = false;
         });
       }
-    } catch (e, stackTrace) {
-      print('💥 Exception caught: $e');
-      print('📚 Stack trace: $stackTrace');
+    } catch (e) {
+      if (AppConfig.enableLogging) {
+        print('❌ RedemptionModal: Exception: $e');
+      }
       setState(() {
         _error = 'Failed to get redemption status: $e';
         _isLoading = false;
@@ -79,7 +84,9 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   }
 
   Future<void> _generateQRCode(String redemptionType) async {
-    print('🔍 Starting QR generation for type: $redemptionType');
+    if (AppConfig.enableLogging) {
+      print('🎫 RedemptionModal: Generating QR for $redemptionType');
+    }
 
     setState(() {
       _isGeneratingQR = true;
@@ -87,32 +94,25 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     });
 
     try {
-      print('📞 Calling RedemptionService.generateQRToken($redemptionType)...');
-
       final result = await RedemptionService.generateQRToken(redemptionType);
 
-      print('📊 QR Generation result: $result');
-
       if (result['success']) {
-        print('✅ QR Success! Token: ${result['qrToken']?.substring(0, 20)}...');
         setState(() {
           _selectedRedemptionType = redemptionType;
           _qrToken = result['qrToken'];
           _isGeneratingQR = false;
         });
       } else {
-        print('❌ QR Failed! Error: ${result['error']}');
+        if (AppConfig.enableLogging) {
+          print('❌ RedemptionModal: QR generation failed');
+        }
 
         // Check if this is a session expiry
         if (result['isSessionExpired'] == true ||
             result['errorCode'] == 'SESSION_EXPIRED' ||
             result['errorCode'] == 'TOKEN_EXPIRED') {
-
-          // Close the modal and show session expired dialog
           Navigator.of(context).pop();
-
           _showSessionExpiredDialog();
-
           return;
         }
 
@@ -129,9 +129,10 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           });
         }
       }
-    } catch (e, stackTrace) {
-      print('💥 QR Exception caught: $e');
-      print('📚 QR Stack trace: $stackTrace');
+    } catch (e) {
+      if (AppConfig.enableLogging) {
+        print('❌ RedemptionModal: QR exception: $e');
+      }
       setState(() {
         _error = 'Failed to generate QR code: $e';
         _isGeneratingQR = false;
@@ -147,17 +148,17 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.lock_clock_outlined, color: Colors.orange),
             SizedBox(width: 8),
             Text(
               'Session Expired',
-              style: TextStyle(color: Colors.orange[700]),
+              style: TextStyle(color: Colors.orange),
             ),
           ],
         ),
-        content: Text(
+        content: const Text(
           'Your session has expired for security reasons. Please log in again to continue.',
         ),
         actions: [
@@ -167,8 +168,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               foregroundColor: Colors.white,
             ),
             onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-              // Navigate to login screen - adjust this route as needed for your app
+              Navigator.of(context).pop();
               Navigator.of(context).pushNamedAndRemoveUntil(
                 '/login',
                     (route) => false,
@@ -191,7 +191,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       ),
       child: Column(
         children: [
-          // Drag indicator
           Container(
             margin: const EdgeInsets.only(top: 12),
             width: 40,
@@ -201,7 +200,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-
           Expanded(
             child: _buildContent(),
           ),
@@ -229,25 +227,23 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   }
 
   Widget _buildErrorState() {
+    final isSessionError = _error!.contains('session') ||
+        _error!.contains('expired') ||
+        _error!.contains('log in');
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            _error!.contains('session') || _error!.contains('expired') || _error!.contains('log in')
-                ? Icons.lock_clock_outlined
-                : Icons.error_outline,
+            isSessionError ? Icons.lock_clock_outlined : Icons.error_outline,
             size: 64,
-            color: _error!.contains('session') || _error!.contains('expired') || _error!.contains('log in')
-                ? Colors.orange[300]
-                : Colors.red[300],
+            color: isSessionError ? Colors.orange[300] : Colors.red[300],
           ),
           const SizedBox(height: 16),
           Text(
-            _error!.contains('session') || _error!.contains('expired') || _error!.contains('log in')
-                ? 'Session Expired'
-                : 'Unable to Generate QR Code',
+            isSessionError ? 'Session Expired' : 'Unable to Generate QR Code',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -263,20 +259,19 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              if (!(_error!.contains('session') || _error!.contains('expired') || _error!.contains('log in')))
+              if (!isSessionError)
                 ElevatedButton(
                   onPressed: _loadRedemptionStatus,
                   child: const Text('Try Again'),
                 ),
-              if (_error!.contains('session') || _error!.contains('expired') || _error!.contains('log in'))
+              if (isSessionError)
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close modal
-                    // Navigate to login screen
+                    Navigator.of(context).pop();
                     Navigator.of(context).pushNamedAndRemoveUntil(
                       '/login',
                           (route) => false,
@@ -316,7 +311,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           ),
           const SizedBox(height: 32),
 
-          // Subscription Option
           _buildRedemptionOption(
             type: 'subscription',
             title: 'Subscription Coffee',
@@ -328,7 +322,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
 
           const SizedBox(height: 16),
 
-          // Joker Option
           _buildRedemptionOption(
             type: 'joker',
             title: 'Use Joker',
@@ -442,7 +435,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          // Header
           Row(
             children: [
               IconButton(
@@ -463,13 +455,12 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(width: 48), // Balance the back button
+              const SizedBox(width: 48),
             ],
           ),
 
           const SizedBox(height: 20),
 
-          // QR Code Card
           Expanded(
             child: Center(
               child: Card(
@@ -501,7 +492,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                       ),
                       const SizedBox(height: 24),
 
-                      // QR Code
                       if (_qrToken != null)
                         Container(
                           padding: const EdgeInsets.all(16),
@@ -526,7 +516,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
 
                       const SizedBox(height: 24),
 
-                      // Status indicator
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                         decoration: BoxDecoration(
@@ -562,7 +551,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             ),
           ),
 
-          // Instructions
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -610,9 +598,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       return 'No subscription';
     }
 
-    // You'll need to get the weekly limit from the subscription info
-    // For now, using a default value
-    final weeklyLimit = 5; // This should come from the subscription bundle
+    final weeklyLimit = 5;
     final remaining = weeklyLimit - weeklyRedemptions;
 
     if (remaining <= 0) {
