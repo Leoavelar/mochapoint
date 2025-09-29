@@ -694,9 +694,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         children: [
           _buildLocationHeader(),
 
-          if (_subscriptionData?.hasActiveSubscription == true)
-            _buildSubscriptionSummary(),
-
           // Display paginated shops
           ..._displayedShops.map((shop) => _buildShopItem(context, shop)).toList(),
 
@@ -820,80 +817,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             fontWeight: FontWeight.w500,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSubscriptionSummary() {
-    final subscription = _subscriptionData!.subscription!;
-    final accessibleShopsCount = _subscriptionData!.accessibleShops.length;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: MyApp.coffeeBean.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: MyApp.coffeeBean.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.card_membership,
-                color: MyApp.coffeeBean,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  subscription.planName,
-                  style: TextStyle(
-                    color: MyApp.coffeeBean,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: MyApp.coffeeBean,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${subscription.usedThisWeek}/${subscription.weeklyLimit}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                Icons.store,
-                color: MyApp.coffeeBean,
-                size: 16,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '$accessibleShopsCount subscribed ${accessibleShopsCount == 1 ? 'shop' : 'shops'} nearby',
-                style: TextStyle(
-                  color: MyApp.coffeeBean,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }
