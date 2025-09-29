@@ -104,17 +104,50 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+// lib/main.dart - UPDATED AuthWrapper
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({Key? key}) : super(key: key);
 
   @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Always show splash for 3 seconds, then check auth
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _showSplash = false;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Always show splash screen first
+    if (_showSplash) {
+      return const SplashScreen();
+    }
+
+    // After splash, check auth state
     return FutureBuilder<bool>(
       future: AuthService.isLoggedIn(),
       builder: (context, snapshot) {
-        // Show splash screen while checking auth state
+        // Show loading while checking auth
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SplashScreen();
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA6623A)),
+              ),
+            ),
+          );
         }
 
         // Navigate based on auth state
