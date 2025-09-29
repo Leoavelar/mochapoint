@@ -500,17 +500,31 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: Colors.grey[200]!),
                           ),
-                          child: QrImageView(
-                            data: _qrToken!,
-                            version: QrVersions.auto,
-                            size: 200.0,
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
-                            gapless: false,
-                            embeddedImage: const AssetImage('assets/images/Icon.png'),
-                            embeddedImageStyle: const QrEmbeddedImageStyle(
-                              size: Size(40, 40),
-                            ),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              QrImageView(
+                                data: _qrToken!,
+                                version: QrVersions.auto,
+                                size: 200.0,
+                                backgroundColor: Colors.white,
+                                gapless: false,
+                              ),
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(2),
+                                  border:Border.all(color: Colors.black)
+                                ),
+                                padding: const EdgeInsets.all(4),
+                                child: Image.asset(
+                                  'assets/icons/mocha_icon_black.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
 
