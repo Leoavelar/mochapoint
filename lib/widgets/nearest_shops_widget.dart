@@ -1,4 +1,4 @@
-// lib/widgets/nearest_shops_widget.dart - Complete file with location integration
+// lib/widgets/nearest_shops_widget.dart - With pagination
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -264,7 +264,12 @@ class NearestShopsWidget extends StatefulWidget {
 }
 
 class _NearestShopsWidgetState extends State<NearestShopsWidget> {
-  List<CoffeeShop> shops = [];
+  // All shops (sorted by distance/rating)
+  List<CoffeeShop> _allShops = [];
+
+  // Currently displayed shops (paginated subset)
+  List<CoffeeShop> _displayedShops = [];
+
   UserSubscriptionStatus? subscriptionStatus;
   UserSubscriptionData? _subscriptionData;
   bool isLoading = true;
@@ -272,6 +277,12 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
   String? debugRawJson;
   Map<String, dynamic>? debugParsedData;
   bool _isDisposed = false;
+
+  // Pagination state
+  static const int _shopsPerPage = 5;
+  int _currentPage = 1;
+  bool _hasMoreShops = false;
+  bool _isLoadingMore = false;
 
   // Location-related state
   Position? _currentPosition;
@@ -363,6 +374,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     setState(() {
       isLoading = true;
       errorMessage = null;
+      _currentPage = 1; // Reset pagination
     });
 
     try {
@@ -411,8 +423,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           logoUrl: shop.logoUrl,
           supportedDrinkTiers: shop.supportedDrinkTiers,
           isActive: shop.isActive,
-          distance: distance, // Flutter-calculated distance
-          walkingTime: walkingTime, // Flutter-calculated walking time
+          distance: distance,
+          walkingTime: walkingTime,
         ));
       }
 
@@ -460,13 +472,19 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       if (!mounted || _isDisposed) return;
 
       setState(() {
-        shops = shopsWithDistances; // Use Flutter-calculated distances
+        _allShops = shopsWithDistances;
+        _displayedShops = _allShops.take(_shopsPerPage).toList();
+        _hasMoreShops = _allShops.length > _shopsPerPage;
         subscriptionStatus = userStatus;
         _subscriptionData = subscriptionData;
         debugRawJson = shopData['rawJson'] as String;
         debugParsedData = shopData['parsedData'] as Map<String, dynamic>?;
         isLoading = false;
       });
+
+      if (AppConfig.enableLogging) {
+        print('📊 Pagination: Showing ${_displayedShops.length} of ${_allShops.length} shops');
+      }
     } catch (e) {
       if (!mounted || _isDisposed) return;
 
@@ -475,6 +493,36 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         isLoading = false;
       });
     }
+  }
+
+  void _loadMoreShops() {
+    if (_isLoadingMore || !_hasMoreShops) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    // Simulate slight delay for smoother UX
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (!mounted || _isDisposed) return;
+
+      final nextPage = _currentPage + 1;
+      final startIndex = _currentPage * _shopsPerPage;
+      final endIndex = startIndex + _shopsPerPage;
+
+      final moreShops = _allShops.skip(startIndex).take(_shopsPerPage).toList();
+
+      setState(() {
+        _displayedShops.addAll(moreShops);
+        _currentPage = nextPage;
+        _hasMoreShops = endIndex < _allShops.length;
+        _isLoadingMore = false;
+      });
+
+      if (AppConfig.enableLogging) {
+        print('📊 Loaded more shops: Now showing ${_displayedShops.length} of ${_allShops.length}');
+      }
+    });
   }
 
   // Helper method to calculate walking time
@@ -636,7 +684,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       return _buildErrorWidget();
     }
 
-    if (shops.isEmpty) {
+    if (_allShops.isEmpty) {
       return _buildEmptyWidget();
     }
 
@@ -649,8 +697,54 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           if (_subscriptionData?.hasActiveSubscription == true)
             _buildSubscriptionSummary(),
 
-          ...shops.map((shop) => _buildShopItem(context, shop)).toList(),
+          // Display paginated shops
+          ..._displayedShops.map((shop) => _buildShopItem(context, shop)).toList(),
+
+          // Load More button
+          if (_hasMoreShops)
+            _buildLoadMoreButton(),
+
+          // Show "All shops loaded" message when at the end
+          if (!_hasMoreShops && _displayedShops.length < _allShops.length)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'All ${_allShops.length} shops loaded',
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreButton() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: _isLoadingMore
+          ? const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: CircularProgressIndicator(),
+        ),
+      )
+          : ElevatedButton.icon(
+        onPressed: _loadMoreShops,
+        icon: const Icon(Icons.expand_more),
+        label: Text(
+          'Load More Shops (${_allShops.length - _displayedShops.length} remaining)',
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: MyApp.coffeeBean,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       ),
     );
   }
@@ -678,7 +772,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               Expanded(
                 child: Text(
                   _currentPosition != null
-                      ? 'Showing nearest coffee shops'
+                      ? 'Showing nearest coffee shops (${_displayedShops.length} of ${_allShops.length})'
                       : 'Location unavailable - showing all shops',
                   style: TextStyle(
                     fontSize: 14,
@@ -976,7 +1070,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Shop name and brand (unchanged)
+                        // Shop name and brand
                         Row(
                           children: [
                             Expanded(
@@ -1009,14 +1103,14 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                             // Rating on the left
                             _buildRatingDisplay(shop, isSubscribed),
 
-                            const SizedBox(width: 16), // Fixed spacing instead of Spacer()
+                            const SizedBox(width: 16),
 
-                            // Walking distance with better spacing
+                            // Walking distance
                             if (shop.distance != null) ...[
                               Icon(
                                 Icons.directions_walk,
                                 size: 14,
-                                color: Colors.black, // Changed to Colors.black as requested
+                                color: Colors.black,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -1033,7 +1127,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                               Icon(
                                 Icons.access_time,
                                 size: 14,
-                                color: Colors.black, // Changed to Colors.black as requested
+                                color: Colors.black,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -1168,5 +1262,4 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         size: 24,
       ),
     );
-  }
-}
+  }}
