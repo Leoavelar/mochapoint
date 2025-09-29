@@ -5,9 +5,11 @@ import 'package:latlong2/latlong.dart';
 import 'package:mocha_point/services/coffee_shop_service.dart';
 import 'package:mocha_point/services/subscription_service.dart';
 import 'package:mocha_point/services/monthly_stats_service.dart';
+import 'package:mocha_point/services/auth_service.dart';
 import 'package:mocha_point/config/app_config.dart';
 import 'package:mocha_point/utils/exceptions.dart';
 import 'package:mocha_point/utils/location_utils.dart';
+import 'package:mocha_point/widgets/profile_avatar.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({Key? key}) : super(key: key);
@@ -34,6 +36,9 @@ class _MapScreenState extends State<MapScreen> {
   int _availableJokers = 0;
   bool _hasActiveSubscription = false;
 
+  // User profile data for avatar
+  Map<String, dynamic>? _userData;
+
   @override
   void initState() {
     super.initState();
@@ -41,9 +46,30 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _initializeMap() async {
+    await _loadUserData();
     await _loadUserSubscriptionData();
     await _loadCoffeeShops();
     await _getCurrentLocation();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final userData = await AuthService.getUser();
+      if (mounted) {
+        setState(() {
+          _userData = userData;
+        });
+
+        if (AppConfig.enableLogging) {
+          print('👤 MapScreen: User data loaded');
+        }
+      }
+    } catch (e) {
+      if (AppConfig.enableLogging) {
+        print('❌ MapScreen: Error loading user data: $e');
+      }
+      // Continue without user data - will use default icon
+    }
   }
 
   Future<void> _loadUserSubscriptionData() async {
@@ -144,7 +170,7 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     // Priority 2: User has jokers AND shop accepts jokers
-    if (_availableJokers > 0 && shop.jokerEnabled) {
+    if (_availableJokers > 0 && shop.supportsJoker) {
       return ShopCategory.joker;
     }
 
@@ -392,32 +418,7 @@ class _MapScreenState extends State<MapScreen> {
                     'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.mochapoint.app',
                   ),
-                  // User location marker
-                  if (_userLocation != null)
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: _userLocation!,
-                          width: 30,
-                          height: 30,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.blue,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 3),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  // Coffee shop markers
+                  // Coffee shop markers (rendered first, below user marker)
                   MarkerLayer(
                     markers: _coffeeShops.map((shop) {
                       final category = _getShopCategory(shop);
@@ -432,6 +433,19 @@ class _MapScreenState extends State<MapScreen> {
                       );
                     }).toList(),
                   ),
+                  // User location marker (rendered last, on top)
+                  if (_userLocation != null)
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: _userLocation!,
+                          width: 50,
+                          height: 50,
+                          alignment: Alignment.center,
+                          child: _buildUserLocationMarker(coffeeBean),
+                        ),
+                      ],
+                    ),
                 ],
               ),
               // Attribution
@@ -570,6 +584,55 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildUserLocationMarker(Color coffeeBean) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Shadow
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+        ),
+        // Profile picture with white border
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 3),
+          ),
+          child: ClipOval(
+            child: _userData != null
+                ? ProfileAvatar(
+              user: _userData,
+              size: 38,
+            )
+                : Container(
+              color: coffeeBean,
+              child: const Center(
+                child: Icon(
+                  Icons.person,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
