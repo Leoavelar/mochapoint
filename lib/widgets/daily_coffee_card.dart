@@ -532,7 +532,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                       TextSpan(
                         text: 'Your Coffee is ',
                         style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
                             height: 1.1,
@@ -542,7 +542,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                       TextSpan(
                         text: 'Ready!',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.w600,
                           fontFamily: "ClashDisplay",
                           color: Color(0xFF4CAF50),
@@ -570,7 +570,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                 Text(
                   _getTimeUntilMidnight(),
                   style: const TextStyle(
-                      fontSize: 28,
+                      fontSize: 24,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                       height: 1.1,
