@@ -2,11 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:mocha_point/services/coffee_shop_service.dart';
+import 'package:mocha_point/services/subscription_service.dart';
+import 'package:mocha_point/services/monthly_stats_service.dart';
 import 'package:mocha_point/config/app_config.dart';
 import 'package:mocha_point/utils/exceptions.dart';
+import 'package:mocha_point/utils/location_utils.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({Key? key}) : super(key: key);
@@ -19,8 +20,7 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
 
   // Center of Graz, Austria (fallback location)
-  final LatLng _defaultCenter = const LatLng(47.0707, 15.4395);
-  LatLng _currentCenter;
+  LatLng _currentCenter = LocationUtils.defaultCenter;
 
   // State management
   bool _isLoading = true;
@@ -29,7 +29,10 @@ class _MapScreenState extends State<MapScreen> {
   List<CoffeeShop> _coffeeShops = [];
   LatLng? _userLocation;
 
-  _MapScreenState() : _currentCenter = const LatLng(47.0707, 15.4395);
+  // User subscription data
+  Set<int> _accessibleShopIds = {};
+  int _availableJokers = 0;
+  bool _hasActiveSubscription = false;
 
   @override
   void initState() {
@@ -38,8 +41,50 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _initializeMap() async {
+    await _loadUserSubscriptionData();
     await _loadCoffeeShops();
     await _getCurrentLocation();
+  }
+
+  Future<void> _loadUserSubscriptionData() async {
+    try {
+      if (AppConfig.enableLogging) {
+        print('🔐 MapScreen: Loading user subscription data...');
+      }
+
+      // Get user subscription details
+      final subscriptionData = await SubscriptionService.getUserSubscription();
+
+      // Get monthly stats for joker count
+      final monthlyStats = await MonthlyStatsService.getMonthlyStats();
+
+      if (mounted) {
+        setState(() {
+          _hasActiveSubscription = subscriptionData.hasActiveSubscription;
+          // Extract shop IDs from accessible shops list
+          _accessibleShopIds = subscriptionData.accessibleShops
+              .map((shop) => shop.id)
+              .toSet();
+          _availableJokers = monthlyStats.jokersAvailable;
+        });
+
+        if (AppConfig.enableLogging) {
+          print('🔐 MapScreen: Subscription status - Active: $_hasActiveSubscription');
+          print('🔐 MapScreen: Accessible shops: $_accessibleShopIds');
+          print('🔐 MapScreen: Available jokers: $_availableJokers');
+        }
+      }
+    } catch (e) {
+      if (AppConfig.enableLogging) {
+        print('❌ MapScreen: Error loading subscription data: $e');
+      }
+      // Continue with default values (no subscription, no jokers)
+      setState(() {
+        _hasActiveSubscription = false;
+        _accessibleShopIds = {};
+        _availableJokers = 0;
+      });
+    }
   }
 
   Future<void> _loadCoffeeShops({LatLng? userLocation}) async {
@@ -67,6 +112,10 @@ class _MapScreenState extends State<MapScreen> {
 
         if (AppConfig.enableLogging) {
           print('☕ MapScreen: Loaded ${coffeeShops.length} coffee shops');
+          for (final shop in coffeeShops) {
+            final category = _getShopCategory(shop);
+            print('   ${shop.name}: $category (ID: ${shop.id})');
+          }
         }
       }
     } on SessionExpiredException catch (e) {
@@ -87,60 +136,77 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
+  // NEW: Determine shop category based on user's subscription status and shop capabilities
+  ShopCategory _getShopCategory(CoffeeShop shop) {
+    // Priority 1: User has subscription AND shop is accessible with subscription
+    if (_hasActiveSubscription && _accessibleShopIds.contains(shop.id)) {
+      return ShopCategory.subscription;
+    }
+
+    // Priority 2: User has jokers AND shop accepts jokers
+    if (_availableJokers > 0 && shop.jokerEnabled) {
+      return ShopCategory.joker;
+    }
+
+    // Priority 3: No redemption options available
+    return ShopCategory.unavailable;
+  }
+
   Future<void> _getCurrentLocation() async {
     try {
       setState(() {
         _isLoadingLocation = true;
       });
 
-      // Check and request location permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (AppConfig.enableLogging) {
-            print('📍 MapScreen: Location permission denied');
-          }
-          setState(() {
-            _isLoadingLocation = false;
-          });
-          return;
-        }
+      if (AppConfig.enableLogging) {
+        print('📍 MapScreen: Getting current location...');
       }
 
-      if (permission == LocationPermission.deniedForever) {
-        if (AppConfig.enableLogging) {
-          print('📍 MapScreen: Location permission permanently denied');
-        }
-        setState(() {
-          _isLoadingLocation = false;
-        });
-        return;
-      }
-
-      // Get current location
-      final Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
-      );
-
-      final userLocation = LatLng(position.latitude, position.longitude);
+      final locationResult = await LocationUtils.getCurrentLocation();
 
       if (mounted) {
         setState(() {
-          _userLocation = userLocation;
-          _currentCenter = userLocation;
           _isLoadingLocation = false;
         });
 
-        // Move map to user location
-        _mapController.move(userLocation, 15.0);
+        if (locationResult.isSuccess && locationResult.location != null) {
+          final userLocation = locationResult.location!;
 
-        // Reload coffee shops with user location for distance calculation
-        await _loadCoffeeShops(userLocation: userLocation);
+          setState(() {
+            _userLocation = userLocation;
+            _currentCenter = userLocation;
+          });
 
-        if (AppConfig.enableLogging) {
-          print('📍 MapScreen: User location: ${position.latitude}, ${position.longitude}');
+          // Move map to user location
+          _mapController.move(userLocation, 15.0);
+
+          // Reload coffee shops with user location for distance calculation
+          await _loadCoffeeShops(userLocation: userLocation);
+
+          if (AppConfig.enableLogging) {
+            print('📍 MapScreen: User location updated successfully');
+          }
+        } else {
+          // Handle location error
+          if (AppConfig.enableLogging) {
+            print('❌ MapScreen Location Error: ${locationResult.errorMessage}');
+          }
+
+          // Show error message to user
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(locationResult.errorMessage ?? 'Unable to get location'),
+                duration: const Duration(seconds: 3),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+
+          // Still show coffee shops, just without user location
+          if (_coffeeShops.isEmpty) {
+            await _loadCoffeeShops();
+          }
         }
       }
     } catch (e) {
@@ -354,18 +420,14 @@ class _MapScreenState extends State<MapScreen> {
                   // Coffee shop markers
                   MarkerLayer(
                     markers: _coffeeShops.map((shop) {
-                      final isSubscription = shop.supportsSubscription;
+                      final category = _getShopCategory(shop);
                       return Marker(
                         point: LatLng(shop.latitude, shop.longitude),
                         width: 40,
                         height: 40,
                         child: GestureDetector(
-                          onTap: () => _showShopDetails(context, shop),
-                          child: _buildCustomMarker(
-                            context,
-                            isSubscription ? coffeeGreen : coffeeBean,
-                            isSubscription,
-                          ),
+                          onTap: () => _showShopDetails(context, shop, category),
+                          child: _buildCustomMarker(context, category),
                         ),
                       );
                     }).toList(),
@@ -463,7 +525,28 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  Widget _buildCustomMarker(BuildContext context, Color color, bool isSubscription) {
+  Widget _buildCustomMarker(BuildContext context, ShopCategory category) {
+    String iconPath;
+    Color backgroundColor;
+
+    switch (category) {
+      case ShopCategory.subscription:
+      // User has subscription and shop accepts it - green icon
+        iconPath = 'assets/icons/mocha_icon_green.png';
+        backgroundColor = const Color(0xFF4CAF50);
+        break;
+      case ShopCategory.joker:
+      // User has jokers and shop accepts them - coffee bean icon
+        iconPath = 'assets/icons/mocha_icon_coffeebean.png';
+        backgroundColor = Theme.of(context).colorScheme.secondary;
+        break;
+      case ShopCategory.unavailable:
+      // No redemption options available - black/grey icon
+        iconPath = 'assets/icons/mocha_icon_black.png';
+        backgroundColor = Colors.grey;
+        break;
+    }
+
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -482,9 +565,7 @@ class _MapScreenState extends State<MapScreen> {
           color: Colors.white,
           padding: const EdgeInsets.all(4),
           child: Image.asset(
-            isSubscription
-                ? 'assets/icons/mocha_icon_coffeebean.png'
-                : 'assets/icons/mocha_icon_black.png',
+            iconPath,
             fit: BoxFit.contain,
           ),
         ),
@@ -492,11 +573,35 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  void _showShopDetails(BuildContext context, CoffeeShop shop) {
+  void _showShopDetails(BuildContext context, CoffeeShop shop, ShopCategory category) {
     final coffeeBean = Theme.of(context).colorScheme.secondary;
     const coffeeGreen = Color(0xFF4CAF50);
-    final isSubscription = shop.supportsSubscription;
-    final color = isSubscription ? coffeeGreen : coffeeBean;
+
+    Color color;
+    String statusText;
+    String actionText;
+    IconData actionIcon;
+
+    switch (category) {
+      case ShopCategory.subscription:
+        color = coffeeGreen;
+        statusText = 'Subscription';
+        actionText = 'Redeem Coffee';
+        actionIcon = Icons.local_cafe;
+        break;
+      case ShopCategory.joker:
+        color = coffeeBean;
+        statusText = 'Joker Only';
+        actionText = 'Use Joker';
+        actionIcon = Icons.redeem;
+        break;
+      case ShopCategory.unavailable:
+        color = Colors.grey;
+        statusText = 'Unavailable';
+        actionText = 'No Options';
+        actionIcon = Icons.block;
+        break;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -519,7 +624,7 @@ class _MapScreenState extends State<MapScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      isSubscription ? Icons.local_cafe : Icons.redeem,
+                      actionIcon,
                       color: color,
                       size: 24,
                     ),
@@ -583,7 +688,7 @@ class _MapScreenState extends State<MapScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                isSubscription ? 'Subscription' : 'Joker Only',
+                                statusText,
                                 style: TextStyle(
                                   color: color,
                                   fontWeight: FontWeight.bold,
@@ -622,17 +727,17 @@ class _MapScreenState extends State<MapScreen> {
               ],
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
+                onPressed: category == ShopCategory.unavailable ? null : () {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Redeem coffee at ${shop.name}'),
+                      content: Text('$actionText at ${shop.name}'),
                       duration: const Duration(seconds: 2),
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
+                  backgroundColor: category == ShopCategory.unavailable ? Colors.grey : color,
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
@@ -642,13 +747,10 @@ class _MapScreenState extends State<MapScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      isSubscription ? Icons.local_cafe : Icons.redeem,
-                      size: 20,
-                    ),
+                    Icon(actionIcon, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      isSubscription ? 'Redeem Coffee' : 'Use Joker',
+                      actionText,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -697,4 +799,11 @@ class _MapScreenState extends State<MapScreen> {
       },
     );
   }
+}
+
+// NEW: Enum to clearly define shop categories
+enum ShopCategory {
+  subscription,  // User can use subscription here
+  joker,        // User can use jokers here
+  unavailable   // No redemption options available
 }

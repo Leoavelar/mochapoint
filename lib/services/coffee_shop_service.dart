@@ -1,4 +1,4 @@
-// lib/services/coffee_shop_service.dart
+// lib/services/coffee_shop_service.dart - Final Production Version
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mocha_point/config/app_config.dart';
@@ -54,13 +54,13 @@ class CoffeeShop {
       address: json['address'] as String,
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
-      subscriptionEnabled: json['subscriptionEnabled'] as bool? ?? false,
-      jokerEnabled: json['jokerEnabled'] as bool? ?? false,
-      appRating: json['appRating'] != null ? (json['appRating'] as num).toDouble() : null,
-      googleRating: json['googleRating'] != null ? (json['googleRating'] as num).toDouble() : null,
+      subscriptionEnabled: json['subscription_enabled'] as bool? ?? false,
+      jokerEnabled: json['joker_enabled'] as bool? ?? false,
+      appRating: json['app_rating'] != null ? (json['app_rating'] as num).toDouble() : null,
+      googleRating: json['google_rating'] != null ? (json['google_rating'] as num).toDouble() : null,
       description: json['description'] as String?,
       phone: json['phone'] as String?,
-      isActive: json['isActive'] as bool? ?? true,
+      isActive: json['is_active'] as bool? ?? true,
       isSubscriptionAccessible: json['isSubscriptionAccessible'] as bool?,
       distance: json['distance'] != null ? (json['distance'] as num).toDouble() : null,
       walkingTime: json['walkingTime'] as String?,
@@ -69,7 +69,6 @@ class CoffeeShop {
     );
   }
 
-  // Helper getter for the best available rating
   double get bestRating {
     if (appRating != null && googleRating != null) {
       return appRating! > googleRating! ? appRating! : googleRating!;
@@ -77,48 +76,35 @@ class CoffeeShop {
     return appRating ?? googleRating ?? 0.0;
   }
 
-  // Helper getter to determine if this shop supports subscriptions
   bool get supportsSubscription => subscriptionEnabled && (isSubscriptionAccessible ?? false);
+
+  bool get supportsJoker => jokerEnabled;
 }
 
 class CoffeeShopService {
   static Future<List<CoffeeShop>> getCoffeeShops({
     double? userLatitude,
     double? userLongitude,
-    double? radius = 10.0, // Default 10km radius
+    double? radius = 10.0,
   }) async {
     try {
-      if (AppConfig.enableLogging) {
-        print('🗺️ CoffeeShopService: Fetching coffee shops...');
-      }
-
-      // Build query parameters
       final queryParams = <String, String>{};
       if (userLatitude != null) queryParams['lat'] = userLatitude.toString();
       if (userLongitude != null) queryParams['lng'] = userLongitude.toString();
       if (radius != null) queryParams['radius'] = radius.toString();
-      queryParams['active'] = 'true'; // Only get active shops
+      queryParams['active'] = 'true';
 
       final uri = Uri.parse('${AppConfig.apiBaseUrl}/coffee-shops').replace(
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
 
-      if (AppConfig.enableLogging) {
-        print('🌐 CoffeeShopService GET: $uri');
-      }
-
       final response = await http.get(
         uri,
         headers: {
           'Content-Type': 'application/json',
-          // Note: Coffee shops endpoint might not require auth, but we include it if available
           ...await AuthService.getAuthHeaders(),
         },
       ).timeout(AppConfig.apiTimeout);
-
-      if (AppConfig.enableLogging) {
-        print('📱 CoffeeShopService Response: ${response.statusCode}');
-      }
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
@@ -128,10 +114,6 @@ class CoffeeShopService {
           final coffeeShops = coffeeShopsJson
               .map((shopJson) => CoffeeShop.fromJson(shopJson))
               .toList();
-
-          if (AppConfig.enableLogging) {
-            print('☕ CoffeeShopService: Loaded ${coffeeShops.length} coffee shops');
-          }
 
           return coffeeShops;
         } else {
@@ -151,19 +133,12 @@ class CoffeeShopService {
       if (e is SessionExpiredException) {
         rethrow;
       }
-      if (AppConfig.enableLogging) {
-        print('❌ CoffeeShopService Error: $e');
-      }
       throw NetworkException('Network error: ${e.toString()}');
     }
   }
 
   static Future<CoffeeShop> getCoffeeShopDetails(int shopId) async {
     try {
-      if (AppConfig.enableLogging) {
-        print('🏪 CoffeeShopService: Fetching shop details for ID: $shopId');
-      }
-
       final response = await http.get(
         Uri.parse('${AppConfig.apiBaseUrl}/coffee-shops/$shopId'),
         headers: {
@@ -195,9 +170,6 @@ class CoffeeShopService {
     } catch (e) {
       if (e is SessionExpiredException) {
         rethrow;
-      }
-      if (AppConfig.enableLogging) {
-        print('❌ CoffeeShopService Error: $e');
       }
       throw NetworkException('Network error: ${e.toString()}');
     }
