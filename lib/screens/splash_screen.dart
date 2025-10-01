@@ -1,5 +1,6 @@
-// lib/screens/splash_screen.dart - SUBTLE SMOOTH BOUNCE
+// lib/screens/splash_screen.dart - NO LOADING INDICATOR
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -11,6 +12,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _bounceController;
+  late AnimationController _waveController;
 
   late Animation<double> _fadeAnimation;
   late Animation<double> _slideAnimation;
@@ -33,6 +35,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       duration: const Duration(milliseconds: 1500),
     );
 
+    // Wave animation controller - slower (5 seconds instead of 3)
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat();
+
     // Fade in animation
     _fadeAnimation = Tween<double>(
       begin: 0.0,
@@ -44,24 +52,20 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     // Slide animation with bounce back
     _slideAnimation = TweenSequence<double>([
-      // Drop down from above (0% to 40%)
       TweenSequenceItem(
         tween: Tween<double>(begin: -50.0, end: 0.0)
             .chain(CurveTween(curve: Curves.easeIn)),
         weight: 40,
       ),
-      // Stay on ground during squash (40% to 48%)
       TweenSequenceItem(
         tween: ConstantTween<double>(0.0),
         weight: 8,
       ),
-      // Bounce back up (48% to 68%)
       TweenSequenceItem(
         tween: Tween<double>(begin: 0.0, end: -15.0)
             .chain(CurveTween(curve: Curves.easeOut)),
         weight: 20,
       ),
-      // Settle back down to final position (68% to 100%)
       TweenSequenceItem(
         tween: Tween<double>(begin: -15.0, end: 0.0)
             .chain(CurveTween(curve: Curves.easeIn)),
@@ -69,67 +73,56 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       ),
     ]).animate(_bounceController);
 
-    // Squash animation (vertical compression) - REDUCED intensity
+    // Squash animation
     _squashAnimation = TweenSequence<double>([
-      // Normal during drop (0% to 38%)
       TweenSequenceItem(
         tween: ConstantTween<double>(1.0),
         weight: 38,
       ),
-      // Subtle squash on impact (38% to 48%)
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.85) // Was 0.75, now 0.85 (15% squash instead of 25%)
+        tween: Tween<double>(begin: 1.0, end: 0.85)
             .chain(CurveTween(curve: Curves.easeInOutCubic)),
         weight: 10,
       ),
-      // Smooth return to normal (48% to 60%)
       TweenSequenceItem(
-        tween: Tween<double>(begin: 0.85, end: 1.0) // Match the squash value
+        tween: Tween<double>(begin: 0.85, end: 1.0)
             .chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 12,
       ),
-      // Stay normal for rest of animation (60% to 100%)
       TweenSequenceItem(
         tween: ConstantTween<double>(1.0),
         weight: 40,
       ),
     ]).animate(_bounceController);
 
-    // Stretch animation (horizontal expansion) - REDUCED intensity
+    // Stretch animation
     _stretchAnimation = TweenSequence<double>([
-      // Normal during drop (0% to 38%)
       TweenSequenceItem(
         tween: ConstantTween<double>(1.0),
         weight: 38,
       ),
-      // Subtle stretch on impact (38% to 48%)
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 1.15) // Was 1.25, now 1.15 (15% stretch instead of 25%)
+        tween: Tween<double>(begin: 1.0, end: 1.15)
             .chain(CurveTween(curve: Curves.easeInOutCubic)),
         weight: 10,
       ),
-      // Smooth return to normal (48% to 60%)
       TweenSequenceItem(
-        tween: Tween<double>(begin: 1.15, end: 1.0) // Match the stretch value
+        tween: Tween<double>(begin: 1.15, end: 1.0)
             .chain(CurveTween(curve: Curves.easeOutCubic)),
         weight: 12,
       ),
-      // Stay normal for rest of animation (60% to 100%)
       TweenSequenceItem(
         tween: ConstantTween<double>(1.0),
         weight: 40,
       ),
     ]).animate(_bounceController);
 
-    // Start animations sequence
+    // Start animations
     _startAnimations();
   }
 
   void _startAnimations() async {
-    // Start fade in
     _fadeController.forward();
-
-    // Wait a moment, then start bounce
     await Future.delayed(const Duration(milliseconds: 200));
     _bounceController.forward();
   }
@@ -138,61 +131,138 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void dispose() {
     _fadeController.dispose();
     _bounceController.dispose();
+    _waveController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F5F1),
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Animated coffee bean icon
-              AnimatedBuilder(
-                animation: _bounceController,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(0, _slideAnimation.value),
-                    child: Transform.scale(
-                      scaleX: _stretchAnimation.value, // Horizontal stretch
-                      scaleY: _squashAnimation.value,  // Vertical squash
-                      child: Image.asset(
-                        'assets/icons/mocha_icon_black.png',
-                        width: 120,
-                        height: 120,
-                      ),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Mocha Point',
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  color: Colors.black,
-                  fontFamily: 'Mocha',
+      body: Stack(
+        children: [
+          // Animated espresso waves background
+          AnimatedBuilder(
+            animation: _waveController,
+            builder: (context, child) {
+              return CustomPaint(
+                painter: EspressoWavesPainter(
+                  waveAnimation: _waveController.value,
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your daily dose of Happiness',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.black54,
-                ),
-              ),
-              const SizedBox(height: 48),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA6623A)),
-                strokeWidth: 3,
-              ),
-            ],
+                size: Size.infinite,
+              );
+            },
           ),
-        ),
+
+          // Content on top of waves
+          Center(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Animated coffee bean icon
+                  AnimatedBuilder(
+                    animation: _bounceController,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(0, _slideAnimation.value),
+                        child: Transform.scale(
+                          scaleX: _stretchAnimation.value,
+                          scaleY: _squashAnimation.value,
+                          child: Image.asset(
+                            'assets/icons/mocha_icon_black.png',
+                            width: 120,
+                            height: 120,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Mocha Point',
+                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      color: Colors.black,
+                      fontFamily: 'Mocha',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your daily dose of Happiness',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.black54,
+                    ),
+                  ),
+                  // Loading indicator removed - clean splash screen!
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
+  }
+}
+
+// Custom painter for animated espresso waves
+class EspressoWavesPainter extends CustomPainter {
+  final double waveAnimation;
+
+  EspressoWavesPainter({required this.waveAnimation});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Background color (cream)
+    final bgPaint = Paint()..color = const Color(0xFFF9F5F1);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+
+    // PAINT FROTH FIRST (bottom z-index) - Coffee bean color (#A6623A)
+    final frothPath = Path();
+    frothPath.moveTo(0, size.height);
+    frothPath.lineTo(0, size.height * 0.70);
+
+    // Animated wave for froth layer
+    for (double i = 0; i <= size.width; i++) {
+      frothPath.lineTo(
+          i,
+          size.height * 0.70 +
+              math.sin((i / size.width * 2 * math.pi) + (waveAnimation * 2.5 * math.pi) + 1.5) * 20
+      );
+    }
+
+    frothPath.lineTo(size.width, size.height);
+    frothPath.close();
+
+    final frothPaint = Paint()
+      ..color = const Color(0xFFA6623A)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(frothPath, frothPaint);
+
+    // PAINT DARK ESPRESSO LAST (top z-index) - #472A19
+    final darkPath = Path();
+    darkPath.moveTo(0, size.height);
+    darkPath.lineTo(0, size.height * 0.77);
+
+    // Animated wave for dark layer
+    for (double i = 0; i <= size.width; i++) {
+      darkPath.lineTo(
+          i,
+          size.height * 0.77 +
+              math.sin((i / size.width * 2 * math.pi) + (waveAnimation * 2 * math.pi)) * 15
+      );
+    }
+
+    darkPath.lineTo(size.width, size.height);
+    darkPath.close();
+
+    final darkPaint = Paint()
+      ..color = const Color(0xFF472A19)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(darkPath, darkPaint);
+  }
+
+  @override
+  bool shouldRepaint(EspressoWavesPainter oldDelegate) {
+    return oldDelegate.waveAnimation != waveAnimation;
   }
 }
