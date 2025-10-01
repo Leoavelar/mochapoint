@@ -1,4 +1,4 @@
-// lib/main.dart - Updated with AppConfig integration
+// lib/main.dart - Alternative solution with prebuilt screen
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'config/app_config.dart';
@@ -104,7 +104,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// lib/main.dart - UPDATED AuthWrapper
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({Key? key}) : super(key: key);
 
@@ -112,51 +111,78 @@ class AuthWrapper extends StatefulWidget {
   State<AuthWrapper> createState() => _AuthWrapperState();
 }
 
-class _AuthWrapperState extends State<AuthWrapper> {
+class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStateMixin {
   bool _showSplash = true;
+  Widget? _nextScreen; // Store the next screen
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    // Always show splash for 3 seconds, then check auth
+
+    // Determine next screen immediately
+    _loadNextScreen();
+
+    // Fade animation controller
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+
+    // Show splash for 3 seconds, then fade out
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        setState(() {
-          _showSplash = false;
+        _fadeController.forward().then((_) {
+          if (mounted) {
+            setState(() {
+              _showSplash = false;
+            });
+          }
         });
       }
     });
   }
 
+  Future<void> _loadNextScreen() async {
+    final isLoggedIn = await AuthService.isLoggedIn();
+    if (mounted) {
+      setState(() {
+        _nextScreen = isLoggedIn ? const HomeScreen() : const LoginScreen();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Always show splash screen first
+    // Show splash screen with fade animation
     if (_showSplash) {
-      return const SplashScreen();
+      return Stack(
+        children: [
+          // Background color layer (cream)
+          Container(
+            color: const Color(0xFFF9F5F1),
+          ),
+          // Splash screen with fade
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: const SplashScreen(),
+          ),
+        ],
+      );
     }
 
-    // After splash, check auth state
-    return FutureBuilder<bool>(
-      future: AuthService.isLoggedIn(),
-      builder: (context, snapshot) {
-        // Show loading while checking auth
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA6623A)),
-              ),
-            ),
-          );
-        }
-
-        // Navigate based on auth state
-        if (snapshot.data == true) {
-          return const HomeScreen();
-        } else {
-          return const LoginScreen();
-        }
-      },
-    );
+    // Show the preloaded next screen (no loading state)
+    return _nextScreen ?? Container(color: const Color(0xFFF9F5F1));
   }
 }
