@@ -1,8 +1,8 @@
+// lib/screens/login_screen.dart - UPDATED TO MATCH SPLASH SCREEN STYLE
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
-// Remove the google_auth_screen import since we don't need it anymore
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -42,7 +42,6 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (result.success) {
-      // Navigate to home screen
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
@@ -90,45 +89,36 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF9F5F1), // Cream background matching splash
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 60),
+              const SizedBox(height: 40),
 
-              // App Logo/Title
+              // App Logo - Coffee Bean Image (matching splash screen)
               Column(
                 children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFA6623A), // Coffee brown
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.coffee,
-                      color: Colors.white,
-                      size: 40,
-                    ),
+                  Image.asset(
+                    'assets/icons/mocha_icon_black.png',
+                    width: 100,
+                    height: 100,
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Mocha Point',
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFFA6623A),
-                      fontFamily: 'Montserrat',
+                      color: Colors.black,
+                      fontFamily: 'Mocha',
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Welcome back to your coffee journey',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey[600],
-                      fontFamily: 'Montserrat',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.black54,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -148,12 +138,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'Email',
-                        prefixIcon: const Icon(Icons.email_outlined),
+                        labelStyle: const TextStyle(color: Colors.black54),
+                        prefixIcon: const Icon(
+                          Icons.email_outlined,
+                          color: Color(0xFFA6623A),
+                        ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: const BorderSide(color: Color(0xFFA6623A)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFA6623A),
+                            width: 2,
+                          ),
                         ),
                         filled: true,
-                        fillColor: Colors.grey[50],
+                        fillColor: Colors.white,
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -174,10 +180,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outlined),
+                        labelStyle: const TextStyle(color: Colors.black54),
+                        prefixIcon: const Icon(
+                          Icons.lock_outlined,
+                          color: Color(0xFFA6623A),
+                        ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                            color: Color(0xFFA6623A),
                           ),
                           onPressed: () {
                             setState(() {
@@ -186,10 +197,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: const BorderSide(color: Color(0xFFA6623A)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFA6623A),
+                            width: 2,
+                          ),
                         ),
                         filled: true,
-                        fillColor: Colors.grey[50],
+                        fillColor: Colors.white,
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -211,11 +234,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFA6623A),
+                          backgroundColor: const Color(0xFFA6623A), // Coffee bean color
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(5),
                           ),
+                          elevation: 0,
                         ),
                         child: _isLoading
                             ? const SizedBox(
@@ -244,7 +268,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Divider
               Row(
                 children: [
-                  Expanded(child: Divider(color: Colors.grey[300])),
+                  Expanded(child: Divider(color: Colors.grey[400])),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
@@ -252,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                   ),
-                  Expanded(child: Divider(color: Colors.grey[300])),
+                  Expanded(child: Divider(color: Colors.grey[400])),
                 ],
               ),
 
@@ -261,24 +285,21 @@ class _LoginScreenState extends State<LoginScreen> {
               // Google Sign-In Button
               OutlinedButton.icon(
                 onPressed: _isLoading ? null : _handleGoogleSignIn,
-                icon: Container(
+                icon: Image.asset(
+                  'assets/icons/google_icon.png',
                   width: 20,
                   height: 20,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.g_mobiledata,
-                    color: Colors.white,
-                    size: 16,
-                  ),
                 ),
-                label: const Text('Continue with Google'),
+                label: const Text(
+                  'Continue with Google',
+                  style: TextStyle(color: Colors.black87),
+                ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: Colors.grey[300]!),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(5),
                   ),
                 ),
               ),
