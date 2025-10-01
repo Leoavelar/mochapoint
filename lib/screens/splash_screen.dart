@@ -183,7 +183,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     'Mocha Point',
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
                       color: Colors.black,
-                      fontFamily: 'Mocha',
+                      fontFamily: 'ClashDisplay',
                     ),
                   ),
                   const SizedBox(height: 8),
