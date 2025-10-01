@@ -62,7 +62,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Container(
-      height: 85, // Reduced height to prevent overflow
+      height: 70,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -90,13 +90,13 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
       child: SafeArea(
         child: Stack(
           children: [
-            // Animated selection indicator - Properly aligned
+            // Animated selection indicator
             AnimatedPositioned(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOutCubic,
               left: widget.selectedIndex == 0
-                  ? (screenWidth * 0.25) - 25  // Center of first quarter
-                  : (screenWidth * 0.75) - 25, // Center of third quarter
+                  ? (screenWidth * 0.25) - 25
+                  : (screenWidth * 0.75) - 25,
               top: 8,
               child: Container(
                 width: 50,
@@ -117,12 +117,11 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
               ),
             ),
 
-            // Bottom navigation items - Properly spaced
+            // Bottom navigation items
             Padding(
-              padding: const EdgeInsets.only(top: 15, bottom: 5),
+              padding: const EdgeInsets.only(top: 12, bottom: 4), // Reduced padding
               child: Row(
                 children: [
-                  // Home tab - Takes 1/2 of screen
                   Expanded(
                     child: _buildNavItem(
                       index: 0,
@@ -131,7 +130,6 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                       label: 'Home',
                     ),
                   ),
-                  // Map tab - Takes 1/2 of screen
                   Expanded(
                     child: _buildNavItem(
                       index: 1,
@@ -144,10 +142,10 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
               ),
             ),
 
-            // Center floating action button - Properly centered
+            // Center floating action button - SQUARE WITH ROUNDED CORNERS (SMALLER)
             Positioned(
-              top: 5,
-              left: (screenWidth / 2) - 35, // Perfect center
+              top: 5, // Adjusted for thinner navbar
+              left: (screenWidth / 2) - 28, // Adjusted for smaller size
               child: GestureDetector(
                 onTapDown: (_) => _animationController.forward(),
                 onTapUp: (_) => _animationController.reverse(),
@@ -159,8 +157,8 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                     return Transform.scale(
                       scale: _animation.value,
                       child: Container(
-                        width: 70,
-                        height: 70,
+                        width: 56, // Reduced from 70
+                        height: 56, // Reduced from 70
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
@@ -170,7 +168,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                               Color(0xFF000000),
                             ],
                           ),
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(14), // Proportionally adjusted
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.15),
@@ -185,10 +183,10 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                           children: [
                             // Background glow effect
                             Container(
-                              width: 60,
-                              height: 60,
+                              width: 48, // Adjusted for smaller button
+                              height: 48,
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
+                                borderRadius: BorderRadius.circular(10),
                                 gradient: RadialGradient(
                                   colors: [
                                     Colors.white.withOpacity(0.3),
@@ -197,7 +195,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                                 ),
                               ),
                             ),
-                            // Icon
+                            // Icon - kept at 32px as requested
                             Icon(
                               isCoffeeShopUser ? Icons.qr_code_scanner_rounded : Icons.qr_code_rounded,
                               color: Colors.white,
@@ -228,13 +226,11 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
     return GestureDetector(
       onTap: () => widget.onIndexChanged(index),
       child: Container(
-        // Full width container for proper alignment
         width: double.infinity,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon - no background decorations
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Icon(
@@ -247,14 +243,13 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
               ),
             ),
             const SizedBox(height: 6),
-            // Label - clean text only
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
                 color: isSelected
                     ? const Color(0xFF000000)
                     : Colors.grey[500],
-                fontSize: isSelected ? 13 : 12,
+                fontSize: isSelected ? 12 : 11, // Reduced font sizes
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 fontFamily: 'Montserrat',
               ),
@@ -270,7 +265,6 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
     final bool isCoffeeShopUser = _user?['role'] == 'coffee_shop';
 
     if (isCoffeeShopUser) {
-      // Navigate to scanner screen for coffee shop users
       Navigator.of(context).push(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => const CoffeeShopScannerScreen(),
@@ -287,7 +281,6 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
         ),
       );
     } else {
-      // Show redemption modal for regular users
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
