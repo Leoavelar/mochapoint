@@ -1,3 +1,4 @@
+// lib/screens/profile_screen.dart - UPDATED TO MATCH DESIGN SYSTEM
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../widgets/profile_avatar.dart';
@@ -39,18 +40,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(5),
+        ),
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.black54),
+            ),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop();
 
-              // Show loading
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -61,10 +68,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               );
 
-              // Perform logout
               await AuthService.logout();
 
-              // Navigate to login screen
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
                     (route) => false,
@@ -84,6 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
+        backgroundColor: Color(0xFFF9F5F1),
         body: Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA6623A)),
@@ -93,55 +99,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF9F5F1), // Cream background
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Header Section
-              Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFA6623A),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
+              const SizedBox(height: 40),
+
+              // Profile Header
+              Column(
+                children: [
+                  // Profile Picture
+                  ProfileAvatar(
+                    user: _user,
+                    size: 100,
                   ),
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
 
-                    // Profile Picture using reusable widget
-                    ProfileAvatar(
-                      user: _user,
-                      size: 100,
+                  const SizedBox(height: 16),
+
+                  // User Name
+                  Text(
+                    _user?['name'] ?? _user?['email']?.split('@')[0] ?? 'Coffee Lover',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                      fontFamily: 'ClashDisplay',
                     ),
+                  ),
 
-                    const SizedBox(height: 16),
+                  const SizedBox(height: 4),
 
-                    // User Name
-                    Text(
-                      _user?['name'] ?? _user?['email']?.split('@')[0] ?? 'Coffee Lover',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                  // User Email
+                  Text(
+                    _user?['email'] ?? '',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black54,
                     ),
+                  ),
 
-                    // User Email
-                    Text(
-                      _user?['email'] ?? '',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white70,
-                      ),
-                    ),
+                  const SizedBox(height: 24),
 
-                    const SizedBox(height: 20),
-
-                    // User Stats Row
-                    Row(
+                  // User Stats Row
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildStatCard(
@@ -161,13 +164,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 30),
-                  ],
-                ),
+                  ),
+                ],
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
 
               // Menu Items
               Padding(
@@ -179,7 +180,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       title: 'Edit Profile',
                       subtitle: 'Update your personal information',
                       onTap: () {
-                        // TODO: Navigate to edit profile screen
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Edit profile coming soon!')),
                         );
@@ -237,6 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // Logout Button
                     SizedBox(
                       width: double.infinity,
+                      height: 50,
                       child: OutlinedButton.icon(
                         onPressed: _logout,
                         icon: const Icon(Icons.logout, color: Colors.red),
@@ -249,10 +250,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: Colors.white,
                           side: const BorderSide(color: Colors.red),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(5),
                           ),
                         ),
                       ),
@@ -273,26 +274,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          Icon(icon, color: const Color(0xFFA6623A), size: 20),
           const SizedBox(height: 4),
           Text(
             value,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Colors.black,
             ),
           ),
           Text(
             label,
             style: const TextStyle(
               fontSize: 12,
-              color: Colors.white70,
+              color: Colors.black54,
             ),
           ),
         ],
@@ -308,12 +316,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: const Color(0xFFA6623A).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(5),
           ),
           child: Icon(
             icon,
@@ -326,21 +345,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 16,
+            color: Colors.black,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            color: Colors.grey[600],
+          style: const TextStyle(
+            color: Colors.black54,
             fontSize: 14,
           ),
         ),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: Colors.black54,
+        ),
         onTap: onTap,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(5),
         ),
-        tileColor: Colors.grey[50],
       ),
     );
   }
