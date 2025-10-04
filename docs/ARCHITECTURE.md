@@ -207,14 +207,21 @@ CREATE TABLE subscription_plans (
     duration_months INTEGER NOT NULL,
     price_cents INTEGER NOT NULL,
     currency VARCHAR(3) DEFAULT 'EUR',
-    weekly_coffee_limit INTEGER NOT NULL,
-    monthly_coffee_limit INTEGER NOT NULL, -- ✅ ACTIVE: Used for remaining calculation
+    weekly_coffee_limit INTEGER NOT NULL, -- Can be 0 (disabled)
+    monthly_coffee_limit INTEGER NOT NULL,
+    default_monthly_jokers INTEGER DEFAULT 0, -- NEW: Jokers user receives monthly
     description TEXT,
     features JSONB,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+COMMENT ON COLUMN subscription_plans.weekly_coffee_limit IS 
+'Weekly coffee redemption limit. Set to 0 to disable weekly limits.';
+
+COMMENT ON COLUMN subscription_plans.default_monthly_jokers IS 
+'Number of joker coffees user receives monthly with this plan. Resets every 30 days from subscription start date.';
 ```
 
 #### user_subscriptions - User subscription records ✅ **IMPLEMENTED**
@@ -597,6 +604,22 @@ class AuthValidationResult {
   AuthValidationResult({required this.isValid, required this.isExpired});
 }
 ```
+
+### Joker System Architecture
+
+**Subscription Plans** define the baseline joker allocation:
+- `default_monthly_jokers` - Number of jokers granted monthly with the plan
+
+**User Joker Management**:
+- Users receive their plan's `default_monthly_jokers` when subscribing
+- Jokers reset every 30 days from the subscription start date (not calendar month)
+- Current joker count stored in `users.joker_count`
+- Can increase through promotions or decrease through redemptions
+- Joker redemptions are separate from subscription coffee limits
+
+**Future Implementation**: 30-day joker reset logic requires:
+- Add `last_joker_reset` timestamp to `user_subscriptions` table
+- Background job or redemption-time check for reset cycle
 
 ---
 

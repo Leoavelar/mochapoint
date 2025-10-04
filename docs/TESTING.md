@@ -1309,3 +1309,22 @@ curl -X POST http://localhost:8000/api/coffee-shops \
 #### Test Enhanced Stats Card Widget
 ```dart
 // test/enhanced_stats_card_test
+
+```
+### Test Joker System
+
+# Create plan with jokers
+curl -X POST http://localhost:8000/api/admin/subscription-plans \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "name": "Joker Test Plan",
+    "defaultMonthlyJokers": 5,
+    "monthlyCoffeeLimit": 20,
+    "weeklyCoffeeLimit": 0
+  }'
+
+# Verify plan returns joker count
+curl -X GET http://localhost:8000/api/admin/subscription-plans/1
+
+# Expected response should include:
+# "default_monthly_jokers": 5

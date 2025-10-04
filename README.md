@@ -81,6 +81,7 @@ MochaPoint is a mobile-first coffee subscription platform that connects coffee l
 - **🆕 Enhanced UI**: Visual subscription indicators and accessible shop highlighting
 - **🆕 Environment Configuration**: Development/production config management
 - **🆕 Session Management**: Enhanced JWT tokens with 30-day expiry and session expiry handling
+- **Joker System**: Subscription plans define monthly joker allocations with 30-day reset cycles
 
 ### 🚧 In Development (Database Ready)
 - **Payment Processing**: Stripe integration for subscriptions
@@ -102,6 +103,7 @@ MochaPoint is a mobile-first coffee subscription platform that connects coffee l
 3. **Scan** → Use built-in scanner to validate customer QR codes
 4. **Analytics** → View real-time redemption stats and customer data
 5. **Rate** → Receive and manage customer ratings
+6. 
 
 ## 🚀 Getting Started
 

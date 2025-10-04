@@ -1413,12 +1413,17 @@ Authorization: Bearer <ADMIN_JWT_TOKEN>
   "priceCents": 2500,
   "currency": "EUR",
   "weeklyLimit": 5,
-  "monthlyLimit": 25,
+  "monthlyLimit": 25, 
+  "defaultMonthlyJokers": 3,  // NEW - optional, defaults to 0
+  "weeklyCoffeeLimit": 0,
   "description": "Unlimited coffee at Central Coffee Graz",
   "features": ["Daily coffee", "Skip lines", "Premium support"],
   "isActive": true
 }
 ```
+- weeklyCoffeeLimit can be 0 (disabled) or positive
+- defaultMonthlyJokers defaults to 0 if not provided
+- Monthly limit validation no longer depends on weekly limit
 
 #### Create User Subscription (Admin Only)
 ```http
