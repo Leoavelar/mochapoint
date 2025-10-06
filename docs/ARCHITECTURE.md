@@ -100,7 +100,7 @@ CREATE TABLE users (
     role user_role DEFAULT 'user',
     coffee_shop_id INTEGER REFERENCES coffee_shops(id),
     subscription_status BOOLEAN DEFAULT false,
-    joker_count INTEGER DEFAULT 3,
+    joker_count INTEGER DEFAULT 0, -- Auto-synced from user_joker_grants via trigger
     -- Social Authentication
     google_id VARCHAR(255) UNIQUE,
     apple_id VARCHAR(255) UNIQUE,
@@ -243,6 +243,30 @@ CREATE TABLE user_subscriptions (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+```
+
+#### user_joker_grants
+```sql
+CREATE TABLE user_joker_grants (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,
+  remaining INTEGER NOT NULL,
+  source VARCHAR(50) NOT NULL,
+  granted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMP NOT NULL, -- 30 days from granted_at
+  plan_id INTEGER REFERENCES subscription_plans(id),
+  referral_id INTEGER REFERENCES user_referrals(id),
+  promotion_code VARCHAR(50),
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Update user_referrals
+ALTER TABLE user_referrals
+ADD COLUMN referrer_joker_grant_id INTEGER REFERENCES user_joker_grants(id),
+ADD COLUMN referred_joker_grant_id INTEGER REFERENCES user_referrals(id);
 ```
 
 ### Database Optimization
