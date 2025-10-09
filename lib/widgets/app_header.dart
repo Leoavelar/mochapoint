@@ -22,23 +22,42 @@ class AppHeader extends StatefulWidget {
 
 class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMixin {
   // Coffee-themed colors (matching splash screen)
-  static const Color lightCream = Color(0xFFF9F5F1); // Light tone background
-  static const Color frothColor = Color(0xFFA6623A); // Light brown froth
-  static const Color darkEspresso = Color(0xFF472A19); // Dark espresso
+  static const Color darkEspresso = Color(0xFF472A19); // Dark espresso (animated wave)
+
+  // Gradient for background instead of solid froth color
+  static const LinearGradient frothGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFF8B4513), // Medium brown (original froth)
+      Color(0xFFD2691E), // Darker brown
+    ],
+    stops: [0.0, 1.0],
+  );
 
   Map<String, dynamic>? _user;
   late AnimationController _waveController;
+  late Animation<double> _waveAnimation;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
 
-    // Wave animation controller - smooth back-and-forth motion
+    // Wave animation controller - smooth back-and-forth motion with easing
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    )..repeat(reverse: true); // Play forward then backward
+    );
+
+    // Apply ease-in-out curve for smooth acceleration/deceleration
+    _waveAnimation = CurvedAnimation(
+      parent: _waveController,
+      curve: Curves.easeInOut,
+    );
+
+    // Repeat with reverse - slows down at ends, speeds up in middle
+    _waveController.repeat(reverse: true);
   }
 
   @override
@@ -78,21 +97,21 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
         height: widget.height,
         child: Stack(
           children: [
-            // Base layer - Light cream background
+            // Base layer - Light brown froth gradient (static background)
             Container(
               decoration: const BoxDecoration(
-                color: lightCream,
+                gradient: frothGradient, // Gradient instead of solid color
               ),
             ),
 
-            // Animated coffee liquid layer (like splash screen but covering full header)
+            // Animated dark espresso wave layer (only one animated layer)
             Positioned.fill(
               child: AnimatedBuilder(
-                animation: _waveController,
+                animation: _waveAnimation,
                 builder: (context, child) {
                   return CustomPaint(
                     painter: HeaderCoffeeLiquidPainter(
-                      wavePhase: _waveController.value * 2 * math.pi,
+                      wavePhase: _waveAnimation.value * 2 * math.pi,
                       height: widget.height,
                     ),
                     size: Size.infinite,
@@ -157,15 +176,13 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
   }
 }
 
-// Header coffee liquid painter - adapted from splash screen
+// Header coffee liquid painter - single dark espresso wave over froth background
 class HeaderCoffeeLiquidPainter extends CustomPainter {
   final double wavePhase;
   final double height;
 
-  // Same colors as splash screen
-  static const Color frothColor = Color(0xFFA6623A); // Light brown froth
+  // Only need dark espresso color for the wave
   static const Color darkEspresso = Color(0xFF472A19); // Dark espresso
-  static const Color creamBackground = Color(0xFFF9F5F1);
 
   HeaderCoffeeLiquidPainter({
     required this.wavePhase,
@@ -174,39 +191,10 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Background - cream
-    final bgPaint = Paint()..color = frothColor;
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+    // Only paint ONE layer: Dark espresso wave
+    // The light brown froth is now the static background
 
-    // LAYER 1: Light brown froth layer (bottom z-index)
-    // Covers more of the header
-    final frothLevel = size.height * 0.3; // Starts at 30% from top
-    final frothPath = Path();
-    frothPath.moveTo(0, size.height);
-
-    for (double x = 0; x <= size.width; x += 3) {
-      final distanceFromCenter = (x - size.width / 2).abs() / (size.width / 2);
-      final amplitude = 8 * (1 - distanceFromCenter * 0.3); // Slightly smaller amplitude for header
-
-      // Same wave pattern as splash screen
-      final wave1 = math.sin((x / size.width) * 3 * math.pi + wavePhase) * amplitude;
-      final wave2 = math.sin((x / size.width) * 5 * math.pi - wavePhase * 0.7) * (amplitude * 0.5);
-
-      final y = frothLevel + wave1 + wave2;
-      frothPath.lineTo(x, y.clamp(0, size.height));
-    }
-
-    frothPath.lineTo(size.width, size.height);
-    frothPath.close();
-
-    final frothPaint = Paint()
-      ..color = darkEspresso
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(frothPath, frothPaint);
-
-    // LAYER 2: Dark espresso layer (top z-index)
-    final espressoLevel = size.height * 0.55; // Starts at 55% from top
+    final espressoLevel = size.height * 0.35; // Starts at 55% from top
     final espressoPath = Path();
     espressoPath.moveTo(0, size.height);
 
@@ -214,7 +202,7 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
       final distanceFromCenter = (x - size.width / 2).abs() / (size.width / 2);
       final amplitude = 8 * (1 - distanceFromCenter * 0.3);
 
-      // Same wave pattern as froth
+      // Wave pattern
       final wave1 = math.sin((x / size.width) * 3 * math.pi + wavePhase) * amplitude;
       final wave2 = math.sin((x / size.width) * 5 * math.pi - wavePhase * 0.7) * (amplitude * 0.5);
 
