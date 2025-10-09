@@ -312,7 +312,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                     'Start Your Coffee Journey!',
                     style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -468,28 +468,28 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
             child: Row(
               children: [
                 // MochaPoint icon (white version) - no background, smaller size
-                SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: Image.asset(
-                    'assets/icons/mocha_icon_white.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(
-                        Icons.local_cafe_rounded,
-                        color: Colors.white,
-                        size: 28,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
+                // SizedBox(
+                //   width: 36,
+                //   height: 36,
+                //   child: Image.asset(
+                //     'assets/icons/mocha_icon_white.png',
+                //     fit: BoxFit.contain,
+                //     errorBuilder: (context, error, stackTrace) {
+                //       return const Icon(
+                //         Icons.local_cafe_rounded,
+                //         color: Colors.white,
+                //         size: 28,
+                //       );
+                //     },
+                //   ),
+                // ),
+                // const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     _selectedShop?.name ?? 'Your Coffee Shop',
                     style: const TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                     overflow: TextOverflow.ellipsis,
