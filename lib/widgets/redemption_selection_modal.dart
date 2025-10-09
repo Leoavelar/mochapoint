@@ -901,6 +901,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     // Calculate monthly limit from remaining + redeemed
     final monthlyLimit = remainingMonthly + totalRedeemed;
 
-    return '$remainingMonthly of $monthlyLimit this month';
+    return '$remainingMonthly remaining this month';
   }
 }
