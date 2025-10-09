@@ -1,4 +1,4 @@
-// lib/screens/splash_screen.dart - NO LOADING INDICATOR
+// lib/screens/splash_screen.dart - Clean Two-Layer Coffee Liquid with Bigger Offset
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -35,10 +35,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       duration: const Duration(milliseconds: 1500),
     );
 
-    // Wave animation controller - slower (5 seconds instead of 3)
+    // Wave animation controller - smooth continuous motion
     _waveController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 4),
     )..repeat();
 
     // Fade in animation
@@ -140,27 +140,38 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     return Scaffold(
       body: Stack(
         children: [
-          // Animated espresso waves background
-          AnimatedBuilder(
-            animation: _waveController,
-            builder: (context, child) {
-              return CustomPaint(
-                painter: EspressoWavesPainter(
-                  waveAnimation: _waveController.value,
-                ),
-                size: Size.infinite,
-              );
-            },
+          // Cream background for upper 3/4
+          Container(
+            color: const Color(0xFFF9F5F1),
           ),
 
-          // Content on top of waves
+          // Coffee liquid animation at bottom 1/4
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: MediaQuery.of(context).size.height * 0.25, // Only bottom 1/4
+            child: AnimatedBuilder(
+              animation: _waveController,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: CoffeeLiquidPainter(
+                    wavePhase: _waveController.value * 2 * math.pi,
+                  ),
+                  size: Size.infinite,
+                );
+              },
+            ),
+          ),
+
+          // Content on top - fully transparent
           Center(
             child: FadeTransition(
               opacity: _fadeAnimation,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Animated coffee bean icon
+                  // Animated coffee bean icon - NO background
                   AnimatedBuilder(
                     animation: _bounceController,
                     builder: (context, child) {
@@ -178,22 +189,29 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Mocha Point',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: Colors.black,
-                      fontFamily: 'ClashDisplay',
-                    ),
+                  const SizedBox(height: 32),
+                  // Text without background container - transparent
+                  Column(
+                    children: [
+                      Text(
+                        'Mocha Point',
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                          color: const Color(0xFF472A19), // Dark espresso
+                          fontFamily: 'ClashDisplay',
+                          fontWeight: FontWeight.bold,
+                          fontSize: 36,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Your daily dose of Happiness',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: const Color(0xFFA6623A), // Coffee bean color
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your daily dose of Happiness',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.black54,
-                    ),
-                  ),
-                  // Loading indicator removed - clean splash screen!
                 ],
               ),
             ),
@@ -204,65 +222,80 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 }
 
-// Custom painter for animated espresso waves
-class EspressoWavesPainter extends CustomPainter {
-  final double waveAnimation;
+// Clean two-layer coffee liquid painter with bigger offset and same wave pattern
+class CoffeeLiquidPainter extends CustomPainter {
+  final double wavePhase;
 
-  EspressoWavesPainter({required this.waveAnimation});
+  // Your original coffee colors
+  static const Color frothColor = Color(0xFFA6623A); // Light brown froth (coffee bean)
+  static const Color darkEspresso = Color(0xFF472A19); // Dark espresso
+  static const Color creamBackground = Color(0xFFF9F5F1);
+
+  CoffeeLiquidPainter({required this.wavePhase});
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Background color (cream)
-    final bgPaint = Paint()..color = const Color(0xFFF9F5F1);
+    // Background - cream
+    final bgPaint = Paint()..color = creamBackground;
     canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
 
-    // PAINT FROTH FIRST (bottom z-index) - Coffee bean color (#A6623A)
+    // LAYER 1: Light brown froth layer (painted first, bottom z-index)
+    // This fills more area and is visible above the espresso
+    final frothLevel = size.height * 0.15; // Starts at 15% from top (higher up)
     final frothPath = Path();
     frothPath.moveTo(0, size.height);
-    frothPath.lineTo(0, size.height * 0.70);
 
-    // Animated wave for froth layer
-    for (double i = 0; i <= size.width; i++) {
-      frothPath.lineTo(
-          i,
-          size.height * 0.70 +
-              math.sin((i / size.width * 2 * math.pi) + (waveAnimation * 2.5 * math.pi) + 1.5) * 20
-      );
+    for (double x = 0; x <= size.width; x += 3) {
+      final distanceFromCenter = (x - size.width / 2).abs() / (size.width / 2);
+      final amplitude = 12 * (1 - distanceFromCenter * 0.3);
+
+      // Same "random" wave pattern
+      final wave1 = math.sin((x / size.width) * 3 * math.pi + wavePhase) * amplitude;
+      final wave2 = math.sin((x / size.width) * 5 * math.pi - wavePhase * 0.7) * (amplitude * 0.5);
+
+      final y = frothLevel + wave1 + wave2;
+      frothPath.lineTo(x, y.clamp(0, size.height));
     }
 
     frothPath.lineTo(size.width, size.height);
     frothPath.close();
 
     final frothPaint = Paint()
-      ..color = const Color(0xFFA6623A)
+      ..color = frothColor
       ..style = PaintingStyle.fill;
+
     canvas.drawPath(frothPath, frothPaint);
 
-    // PAINT DARK ESPRESSO LAST (top z-index) - #472A19
-    final darkPath = Path();
-    darkPath.moveTo(0, size.height);
-    darkPath.lineTo(0, size.height * 0.77);
+    // LAYER 2: Dark espresso layer (painted last, top z-index)
+    // Bigger offset - starts much lower to show more froth
+    final espressoLevel = size.height * 0.45; // Starts at 45% from top (much lower)
+    final espressoPath = Path();
+    espressoPath.moveTo(0, size.height);
 
-    // Animated wave for dark layer
-    for (double i = 0; i <= size.width; i++) {
-      darkPath.lineTo(
-          i,
-          size.height * 0.77 +
-              math.sin((i / size.width * 2 * math.pi) + (waveAnimation * 2 * math.pi)) * 15
-      );
+    for (double x = 0; x <= size.width; x += 3) {
+      final distanceFromCenter = (x - size.width / 2).abs() / (size.width / 2);
+      final amplitude = 12 * (1 - distanceFromCenter * 0.3);
+
+      // SAME "random" wave pattern as froth
+      final wave1 = math.sin((x / size.width) * 3 * math.pi + wavePhase) * amplitude;
+      final wave2 = math.sin((x / size.width) * 5 * math.pi - wavePhase * 0.7) * (amplitude * 0.5);
+
+      final y = espressoLevel + wave1 + wave2;
+      espressoPath.lineTo(x, y.clamp(0, size.height));
     }
 
-    darkPath.lineTo(size.width, size.height);
-    darkPath.close();
+    espressoPath.lineTo(size.width, size.height);
+    espressoPath.close();
 
-    final darkPaint = Paint()
-      ..color = const Color(0xFF472A19)
+    final espressoPaint = Paint()
+      ..color = darkEspresso
       ..style = PaintingStyle.fill;
-    canvas.drawPath(darkPath, darkPaint);
+
+    canvas.drawPath(espressoPath, espressoPaint);
   }
 
   @override
-  bool shouldRepaint(EspressoWavesPainter oldDelegate) {
-    return oldDelegate.waveAnimation != waveAnimation;
+  bool shouldRepaint(CoffeeLiquidPainter oldDelegate) {
+    return oldDelegate.wavePhase != wavePhase;
   }
 }
