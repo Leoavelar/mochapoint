@@ -1,4 +1,4 @@
-// lib/main.dart - Alternative solution with prebuilt screen
+// lib/main.dart - With gradient background matching modal
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'config/app_config.dart';
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
 
   // Colors based on the updated design
   static const Color coffeeBean = Color(0xFFA6623A); // Brown for coffee bean
-  static const Color background = Color(0xFFFAF9F2); // Light cream background
+  static const Color lightCream = Color(0xFFF5E6D3); // Light cream (matches modal)
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +34,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: AppConfig.enableDebugFeatures,
       theme: ThemeData(
         primaryColor: coffeeBean,
-        scaffoldBackgroundColor: background,
+        // Remove solid scaffold background - we'll use gradient containers instead
+        scaffoldBackgroundColor: Colors.transparent,
         fontFamily: 'ClashDisplay',
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
@@ -94,12 +95,41 @@ class MyApp extends StatelessWidget {
           background: Colors.white,
         ),
       ),
-      home: const AuthWrapper(),
-      // Add routes for better navigation handling
+      home: const GradientBackground(
+        child: AuthWrapper(),
+      ),
+      // Add routes with gradient background wrapper
       routes: {
-        '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/login': (context) => const GradientBackground(child: LoginScreen()),
+        '/home': (context) => const GradientBackground(child: HomeScreen()),
       },
+    );
+  }
+}
+
+// New widget to provide consistent gradient background
+class GradientBackground extends StatelessWidget {
+  final Widget child;
+
+  const GradientBackground({
+    Key? key,
+    required this.child,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            Color(0xFFF5E6D3), // lightCream - matches modal
+          ],
+        ),
+      ),
+      child: child,
     );
   }
 }
@@ -113,7 +143,7 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStateMixin {
   bool _showSplash = true;
-  Widget? _nextScreen; // Store the next screen
+  Widget? _nextScreen;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -121,10 +151,8 @@ class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStat
   void initState() {
     super.initState();
 
-    // Determine next screen immediately
     _loadNextScreen();
 
-    // Fade animation controller
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -134,7 +162,6 @@ class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStat
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
 
-    // Show splash for 3 seconds, then fade out
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         _fadeController.forward().then((_) {
@@ -165,13 +192,21 @@ class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    // Show splash screen with fade animation
     if (_showSplash) {
       return Stack(
         children: [
-          // Background color layer (cream)
+          // Gradient background layer (matching modal)
           Container(
-            color: const Color(0xFFF9F5F1),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white,
+                  Color(0xFFF5E6D3), // lightCream
+                ],
+              ),
+            ),
           ),
           // Splash screen with fade
           FadeTransition(
@@ -182,7 +217,18 @@ class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStat
       );
     }
 
-    // Show the preloaded next screen (no loading state)
-    return _nextScreen ?? Container(color: const Color(0xFFF9F5F1));
+    // Show the preloaded next screen (already wrapped with GradientBackground)
+    return _nextScreen ?? Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            Color(0xFFF5E6D3),
+          ],
+        ),
+      ),
+    );
   }
 }
