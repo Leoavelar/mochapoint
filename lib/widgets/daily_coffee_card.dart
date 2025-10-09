@@ -1,5 +1,6 @@
 // Path: lib/widgets/daily_coffee_card.dart
 // ✅ REDESIGNED to match redemption modal subscription card style
+// ✅ UPDATED with coffee gradient circular progress bar
 
 import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
@@ -34,6 +35,11 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
   static const Color chocolate = Color(0xFFD2691E);
   static const Color coffeeGreen = Color(0xFF4CAF50);
 
+  // ✨ ANIMATION CONFIGURATION - Easy to adjust!
+  static const int flipIntervalSeconds = 5;  // Time between flips
+  static const int numberOfFlips = 1;        // Number of complete rotations (1 = 360°, 2 = 720°, etc.)
+  static const int flipDurationMs = 1600;     // Duration of flip animation in milliseconds
+
   bool isAvailableToday = true;
   int availableCoffees = 1;
   UserSubscriptionData? _subscriptionData;
@@ -41,7 +47,10 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
   CoffeeShop? _selectedShop;
   late AnimationController _progressController;
   late Animation<double> _progressAnimation;
+  late AnimationController _flipController;
+  late Animation<double> _flipAnimation;
   Timer? _countdownTimer;
+  Timer? _flipTimer;
 
   SubscriptionState get _subscriptionState {
     if (_isLoadingSubscription) return SubscriptionState.loading;
@@ -67,8 +76,23 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
       curve: Curves.easeInOut,
     ));
 
+    // Flip animation controller
+    _flipController = AnimationController(
+      duration: Duration(milliseconds: flipDurationMs),
+      vsync: this,
+    );
+
+    _flipAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _flipController,
+      curve: Curves.easeInOutCubic,
+    ));
+
     _progressController.forward();
     _startCountdownTimer();
+    _startFlipTimer();
   }
 
   void _startCountdownTimer() {
@@ -79,10 +103,28 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
     });
   }
 
+  void _startFlipTimer() {
+    // Start first flip after initial delay (40% of interval)
+    final initialDelay = (flipIntervalSeconds * 0.4).round();
+    Future.delayed(Duration(seconds: initialDelay), () {
+      if (mounted) {
+        _flipController.forward(from: 0.0);
+      }
+    });
+
+    _flipTimer = Timer.periodic(Duration(seconds: flipIntervalSeconds), (timer) {
+      if (mounted) {
+        _flipController.forward(from: 0.0);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _progressController.dispose();
+    _flipController.dispose();
     _countdownTimer?.cancel();
+    _flipTimer?.cancel();
     super.dispose();
   }
 
@@ -467,23 +509,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
             ),
             child: Row(
               children: [
-                // MochaPoint icon (white version) - no background, smaller size
-                // SizedBox(
-                //   width: 36,
-                //   height: 36,
-                //   child: Image.asset(
-                //     'assets/icons/mocha_icon_white.png',
-                //     fit: BoxFit.contain,
-                //     errorBuilder: (context, error, stackTrace) {
-                //       return const Icon(
-                //         Icons.local_cafe_rounded,
-                //         color: Colors.white,
-                //         size: 28,
-                //       );
-                //     },
-                //   ),
-                // ),
-                // const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     _selectedShop?.name ?? 'Your Coffee Shop',
@@ -572,7 +597,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
 
                 const SizedBox(width: 20),
 
-                // Right side - Circular progress (kept from original)
+                // Right side - Circular progress with gradient
                 SizedBox(
                   width: 80,
                   height: 80,
@@ -588,7 +613,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                         ),
                       ),
 
-                      // Animated progress circle
+                      // Animated progress circle with gradient
                       AnimatedBuilder(
                         animation: _progressAnimation,
                         builder: (context, child) {
@@ -604,46 +629,75 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                         },
                       ),
 
-                      // Center icon/logo with tap functionality to toggle state
+                      // Center icon/logo with flip animation
                       Center(
-                        child: GestureDetector(
-                          onTap: () {
-                            // Debug mode: toggle between available and countdown states
-                            print('Tapped! Current state: $isAvailableToday');
-                            setState(() {
-                              isAvailableToday = !isAvailableToday;
-                            });
-                          },
-                          child: Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: coffeeReady ? coffeeGreen : Colors.grey.shade300,
-                            ),
-                            child: ClipOval(
-                              child: _selectedShop?.logoUrl != null
-                                  ? Padding(
-                                padding: const EdgeInsets.all(0),
-                                child: Image.asset(
-                                  'assets/images/shops/${_selectedShop!.logoUrl}',
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
+                        child: AnimatedBuilder(
+                          animation: _flipAnimation,
+                          builder: (context, child) {
+                            // Calculate rotation angle based on number of flips
+                            // numberOfFlips = 1: 360°, numberOfFlips = 2: 720°, etc.
+                            final angle = _flipAnimation.value * numberOfFlips * 2 * math.pi;
+
+                            // Calculate scale effect (shrink during middle of flip)
+                            final scale = 1.0 - (math.sin(_flipAnimation.value * math.pi) * 0.15);
+
+                            // Apply 3D perspective transform with scale (Y-axis rotation)
+                            return Transform(
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()
+                                ..setEntry(3, 2, 0.002) // stronger perspective
+                                ..rotateY(angle)  // Changed from rotateX to rotateY
+                                ..scale(scale),
+                              child: GestureDetector(
+                                onTap: () {
+                                  // Debug mode: toggle between available and countdown states
+                                  print('Tapped! Current state: $isAvailableToday');
+                                  setState(() {
+                                    isAvailableToday = !isAvailableToday;
+                                  });
+                                  // Also trigger flip animation on tap
+                                  _flipController.forward(from: 0.0);
+                                },
+                                child: Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: coffeeReady ? coffeeGreen : Colors.grey.shade300,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipOval(
+                                    child: _selectedShop?.logoUrl != null
+                                        ? Padding(
+                                      padding: const EdgeInsets.all(0),
+                                      child: Image.asset(
+                                        'assets/images/shops/${_selectedShop!.logoUrl}',
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Icon(
+                                            coffeeReady ? Icons.local_cafe : Icons.access_time,
+                                            color: Colors.white,
+                                            size: 24,
+                                          );
+                                        },
+                                      ),
+                                    )
+                                        : Icon(
                                       coffeeReady ? Icons.local_cafe : Icons.access_time,
                                       color: Colors.white,
                                       size: 24,
-                                    );
-                                  },
+                                    ),
+                                  ),
                                 ),
-                              )
-                                  : Icon(
-                                coffeeReady ? Icons.local_cafe : Icons.access_time,
-                                color: Colors.white,
-                                size: 24,
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -658,7 +712,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
   }
 }
 
-// Custom painter for the circular progress bar (kept from original)
+// Custom painter for the circular progress bar with coffee gradient
 class CircularProgressPainter extends CustomPainter {
   final double progress;
   final Color backgroundColor;
@@ -686,17 +740,23 @@ class CircularProgressPainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, backgroundPaint);
 
-    // Draw progress arc
+    // Draw progress arc with uniform color
+    final sweepAngle = 2 * math.pi * progress;
+
+    // Use chocolate (lighter tone) for countdown, green for ready
+    final Color arcColor = progressColor == const Color(0xFF4CAF50)
+        ? const Color(0xFF4CAF50) // coffeeGreen when ready
+        : const Color(0xFFD2691E); // chocolate (lighter) for countdown
+
     final progressPaint = Paint()
-      ..color = progressColor
+      ..color = arcColor
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
 
-    final sweepAngle = 2 * math.pi * progress;
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2, // Start from top
+      -math.pi / 2,
       sweepAngle,
       false,
       progressPaint,
