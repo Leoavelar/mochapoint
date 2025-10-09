@@ -76,12 +76,12 @@ flutter_icons:
 
 flutter_native_splash:
   color: "#4C2915"
-  image: assets/icon/icon.svg
+  image: assets/icon/mocha_icon_black.png
   android: true
   ios: true
   web: false
 
   android_12:
     color: "#FAF5F2"
-    image: assets/icon/icon.svg
+    image: assets/icon/mocha_icon_black.png
     icon_background_color: "#4C2915"

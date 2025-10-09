@@ -13,6 +13,7 @@ class MonthlyStatsData {
   final int jokersAvailable;
   final bool hasActiveSubscription;
   final String? subscriptionPlanName;
+  final String? coffeeShopName;
   final int monthlyLimit;
   final int weeklyLimit;
   final int remainingMonthly;
@@ -26,6 +27,7 @@ class MonthlyStatsData {
     required this.jokersAvailable,
     required this.hasActiveSubscription,
     this.subscriptionPlanName,
+    this.coffeeShopName,
     required this.monthlyLimit,
     required this.weeklyLimit,
     required this.remainingMonthly,
@@ -46,6 +48,7 @@ class MonthlyStatsData {
       jokersAvailable: available['jokers'] ?? 0,
       hasActiveSubscription: subscription['hasActiveSubscription'] ?? false,
       subscriptionPlanName: subscription['planName'],
+      coffeeShopName: subscription['shopName'],
       monthlyLimit: subscription['monthlyLimit'] ?? 0,
       weeklyLimit: subscription['weeklyLimit'] ?? 0,
       remainingMonthly: subscription['remainingMonthly'] ?? 0,

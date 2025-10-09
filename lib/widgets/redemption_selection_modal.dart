@@ -1,11 +1,14 @@
 // lib/widgets/redemption_selection_modal.dart
+// ✅ FIXED: Now uses MonthlyStatsService for accurate data
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/redemption_service.dart';
+import '../services/monthly_stats_service.dart'; // ✅ ADDED
 import '../config/app_config.dart';
+import '../utils/exceptions.dart'; // ✅ ADDED
 
 class RedemptionSelectionModal extends StatefulWidget {
-  final String? initialRedemptionType; // 'subscription' or 'joker' or null for selection
+  final String? initialRedemptionType;
 
   const RedemptionSelectionModal({
     Key? key,
@@ -17,7 +20,13 @@ class RedemptionSelectionModal extends StatefulWidget {
 }
 
 class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
+  static const Color coffeeBrown = Color(0xFF8B4513);
+  static const Color lightCream = Color(0xFFF5E6D3);
+  static const Color darkBrown = Color(0xFF5D4037);
+  static const Color chocolate = Color(0xFFD2691E);
+
   Map<String, dynamic>? _redemptionStatus;
+  MonthlyStatsData? _monthlyStats; // ✅ ADDED: State variable for monthly stats
   String? _selectedRedemptionType;
   String? _qrToken;
   bool _isLoading = false;
@@ -30,9 +39,10 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     _loadRedemptionStatus();
   }
 
+  // ✅ UPDATED: Now fetches both redemption status AND monthly stats
   Future<void> _loadRedemptionStatus() async {
     if (AppConfig.enableLogging) {
-      print('🔍 RedemptionModal: Loading redemption status');
+      print('🔍 RedemptionModal: Loading redemption status and monthly stats');
     }
 
     setState(() {
@@ -41,15 +51,24 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     });
 
     try {
-      final result = await RedemptionService.getRedemptionStatus();
+      // Fetch both data sources
+      final statusResult = await RedemptionService.getRedemptionStatus();
+      final monthlyStats = await MonthlyStatsService.getMonthlyStats(); // ✅ ADDED
 
-      if (result['success']) {
+      if (statusResult['success']) {
         setState(() {
-          _redemptionStatus = result['status'];
+          _redemptionStatus = statusResult['status'];
+          _monthlyStats = monthlyStats; // ✅ ADDED: Store monthly stats
           _isLoading = false;
         });
 
-        // If initial redemption type is provided, generate QR immediately
+        if (AppConfig.enableLogging) {
+          print('✅ RedemptionModal: Data loaded successfully');
+          print('   Remaining monthly: ${monthlyStats.remainingMonthly}');
+          print('   Total redeemed: ${monthlyStats.totalRedeemed}');
+          print('   Has subscription: ${monthlyStats.hasActiveSubscription}');
+        }
+
         if (widget.initialRedemptionType != null && mounted) {
           _generateQRCode(widget.initialRedemptionType!);
         }
@@ -58,20 +77,25 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           print('❌ RedemptionModal: Failed to load status');
         }
 
-        // Check if this is a session expiry
-        if (result['isSessionExpired'] == true ||
-            result['errorCode'] == 'SESSION_EXPIRED' ||
-            result['errorCode'] == 'TOKEN_EXPIRED') {
+        if (statusResult['isSessionExpired'] == true ||
+            statusResult['errorCode'] == 'SESSION_EXPIRED' ||
+            statusResult['errorCode'] == 'TOKEN_EXPIRED') {
           Navigator.of(context).pop();
           _showSessionExpiredDialog();
           return;
         }
 
         setState(() {
-          _error = result['error'] ?? 'Unknown error from server';
+          _error = statusResult['error'] ?? 'Unknown error from server';
           _isLoading = false;
         });
       }
+    } on SessionExpiredException catch (e) {
+      if (AppConfig.enableLogging) {
+        print('❌ RedemptionModal: Session expired - $e');
+      }
+      Navigator.of(context).pop();
+      _showSessionExpiredDialog();
     } catch (e) {
       if (AppConfig.enableLogging) {
         print('❌ RedemptionModal: Exception: $e');
@@ -107,7 +131,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           print('❌ RedemptionModal: QR generation failed');
         }
 
-        // Check if this is a session expiry
         if (result['isSessionExpired'] == true ||
             result['errorCode'] == 'SESSION_EXPIRED' ||
             result['errorCode'] == 'TOKEN_EXPIRED') {
@@ -121,7 +144,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           _isGeneratingQR = false;
         });
 
-        // If there's a next available time, show it
         if (result['nextAvailableAt'] != null) {
           final timeUntilNext = RedemptionService.getTimeUntilNextRedemption(result['nextAvailableAt']);
           setState(() {
@@ -145,36 +167,68 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: lightCream,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.lock_clock_outlined, color: Colors.orange),
-            SizedBox(width: 8),
-            Text(
-              'Session Expired',
-              style: TextStyle(color: Colors.orange),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.lock_clock, color: Colors.orange, size: 28),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Session Expired',
+                style: TextStyle(
+                  color: coffeeBrown,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                ),
+              ),
             ),
           ],
         ),
         content: const Text(
-          'Your session has expired for security reasons. Please log in again to continue.',
+          'Your session has expired for security reasons. Please log in again to continue enjoying your coffee!',
+          style: TextStyle(
+            color: darkBrown,
+            fontSize: 16,
+          ),
         ),
         actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: coffeeBrown,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  '/login',
+                      (route) => false,
+                );
+              },
+              child: const Text(
+                'Login Again',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/login',
-                    (route) => false,
-              );
-            },
-            child: const Text('Login Again'),
           ),
         ],
       ),
@@ -186,18 +240,25 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            lightCream,
+          ],
+        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: Column(
         children: [
           Container(
             margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
+            width: 50,
+            height: 5,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
+              color: coffeeBrown.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
           Expanded(
@@ -210,8 +271,32 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: lightCream,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(coffeeBrown),
+                strokeWidth: 3,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Preparing your coffee...',
+              style: TextStyle(
+                color: coffeeBrown,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -232,55 +317,95 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
         _error!.contains('log in');
 
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            isSessionError ? Icons.lock_clock_outlined : Icons.error_outline,
-            size: 64,
-            color: isSessionError ? Colors.orange[300] : Colors.red[300],
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: lightCream,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isSessionError ? Icons.lock_clock : Icons.coffee_outlined,
+              size: 80,
+              color: isSessionError ? Colors.orange : coffeeBrown.withOpacity(0.7),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
-            isSessionError ? 'Session Expired' : 'Unable to Generate QR Code',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            isSessionError ? 'Session Expired' : 'Oops!',
+            style: const TextStyle(
+              fontSize: 28,
               fontWeight: FontWeight.bold,
+              color: coffeeBrown,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
             _error!,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: const TextStyle(
+              fontSize: 16,
+              color: darkBrown,
+              height: 1.5,
+            ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              if (!isSessionError)
-                ElevatedButton(
-                  onPressed: _loadRedemptionStatus,
-                  child: const Text('Try Again'),
-                ),
-              if (isSessionError)
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
+          const SizedBox(height: 32),
+          if (!isSessionError)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: coffeeBrown,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/login',
-                          (route) => false,
-                    );
-                  },
-                  child: const Text('Login Again'),
+                  elevation: 4,
                 ),
-            ],
-          ),
+                onPressed: _loadRedemptionStatus,
+                child: const Text(
+                  'Try Again',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          if (isSessionError)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 4,
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pushNamedAndRemoveUntil(
+                    '/login',
+                        (route) => false,
+                  );
+                },
+                child: const Text(
+                  'Login Again',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -290,43 +415,80 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     final status = _redemptionStatus;
     if (status == null) return const SizedBox();
 
-    return Padding(
-      padding: const EdgeInsets.all(20),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
-          Text(
-            'Choose Redemption Type',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           const SizedBox(height: 8),
-          Text(
-            'Select how you\'d like to redeem your coffee',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[600],
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: coffeeBrown.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Image.asset(
+                  'assets/icons/mocha_icon_coffeebean.png',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Redeem Coffee',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Choose your redemption type',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: darkBrown,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 32),
-
           _buildRedemptionOption(
             type: 'subscription',
             title: 'Subscription Coffee',
             subtitle: _getSubscriptionSubtitle(status),
-            icon: Icons.coffee,
+            icon: Icons.local_cafe_rounded,
+            gradient: const LinearGradient(
+              colors: [coffeeBrown, chocolate],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            gradientPosition: 'top',
             enabled: status['canRedeemSubscription'] ?? false,
             available: _getSubscriptionAvailable(status),
           ),
-
           const SizedBox(height: 16),
-
           _buildRedemptionOption(
             type: 'joker',
             title: 'Use Joker',
-            subtitle: 'Valid at any participating coffee shop',
-            icon: Icons.stars,
+            subtitle: 'Valid at any participating shop',
+            icon: Icons.stars_rounded,
+            gradient: LinearGradient(
+              colors: [Colors.orange[700]!, Colors.orange[400]!],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            gradientPosition: 'bottom',
             enabled: status['canRedeemJoker'] ?? false,
             available: '${status['jokerCount'] ?? 0} jokers available',
           ),
@@ -340,88 +502,133 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     required String title,
     required String subtitle,
     required IconData icon,
+    required Gradient gradient,
+    required String gradientPosition,
     required bool enabled,
     required String available,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Material(
-        color: enabled ? Colors.white : Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           onTap: enabled ? () => _generateQRCode(type) : null,
           child: Container(
-            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: enabled ? Theme.of(context).primaryColor : Colors.grey[300]!,
-                width: enabled ? 2 : 1,
-              ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: enabled
-                        ? Theme.of(context).primaryColor.withOpacity(0.1)
-                        : Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: enabled
+                        ? gradient
+                        : LinearGradient(
+                      colors: [Colors.grey[300]!, Colors.grey[200]!],
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
                   ),
-                  child: Icon(
-                    icon,
-                    color: enabled
-                        ? Theme.of(context).primaryColor
-                        : Colors.grey[400],
-                    size: 24,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          icon,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: enabled ? Colors.white : Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                      if (enabled)
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+                Padding(
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: enabled ? Colors.black : Colors.grey[500],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
                         subtitle,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: enabled ? Colors.grey[600] : Colors.grey[400],
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: enabled ? coffeeBrown : Colors.grey[500],
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: enabled ? Colors.green.withOpacity(0.1) : Colors.grey[100],
+                          color: enabled
+                              ? coffeeBrown.withOpacity(0.1)
+                              : Colors.grey[200],
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(
-                          available,
-                          style: TextStyle(
-                            color: enabled ? Colors.green[700] : Colors.grey[500],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              enabled ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                              color: enabled ? coffeeBrown : Colors.grey[500],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              available,
+                              style: TextStyle(
+                                color: enabled ? coffeeBrown : Colors.grey[600],
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (enabled)
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: Theme.of(context).primaryColor,
-                    size: 16,
-                  ),
               ],
             ),
           ),
@@ -431,26 +638,34 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   }
 
   Widget _buildQRCodeView() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Row(
             children: [
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedRedemptionType = null;
-                    _qrToken = null;
-                  });
-                },
-                icon: const Icon(Icons.arrow_back),
+              Container(
+                decoration: BoxDecoration(
+                  color: lightCream,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedRedemptionType = null;
+                      _qrToken = null;
+                    });
+                  },
+                  icon: const Icon(Icons.arrow_back_rounded, color: coffeeBrown),
+                ),
               ),
-              Expanded(
+              const Expanded(
                 child: Text(
-                  'Redeem Your Coffee',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  'Your Coffee QR',
+                  style: TextStyle(
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -458,80 +673,105 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               const SizedBox(width: 48),
             ],
           ),
-
-          const SizedBox(height: 20),
-
-          Expanded(
-            child: Center(
-              child: Card(
-                elevation: 8,
-                shadowColor: Colors.black,
-                surfaceTintColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+          const SizedBox(height: 32),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
-                child: Container(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: _selectedRedemptionType == 'subscription'
+                          ? [coffeeBrown, chocolate]
+                          : [Colors.orange[700]!, Colors.orange[400]!],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
+                    ),
+                  ),
+                  child: Row(
                     children: [
-                      Text(
-                        _selectedRedemptionType == 'subscription'
-                            ? 'Subscription Coffee'
-                            : 'Joker Redemption',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Valid until midnight',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      if (_qrToken != null)
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey[200]!),
-                          ),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              QrImageView(
-                                data: _qrToken!,
-                                version: QrVersions.auto,
-                                size: 200.0,
-                                backgroundColor: Colors.white,
-                                gapless: false,
-                              ),
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(2),
-                                  border:Border.all(color: Colors.black)
-                                ),
-                                padding: const EdgeInsets.all(4),
-                                child: Image.asset(
-                                  'assets/icons/mocha_icon_black.png',
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      const SizedBox(height: 24),
-
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _selectedRedemptionType == 'subscription'
+                              ? Icons.local_cafe_rounded
+                              : Icons.stars_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _selectedRedemptionType == 'subscription'
+                              ? 'Subscription Coffee'
+                              : 'Joker Redemption',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: coffeeBrown.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.access_time, color: coffeeBrown, size: 14),
+                            SizedBox(width: 6),
+                            Text(
+                              'Valid until midnight',
+                              style: TextStyle(
+                                color: coffeeBrown,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      if (_qrToken != null)
+                        QrImageView(
+                          data: _qrToken!,
+                          version: QrVersions.auto,
+                          size: 240.0,
+                          backgroundColor: Colors.white,
+                          gapless: false,
+                        ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                         decoration: BoxDecoration(
                           color: Colors.green.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(30),
@@ -543,7 +783,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.check_circle,
+                              Icons.check_circle_rounded,
                               color: Colors.green,
                               size: 20,
                             ),
@@ -553,6 +793,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                               style: TextStyle(
                                 color: Colors.green,
                                 fontWeight: FontWeight.bold,
+                                fontSize: 15,
                               ),
                             ),
                           ],
@@ -561,30 +802,35 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
           ),
-
+          const SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.blue[50],
-              borderRadius: BorderRadius.circular(12),
+              color: lightCream,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: coffeeBrown.withOpacity(0.2),
+                width: 1.5,
+              ),
             ),
             child: const Row(
               children: [
                 Icon(
-                  Icons.info_outline,
-                  color: Colors.blue,
-                  size: 20,
+                  Icons.info_outline_rounded,
+                  color: coffeeBrown,
+                  size: 24,
                 ),
-                SizedBox(width: 12),
+                SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     'Show this QR code to the coffee shop staff to complete your redemption.',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: darkBrown,
                       fontSize: 14,
+                      height: 1.5,
                     ),
                   ),
                 ),
@@ -596,7 +842,24 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     );
   }
 
+  // ✅ UPDATED: Uses monthly stats for subscription plan name
   String _getSubscriptionSubtitle(Map<String, dynamic> status) {
+    if (_monthlyStats?.hasActiveSubscription == true) {
+      // Get both coffee shop name and subscription plan name
+      final shopName = _monthlyStats?.coffeeShopName;
+      final planName = _monthlyStats?.subscriptionPlanName;
+
+      if (shopName != null && planName != null) {
+        // Return formatted string with shop name first, then plan name
+        return '$shopName\n$planName';
+      } else if (planName != null) {
+        return planName;
+      } else if (shopName != null) {
+        return shopName;
+      }
+      return 'Active subscription';
+    }
+
     final subscriptionInfo = status['subscriptionInfo'];
     if (subscriptionInfo?['hasSubscription'] == true) {
       return subscriptionInfo['bundleName'] ?? 'Active subscription';
@@ -604,21 +867,40 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     return 'No active subscription';
   }
 
+  // ✅ COMPLETELY REWRITTEN: Uses MonthlyStatsData directly
   String _getSubscriptionAvailable(Map<String, dynamic> status) {
-    final weeklyRedemptions = status['weeklyRedemptions'] ?? 0;
-    final subscriptionInfo = status['subscriptionInfo'];
+    // Use monthly stats data which matches the working stats card
+    if (_monthlyStats == null) {
+      if (AppConfig.enableLogging) {
+        print('⚠️ Monthly stats not loaded yet');
+      }
+      return 'Loading...';
+    }
 
-    if (subscriptionInfo?['hasSubscription'] != true) {
+    if (!_monthlyStats!.hasActiveSubscription) {
+      if (AppConfig.enableLogging) {
+        print('ℹ️ No active subscription');
+      }
       return 'No subscription';
     }
 
-    final weeklyLimit = 5;
-    final remaining = weeklyLimit - weeklyRedemptions;
+    final remainingMonthly = _monthlyStats!.remainingMonthly;
+    final totalRedeemed = _monthlyStats!.totalRedeemed;
 
-    if (remaining <= 0) {
-      return 'Weekly limit reached';
+    if (AppConfig.enableLogging) {
+      print('📊 Subscription Available Calculation:');
+      print('   Remaining monthly: $remainingMonthly');
+      print('   Total redeemed: $totalRedeemed');
+      print('   Has subscription: ${_monthlyStats!.hasActiveSubscription}');
     }
 
-    return '$remaining of $weeklyLimit this week';
+    if (remainingMonthly <= 0) {
+      return 'Monthly limit reached';
+    }
+
+    // Calculate monthly limit from remaining + redeemed
+    final monthlyLimit = remainingMonthly + totalRedeemed;
+
+    return '$remainingMonthly of $monthlyLimit this month';
   }
 }
