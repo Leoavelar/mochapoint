@@ -728,18 +728,31 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           child: CircularProgressIndicator(),
         ),
       )
-          : ElevatedButton.icon(
-        onPressed: _loadMoreShops,
-        icon: const Icon(Icons.expand_more),
-        label: Text(
-          'Load More Shops (${_allShops.length - _displayedShops.length} remaining)',
+          : Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF8B4513), Color(0xFFD2691E)], // coffeeBrown to chocolate
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(8),
         ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: MyApp.coffeeBean,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+        child: ElevatedButton.icon(
+          onPressed: _loadMoreShops,
+          icon: const Icon(Icons.expand_more),
+          label: Text(
+            'Load More Shops (${_allShops.length - _displayedShops.length} remaining)',
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            shadowColor: Colors.transparent,
+          ).copyWith(
+            elevation: MaterialStateProperty.all(0),
           ),
         ),
       ),
@@ -798,10 +811,17 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? MyApp.coffeeBean : Colors.transparent,
+          gradient: isSelected
+              ? const LinearGradient(
+            colors: [Color(0xFF8B4513), Color(0xFFD2691E)], // coffeeBrown to chocolate
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          )
+              : null,
+          color: isSelected ? null : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? MyApp.coffeeBean : Colors.grey.shade400,
+            color: isSelected ? Colors.transparent : Colors.grey.shade400,
           ),
         ),
         child: Text(
@@ -974,7 +994,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       shadowColor: Colors.black,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1158,7 +1178,11 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: coffeeBean,
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF8B4513), Color(0xFFD2691E)], // coffeeBrown to chocolate
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: IconButton(
