@@ -147,7 +147,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       shadowColor: Colors.black,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
