@@ -119,7 +119,8 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
 
             // Bottom navigation items
             Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 4), // Reduced padding
+              padding: const EdgeInsets.only(top: 12, bottom: 4),
+              // Reduced padding
               child: Row(
                 children: [
                   Expanded(
@@ -164,11 +165,12 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF000000),
-                              Color(0xFF000000),
+                              Color(0xFF472A19),
+                              Color(0xFF472A19),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(14), // Proportionally adjusted
+                          borderRadius: BorderRadius.circular(14),
+                          // Proportionally adjusted
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.15),
@@ -187,17 +189,14 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                               height: 48,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
-                                gradient: RadialGradient(
-                                  colors: [
-                                    Colors.white.withOpacity(0.3),
-                                    Colors.transparent,
-                                  ],
-                                ),
+
                               ),
                             ),
                             // Icon - kept at 32px as requested
                             Icon(
-                              isCoffeeShopUser ? Icons.qr_code_scanner_rounded : Icons.qr_code_rounded,
+                              isCoffeeShopUser
+                                  ? Icons.qr_code_scanner_rounded
+                                  : Icons.qr_code_rounded,
                               color: Colors.white,
                               size: 32,
                             ),
@@ -236,9 +235,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
               child: Icon(
                 isSelected ? activeIcon : icon,
                 key: ValueKey(isSelected),
-                color: isSelected
-                    ? const Color(0xFF000000)
-                    : Colors.grey[500],
+                color: isSelected ? const Color(0xFF000000) : Colors.grey[500],
                 size: 24,
               ),
             ),
@@ -246,9 +243,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                color: isSelected
-                    ? const Color(0xFF000000)
-                    : Colors.grey[500],
+                color: isSelected ? const Color(0xFF000000) : Colors.grey[500],
                 fontSize: isSelected ? 12 : 11, // Reduced font sizes
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 fontFamily: 'Montserrat',
@@ -267,13 +262,15 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
     if (isCoffeeShopUser) {
       Navigator.of(context).push(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const CoffeeShopScannerScreen(),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const CoffeeShopScannerScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             const begin = Offset(0.0, 1.0);
             const end = Offset.zero;
             const curve = Curves.easeInOutCubic;
 
-            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var tween =
+                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
             var offsetAnimation = animation.drive(tween);
 
             return SlideTransition(position: offsetAnimation, child: child);
