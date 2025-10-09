@@ -1,5 +1,4 @@
 // lib/widgets/redemption_selection_modal.dart
-// ✅ FIXED: Now uses MonthlyStatsService for accurate data
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../services/redemption_service.dart';
