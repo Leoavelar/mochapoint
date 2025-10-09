@@ -271,13 +271,6 @@ class _CustomerHomeTab extends StatelessWidget {
             }
           },
         ),
-        Text(
-          'Nearest Coffee Shops',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
-        ),
         const NearestShopsWidget(),
       ],
       contentSpacing: 20.0,

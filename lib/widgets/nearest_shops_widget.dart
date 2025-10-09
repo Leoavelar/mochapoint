@@ -691,7 +691,20 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     return RefreshIndicator(
       onRefresh: _refresh,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title moved inside the widget
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: Text(
+              'Nearest Coffee Shops',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                fontSize: 20,
+              ),
+            ),
+          ),
+
           _buildLocationHeader(),
 
           // Display paginated shops
@@ -771,7 +784,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               Icon(
                 _currentPosition != null ? Icons.location_on : Icons.location_off,
                 size: 16,
-                color: _currentPosition != null ? Colors.green : Colors.orange,
+                color: _currentPosition != null ? Color(0xFFD2691E) : Colors.red,
               ),
               const SizedBox(width: 8),
               Expanded(
