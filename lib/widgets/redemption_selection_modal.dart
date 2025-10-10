@@ -40,7 +40,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   bool _isPolling = false;
   DateTime? _qrGeneratedAt;
 
-  // Confetti controller
   late ConfettiController _confettiController;
 
   // Success state
@@ -50,7 +49,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
     _loadRedemptionStatus();
   }
 
@@ -328,54 +327,35 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.white, lightCream],
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white,
+            lightCream,
+          ],
+        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 50,
+            height: 5,
+            decoration: BoxDecoration(
+              color: coffeeBrown.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(3),
             ),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
           ),
-          child: Column(
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 50,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: coffeeBrown.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              Expanded(child: _buildContent()),
-            ],
+          Expanded(
+            child: _buildContent(),
           ),
-        ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirection: 3.14 / 2,
-            maxBlastForce: 5,
-            minBlastForce: 2,
-            emissionFrequency: 0.05,
-            numberOfParticles: 50,
-            gravity: 0.3,
-            shouldLoop: false,
-            colors: const [
-              coffeeBrown,
-              chocolate,
-              Colors.orange,
-              Colors.amber,
-              Colors.brown,
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -432,148 +412,175 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     final isSubscription = details['type'] == 'subscription';
     final remainingMonthly = details['remainingMonthly'] ?? 0;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const SizedBox(height: 40),
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.elasticOut,
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: isSubscription
-                          ? [coffeeBrown, chocolate]
-                          : [Colors.orange[700]!, Colors.orange[400]!],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (isSubscription ? coffeeBrown : Colors.orange)
-                            .withOpacity(0.3),
-                        blurRadius: 30,
-                        spreadRadius: 5,
+    return Stack(  // ✅ Stack only in success screen
+      children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: isSubscription
+                              ? [coffeeBrown, chocolate]
+                              : [Colors.orange[700]!, Colors.orange[400]!],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (isSubscription ? coffeeBrown : Colors.orange)
+                                .withOpacity(0.3),
+                            blurRadius: 30,
+                            spreadRadius: 5,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.local_cafe_rounded,
-                    size: 80,
-                    color: Colors.white,
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-          const Text(
-            'Coffee Redeemed!',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Enjoy your ${isSubscription ? "subscription" : "joker"} coffee!',
-            style: const TextStyle(
-              fontSize: 18,
-              color: darkBrown,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 40),
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                if (isSubscription) ...[
-                  _buildStatRow(
-                    icon: Icons.coffee,
-                    label: 'Remaining This Month',
-                    value: '$remainingMonthly',
-                    color: coffeeBrown,
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(color: coffeeBrown.withOpacity(0.2)),
-                  const SizedBox(height: 16),
-                ],
-                _buildStatRow(
-                  icon: Icons.calendar_today,
-                  label: 'Total Redeemed',
-                  value: '${details['totalRedeemed']}',
-                  color: chocolate,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: coffeeBrown,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 4,
+                      child: Image.asset(
+                        'assets/icons/mocha_icon_white.png',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  );
+                },
               ),
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-              child: const Text(
-                'Done',
+              const SizedBox(height: 32),
+              const Text(
+                'Coffee Redeemed!',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Enjoy your ${isSubscription ? "subscription" : "joker"} coffee!',
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: darkBrown,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    if (isSubscription) ...[
+                      _buildStatRow(
+                        icon: Icons.coffee,
+                        label: 'Remaining This Month',
+                        value: '$remainingMonthly',
+                        color: coffeeBrown,
+                      ),
+                      const SizedBox(height: 16),
+                      Divider(color: coffeeBrown.withOpacity(0.2)),
+                      const SizedBox(height: 16),
+                    ],
+                    _buildStatRow(
+                      icon: Icons.calendar_today,
+                      label: 'Total Redeemed',
+                      value: '${details['totalRedeemed']}',
+                      color: chocolate,
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _showSuccessScreen = false;
-                _qrToken = null;
-                _selectedRedemptionType = null;
-              });
-              _loadRedemptionStatus();
-            },
-            child: const Text(
-              'Redeem Another Coffee',
-              style: TextStyle(
-                color: coffeeBrown,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
+
+
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: coffeeBrown,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 4,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _showSuccessScreen = false;
+                    _qrToken = null;
+                    _selectedRedemptionType = null;
+                  });
+                  _loadRedemptionStatus();
+                },
+                child: const Text(
+                  'Redeem Another Coffee',
+                  style: TextStyle(
+                    color: coffeeBrown,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: 3.14 / 2,
+            maxBlastForce: 3,
+            minBlastForce: 1,
+            emissionFrequency: 0.1,
+            numberOfParticles: 10,
+            gravity: 0.5,
+            shouldLoop: false,
+            colors: const [
+              coffeeBrown,
+              chocolate,
+              Colors.orange,
+              Colors.amber,
+              Colors.brown,
+            ],
+          ),
+        ),
+      ],
     );
   }
 
