@@ -877,7 +877,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                   subscription.planName,
                   style: TextStyle(
                     color: MyApp.coffeeBean,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),
                 ),
