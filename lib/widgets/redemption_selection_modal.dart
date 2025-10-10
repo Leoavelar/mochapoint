@@ -425,13 +425,13 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: coffeeBrown.withOpacity(0.1),
+                  color: Colors.white12,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Image.asset(
-                  'assets/icons/mocha_icon_coffeebean.png',
-                  width: 32,
-                  height: 32,
+                  'assets/icons/mocha_icon_black.png',
+                  width: 42,
+                  height: 42,
                   fit: BoxFit.contain,
                 ),
               ),
