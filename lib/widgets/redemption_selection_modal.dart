@@ -1,10 +1,12 @@
 // lib/widgets/redemption_selection_modal.dart
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:async';
+import 'package:confetti/confetti.dart';
 import '../services/redemption_service.dart';
-import '../services/monthly_stats_service.dart'; // ✅ ADDED
+import '../services/monthly_stats_service.dart';
 import '../config/app_config.dart';
-import '../utils/exceptions.dart'; // ✅ ADDED
+import '../utils/exceptions.dart';
 
 class RedemptionSelectionModal extends StatefulWidget {
   final String? initialRedemptionType;
@@ -25,20 +27,40 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   static const Color chocolate = Color(0xFFD2691E);
 
   Map<String, dynamic>? _redemptionStatus;
-  MonthlyStatsData? _monthlyStats; // ✅ ADDED: State variable for monthly stats
+  MonthlyStatsData? _monthlyStats;
   String? _selectedRedemptionType;
   String? _qrToken;
   bool _isLoading = false;
   String? _error;
   bool _isGeneratingQR = false;
 
+  // Polling infrastructure
+  Timer? _pollTimer;
+  int _initialRedemptionCount = 0;
+  bool _isPolling = false;
+  DateTime? _qrGeneratedAt;
+
+  // Confetti controller
+  late ConfettiController _confettiController;
+
+  // Success state
+  bool _showSuccessScreen = false;
+  Map<String, dynamic>? _redemptionDetails;
+
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
     _loadRedemptionStatus();
   }
 
-  // ✅ UPDATED: Now fetches both redemption status AND monthly stats
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _confettiController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadRedemptionStatus() async {
     if (AppConfig.enableLogging) {
       print('🔍 RedemptionModal: Loading redemption status and monthly stats');
@@ -50,32 +72,27 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     });
 
     try {
-      // Fetch both data sources
       final statusResult = await RedemptionService.getRedemptionStatus();
-      final monthlyStats = await MonthlyStatsService.getMonthlyStats(); // ✅ ADDED
+      final monthlyStats = await MonthlyStatsService.getMonthlyStats();
 
       if (statusResult['success']) {
         setState(() {
           _redemptionStatus = statusResult['status'];
-          _monthlyStats = monthlyStats; // ✅ ADDED: Store monthly stats
+          _monthlyStats = monthlyStats;
           _isLoading = false;
+          _initialRedemptionCount = monthlyStats.totalRedeemed;
         });
 
         if (AppConfig.enableLogging) {
           print('✅ RedemptionModal: Data loaded successfully');
+          print('   Initial redemption count: $_initialRedemptionCount');
           print('   Remaining monthly: ${monthlyStats.remainingMonthly}');
-          print('   Total redeemed: ${monthlyStats.totalRedeemed}');
-          print('   Has subscription: ${monthlyStats.hasActiveSubscription}');
         }
 
         if (widget.initialRedemptionType != null && mounted) {
           _generateQRCode(widget.initialRedemptionType!);
         }
       } else {
-        if (AppConfig.enableLogging) {
-          print('❌ RedemptionModal: Failed to load status');
-        }
-
         if (statusResult['isSessionExpired'] == true ||
             statusResult['errorCode'] == 'SESSION_EXPIRED' ||
             statusResult['errorCode'] == 'TOKEN_EXPIRED') {
@@ -124,12 +141,11 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           _selectedRedemptionType = redemptionType;
           _qrToken = result['qrToken'];
           _isGeneratingQR = false;
+          _qrGeneratedAt = DateTime.now();
         });
-      } else {
-        if (AppConfig.enableLogging) {
-          print('❌ RedemptionModal: QR generation failed');
-        }
 
+        _startPolling();
+      } else {
         if (result['isSessionExpired'] == true ||
             result['errorCode'] == 'SESSION_EXPIRED' ||
             result['errorCode'] == 'TOKEN_EXPIRED') {
@@ -158,6 +174,82 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
         _error = 'Failed to generate QR code: $e';
         _isGeneratingQR = false;
       });
+    }
+  }
+
+  void _startPolling() {
+    if (_isPolling) return;
+
+    setState(() {
+      _isPolling = true;
+    });
+
+    if (AppConfig.enableLogging) {
+      print('🔄 Starting redemption polling...');
+    }
+
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
+      await _checkRedemptionStatus();
+    });
+
+    Future.delayed(const Duration(minutes: 5), () {
+      _stopPolling();
+    });
+  }
+
+  void _stopPolling() {
+    if (AppConfig.enableLogging) {
+      print('⏹️ Stopping redemption polling');
+    }
+    _pollTimer?.cancel();
+    setState(() {
+      _isPolling = false;
+    });
+  }
+
+  Future<void> _checkRedemptionStatus() async {
+    if (!mounted || _showSuccessScreen) return;
+
+    try {
+      final monthlyStats = await MonthlyStatsService.getMonthlyStats();
+
+      if (AppConfig.enableLogging) {
+        print('🔍 Poll check: ${monthlyStats.totalRedeemed} vs $_initialRedemptionCount');
+      }
+
+      if (monthlyStats.totalRedeemed > _initialRedemptionCount) {
+        if (AppConfig.enableLogging) {
+          print('✅ Redemption detected! Showing success screen');
+        }
+
+        _stopPolling();
+        _onRedemptionSuccess(monthlyStats);
+      }
+    } catch (e) {
+      if (AppConfig.enableLogging) {
+        print('⚠️ Polling error (continuing): $e');
+      }
+    }
+  }
+
+  void _onRedemptionSuccess(MonthlyStatsData updatedStats) {
+    if (!mounted) return;
+
+    setState(() {
+      _showSuccessScreen = true;
+      _monthlyStats = updatedStats;
+      _redemptionDetails = {
+        'type': _selectedRedemptionType,
+        'timestamp': DateTime.now(),
+        'remainingMonthly': updatedStats.remainingMonthly,
+        'totalRedeemed': updatedStats.totalRedeemed,
+      };
+    });
+
+    _confettiController.play();
+
+    if (AppConfig.enableLogging) {
+      print('🎉 Success screen shown with confetti!');
     }
   }
 
@@ -236,39 +328,62 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white,
-            lightCream,
-          ],
-        ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 50,
-            height: 5,
-            decoration: BoxDecoration(
-              color: coffeeBrown.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(3),
+    return Stack(
+      children: [
+        Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white, lightCream],
             ),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
           ),
-          Expanded(
-            child: _buildContent(),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 50,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: coffeeBrown.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              Expanded(child: _buildContent()),
+            ],
           ),
-        ],
-      ),
+        ),
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: 3.14 / 2,
+            maxBlastForce: 5,
+            minBlastForce: 2,
+            emissionFrequency: 0.05,
+            numberOfParticles: 50,
+            gravity: 0.3,
+            shouldLoop: false,
+            colors: const [
+              coffeeBrown,
+              chocolate,
+              Colors.orange,
+              Colors.amber,
+              Colors.brown,
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildContent() {
+    if (_showSuccessScreen) {
+      return _buildSuccessScreen();
+    }
+
     if (_isLoading) {
       return Center(
         child: Column(
@@ -308,6 +423,196 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     }
 
     return _buildRedemptionSelection();
+  }
+
+  Widget _buildSuccessScreen() {
+    final details = _redemptionDetails;
+    if (details == null) return const SizedBox();
+
+    final isSubscription = details['type'] == 'subscription';
+    final remainingMonthly = details['remainingMonthly'] ?? 0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: isSubscription
+                          ? [coffeeBrown, chocolate]
+                          : [Colors.orange[700]!, Colors.orange[400]!],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isSubscription ? coffeeBrown : Colors.orange)
+                            .withOpacity(0.3),
+                        blurRadius: 30,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.local_cafe_rounded,
+                    size: 80,
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+          const Text(
+            'Coffee Redeemed!',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Enjoy your ${isSubscription ? "subscription" : "joker"} coffee!',
+            style: const TextStyle(
+              fontSize: 18,
+              color: darkBrown,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 40),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                if (isSubscription) ...[
+                  _buildStatRow(
+                    icon: Icons.coffee,
+                    label: 'Remaining This Month',
+                    value: '$remainingMonthly',
+                    color: coffeeBrown,
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: coffeeBrown.withOpacity(0.2)),
+                  const SizedBox(height: 16),
+                ],
+                _buildStatRow(
+                  icon: Icons.calendar_today,
+                  label: 'Total Redeemed',
+                  value: '${details['totalRedeemed']}',
+                  color: chocolate,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: coffeeBrown,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 4,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text(
+                'Done',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _showSuccessScreen = false;
+                _qrToken = null;
+                _selectedRedemptionType = null;
+              });
+              _loadRedemptionStatus();
+            },
+            child: const Text(
+              'Redeem Another Coffee',
+              style: TextStyle(
+                color: coffeeBrown,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 15,
+              color: darkBrown,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildErrorState() {
@@ -376,35 +681,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                 ),
               ),
             ),
-          if (isSessionError)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 4,
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    '/login',
-                        (route) => false,
-                  );
-                },
-                child: const Text(
-                  'Login Again',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -425,13 +701,13 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white12,
+                  color: coffeeBrown.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Image.asset(
-                  'assets/icons/mocha_icon_black.png',
-                  width: 42,
-                  height: 42,
+                  'assets/icons/mocha_icon_coffeebean.png',
+                  width: 32,
+                  height: 32,
                   fit: BoxFit.contain,
                 ),
               ),
@@ -472,7 +748,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            gradientPosition: 'top',
             enabled: status['canRedeemSubscription'] ?? false,
             available: _getSubscriptionAvailable(status),
           ),
@@ -487,7 +762,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            gradientPosition: 'bottom',
             enabled: status['canRedeemJoker'] ?? false,
             available: '${status['jokerCount'] ?? 0} jokers available',
           ),
@@ -502,7 +776,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     required String subtitle,
     required IconData icon,
     required Gradient gradient,
-    required String gradientPosition,
     required bool enabled,
     required String available,
   }) {
@@ -532,7 +805,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: enabled
                         ? gradient
@@ -650,6 +923,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                 ),
                 child: IconButton(
                   onPressed: () {
+                    _stopPolling();
                     setState(() {
                       _selectedRedemptionType = null;
                       _qrToken = null;
@@ -737,27 +1011,66 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: coffeeBrown.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.access_time, color: coffeeBrown, size: 14),
-                            SizedBox(width: 6),
-                            Text(
-                              'Valid until midnight',
-                              style: TextStyle(
-                                color: coffeeBrown,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: coffeeBrown.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.access_time, color: coffeeBrown, size: 14),
+                                SizedBox(width: 6),
+                                Text(
+                                  'Valid until midnight',
+                                  style: TextStyle(
+                                    color: coffeeBrown,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_isPolling) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 12,
+                                    height: 12,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.green[700]!,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Waiting',
+                                    style: TextStyle(
+                                      color: Colors.green[700],
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
+                        ],
                       ),
                       const SizedBox(height: 20),
                       if (_qrToken != null)
@@ -815,24 +1128,63 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                 width: 1.5,
               ),
             ),
-            child: const Row(
+            child: Column(
               children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  color: coffeeBrown,
-                  size: 24,
+                Row(
+                  children: [
+                    Icon(
+                      _isPolling ? Icons.qr_code_scanner : Icons.info_outline_rounded,
+                      color: coffeeBrown,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        _isPolling
+                            ? 'Show this QR code to the coffee shop. We\'ll automatically detect when it\'s scanned!'
+                            : 'Show this QR code to the coffee shop staff to complete your redemption.',
+                        style: const TextStyle(
+                          color: darkBrown,
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    'Show this QR code to the coffee shop staff to complete your redemption.',
-                    style: TextStyle(
-                      color: darkBrown,
-                      fontSize: 14,
-                      height: 1.5,
+                if (_isPolling) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.green.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.wifi_tethering,
+                          color: Colors.green[700],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Monitoring redemption status...',
+                            style: TextStyle(
+                              color: Colors.green[700],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -841,15 +1193,12 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     );
   }
 
-  // ✅ UPDATED: Uses monthly stats for subscription plan name
   String _getSubscriptionSubtitle(Map<String, dynamic> status) {
     if (_monthlyStats?.hasActiveSubscription == true) {
-      // Get both coffee shop name and subscription plan name
       final shopName = _monthlyStats?.coffeeShopName;
       final planName = _monthlyStats?.subscriptionPlanName;
 
       if (shopName != null && planName != null) {
-        // Return formatted string with shop name first, then plan name
         return '$shopName\n$planName';
       } else if (planName != null) {
         return planName;
@@ -866,9 +1215,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     return 'No active subscription';
   }
 
-  // ✅ COMPLETELY REWRITTEN: Uses MonthlyStatsData directly
   String _getSubscriptionAvailable(Map<String, dynamic> status) {
-    // Use monthly stats data which matches the working stats card
     if (_monthlyStats == null) {
       if (AppConfig.enableLogging) {
         print('⚠️ Monthly stats not loaded yet');
@@ -884,21 +1231,15 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     }
 
     final remainingMonthly = _monthlyStats!.remainingMonthly;
-    final totalRedeemed = _monthlyStats!.totalRedeemed;
 
     if (AppConfig.enableLogging) {
       print('📊 Subscription Available Calculation:');
       print('   Remaining monthly: $remainingMonthly');
-      print('   Total redeemed: $totalRedeemed');
-      print('   Has subscription: ${_monthlyStats!.hasActiveSubscription}');
     }
 
     if (remainingMonthly <= 0) {
       return 'Monthly limit reached';
     }
-
-    // Calculate monthly limit from remaining + redeemed
-    final monthlyLimit = remainingMonthly + totalRedeemed;
 
     return '$remainingMonthly remaining this month';
   }
