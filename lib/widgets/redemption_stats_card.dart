@@ -11,6 +11,7 @@ class CoffeeStatsCard extends StatefulWidget {
   final String? fallbackRedeemedCount;
   final String? fallbackRemainingCount;
   final String? fallbackJokersCount;
+  final VoidCallback? onRefreshRequested;
 
   const CoffeeStatsCard({
     super.key,
@@ -18,6 +19,7 @@ class CoffeeStatsCard extends StatefulWidget {
     this.fallbackRedeemedCount,
     this.fallbackRemainingCount,
     this.fallbackJokersCount,
+    this.onRefreshRequested,
   });
 
   @override
@@ -32,6 +34,10 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
   @override
   void initState() {
     super.initState();
+    _loadMonthlyStats();
+  }
+
+  void refresh() {
     _loadMonthlyStats();
   }
 

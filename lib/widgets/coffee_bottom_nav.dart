@@ -256,21 +256,21 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
     );
   }
 
-  void _handleCenterButtonTap() {
+  void _handleCenterButtonTap() async { // ✅ Make it async
     final bool isCoffeeShopUser = _user?['role'] == 'coffee_shop';
 
     if (isCoffeeShopUser) {
       Navigator.of(context).push(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) =>
-              const CoffeeShopScannerScreen(),
+          const CoffeeShopScannerScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             const begin = Offset(0.0, 1.0);
             const end = Offset.zero;
             const curve = Curves.easeInOutCubic;
 
             var tween =
-                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
             var offsetAnimation = animation.drive(tween);
 
             return SlideTransition(position: offsetAnimation, child: child);
@@ -278,12 +278,19 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
         ),
       );
     } else {
-      showModalBottomSheet(
+      // ✅ Await the modal result
+      final result = await showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
         builder: (context) => const RedemptionSelectionModal(),
       );
+
+      // ✅ If redemption was successful, call onIndexChanged with index 2
+      // This will notify HomeScreen that something happened
+      if (result == true && mounted) {
+        widget.onIndexChanged(2); // Signal to parent that redemption happened
+      }
     }
   }
 }

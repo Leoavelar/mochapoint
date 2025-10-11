@@ -1,4 +1,4 @@
-// lib/screens/home_screen.dart
+// lib/screens/home_screen.dart - FIXED VERSION
 
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
@@ -10,6 +10,7 @@ import '../widgets/nearest_shops_widget.dart';
 import '../utils/admin_interface_helper.dart';
 import '../services/auth_service.dart';
 import '../config/app_config.dart';
+import '../widgets/redemption_selection_modal.dart';
 import 'map_screen.dart';
 import 'coffee_shop_home_screen.dart';
 import '../widgets/redemption_stats_card.dart';
@@ -30,8 +31,11 @@ class HomeScreenState extends State<HomeScreen> {
   bool _showCoffeeShopInterface = false;
   bool _isLoading = true;
 
+  // ✅ NEW: Key to control customer home tab refresh
+  final GlobalKey<_CustomerHomeTabState> _customerHomeKey = GlobalKey<_CustomerHomeTabState>();
+
   // Back button navigation state
-  final List<int> _navigationStack = [0]; // Track navigation history
+  final List<int> _navigationStack = [0];
   DateTime? _lastBackPressed;
 
   final List<Widget> _tabs = [];
@@ -42,17 +46,29 @@ class HomeScreenState extends State<HomeScreen> {
     }
 
     setState(() {
-      // Add to navigation stack if different from current and not placeholder (index 2)
-      if (index != _selectedIndex && index != 2) {
+      if (index == 2) {
+        // ✅ FIXED: Index 2 is a special signal meaning "refresh current tab"
+        if (AppConfig.enableLogging) {
+          print('🔄 Received refresh signal, refreshing current tab');
+        }
+
+        // Refresh the customer home tab if it's currently shown
+        if (_selectedIndex == 0 && !_showCoffeeShopInterface) {
+          _customerHomeKey.currentState?.triggerRefresh();
+        }
+
+        // Don't change the selected index, stay on current tab
+        return;
+      }
+
+      // Normal tab switching logic
+      if (index != _selectedIndex) {
         _navigationStack.add(index);
         _selectedIndex = index;
 
         if (AppConfig.enableLogging) {
           print('📚 Navigation stack: $_navigationStack');
         }
-      } else if (index == 2) {
-        // Index 2 is the center button (QR/Scanner), don't add to stack
-        _selectedIndex = index;
       }
     });
   }
@@ -89,16 +105,15 @@ class HomeScreenState extends State<HomeScreen> {
     _tabs.clear();
 
     if (_showCoffeeShopInterface) {
-      // Coffee shop interface
       _tabs.add(const CoffeeShopHomeScreen());
       _tabs.add(const MapScreen());
-      _tabs.add(const SizedBox()); // Placeholder for scanner button
+      _tabs.add(const SizedBox());
       _tabs.add(const ProfileScreen());
     } else {
-      // Regular user interface
-      _tabs.add(const _CustomerHomeTab());
+      // ✅ FIXED: Use the key for customer home tab
+      _tabs.add(_CustomerHomeTab(key: _customerHomeKey));
       _tabs.add(const MapScreen());
-      _tabs.add(const SizedBox()); // Placeholder for QR generator button
+      _tabs.add(const SizedBox());
       _tabs.add(const ProfileScreen());
     }
   }
@@ -110,7 +125,6 @@ class HomeScreenState extends State<HomeScreen> {
       print('📍 Current index: $_selectedIndex');
     }
 
-    // If currently showing center button action (index 2), go back to previous tab
     if (_selectedIndex == 2 && _navigationStack.isNotEmpty) {
       setState(() {
         _selectedIndex = _navigationStack.last;
@@ -120,10 +134,9 @@ class HomeScreenState extends State<HomeScreen> {
         print('↩️ Closing center modal, returning to index: $_selectedIndex');
       }
 
-      return false; // Don't exit app
+      return false;
     }
 
-    // If we have navigation history, go back through tabs
     if (_navigationStack.length > 1) {
       setState(() {
         _navigationStack.removeLast();
@@ -134,10 +147,9 @@ class HomeScreenState extends State<HomeScreen> {
         print('↩️ Navigating back to index: $_selectedIndex');
       }
 
-      return false; // Don't exit app
+      return false;
     }
 
-    // If on home tab (index 0), implement double-tap to exit
     if (_selectedIndex == 0) {
       final now = DateTime.now();
       if (_lastBackPressed == null ||
@@ -148,7 +160,6 @@ class HomeScreenState extends State<HomeScreen> {
           print('🔔 Showing exit confirmation snackbar');
         }
 
-        // Show snackbar: "Press back again to exit"
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -167,17 +178,16 @@ class HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        return false; // Don't exit yet
+        return false;
       }
 
       if (AppConfig.enableLogging) {
         print('👋 Exiting app');
       }
 
-      return true; // Exit app on second press within 2 seconds
+      return true;
     }
 
-    // If not on home tab but no history, go to home
     setState(() {
       _navigationStack.clear();
       _navigationStack.add(0);
@@ -203,7 +213,6 @@ class HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // A check to prevent range errors if tabs are not yet initialized
     if (_tabs.isEmpty) {
       return const Scaffold(
         body: Center(
@@ -212,7 +221,6 @@ class HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Handle index 2 which is a placeholder
     final int effectiveIndex = _selectedIndex >= _tabs.length || _selectedIndex == 2 ? 0 : _selectedIndex;
 
     return PopScope(
@@ -231,24 +239,39 @@ class HomeScreenState extends State<HomeScreen> {
         ),
         bottomNavigationBar: CoffeeBottomNav(
           selectedIndex: _selectedIndex,
-          onIndexChanged: (index) {
-            setSelectedIndex(index);
-          },
+          onIndexChanged: setSelectedIndex,
         ),
       ),
     );
   }
 }
 
-class _CustomerHomeTab extends StatelessWidget {
+class _CustomerHomeTab extends StatefulWidget {
   const _CustomerHomeTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 1. Get the current date
-    final now = DateTime.now();
+  State<_CustomerHomeTab> createState() => _CustomerHomeTabState();
+}
 
-    // 2. Format it to "Month Year" using the intl package
+class _CustomerHomeTabState extends State<_CustomerHomeTab> {
+  int _refreshTrigger = 0;
+
+  // ✅ NEW: Public method to trigger refresh from parent
+  void triggerRefresh() {
+    if (mounted) {
+      setState(() {
+        _refreshTrigger++;
+      });
+
+      if (AppConfig.enableLogging) {
+        print('✅ _CustomerHomeTab: Refresh triggered, counter = $_refreshTrigger');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
     final String formattedDate = DateFormat('MMMM yyyy').format(now);
 
     return OverlappingContentLayout(
@@ -257,23 +280,34 @@ class _CustomerHomeTab extends StatelessWidget {
         height: 200.0,
       ),
       overlappingWidget: CoffeeStatsCard(
-        // Updated parameter names to match the new widget structure
-        fallbackMonth: formattedDate, // Use the formatted current month
+        key: ValueKey(_refreshTrigger),
+        fallbackMonth: formattedDate,
         fallbackRedeemedCount: '0',
-        fallbackRemainingCount: '0', // Changed from fallbackAvailableCount
+        fallbackRemainingCount: '0',
         fallbackJokersCount: '0',
       ),
       contentWidgets: [
         DailyCoffeeCard(
-          onRedeem: () {
-            if (kDebugMode) {
-              print('Redeem button pressed!');
+          onRedeem: () async {
+            final result = await showRedemptionModal(context);
+
+            if (result == true) {
+              triggerRefresh(); // ✅ Use the same method
             }
           },
         ),
         const NearestShopsWidget(),
       ],
       contentSpacing: 20.0,
+    );
+  }
+
+  Future<bool?> showRedemptionModal(BuildContext context) async {
+    return await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const RedemptionSelectionModal(),
     );
   }
 }
