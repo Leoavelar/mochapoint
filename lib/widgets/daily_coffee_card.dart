@@ -1,11 +1,13 @@
-// Path: lib/widgets/daily_coffee_card.dart
-// ✅ REDESIGNED to match redemption modal subscription card style
-// ✅ UPDATED with coffee gradient circular progress bar
+// lib/widgets/daily_coffee_card.dart
+// ✅ SYNCED with actual redemption status from backend
+// ✅ Updates automatically after redemptions
 
 import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
 import '../services/subscription_service.dart';
+import '../services/redemption_service.dart';
 import '../widgets/nearest_shops_widget.dart';
+import '../config/app_config.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'dart:async';
@@ -19,7 +21,7 @@ class DailyCoffeeCard extends StatefulWidget {
   });
 
   @override
-  State<DailyCoffeeCard> createState() => _DailyCoffeeCardState();
+  State<DailyCoffeeCard> createState() => DailyCoffeeCardState();
 }
 
 enum SubscriptionState {
@@ -28,19 +30,23 @@ enum SubscriptionState {
   inactive
 }
 
-class _DailyCoffeeCardState extends State<DailyCoffeeCard>
+class DailyCoffeeCardState extends State<DailyCoffeeCard>
     with TickerProviderStateMixin {
   // Coffee-themed colors matching redemption modal
   static const Color coffeeBrown = Color(0xFF8B4513);
   static const Color chocolate = Color(0xFFD2691E);
   static const Color coffeeGreen = Color(0xFF4CAF50);
 
-  // ✨ ANIMATION CONFIGURATION - Easy to adjust!
-  static const int flipIntervalSeconds = 5;  // Time between flips
-  static const int numberOfFlips = 1;        // Number of complete rotations (1 = 360°, 2 = 720°, etc.)
-  static const int flipDurationMs = 1600;     // Duration of flip animation in milliseconds
+  // ✨ ANIMATION CONFIGURATION
+  static const int flipIntervalSeconds = 5;
+  static const int numberOfFlips = 1;
+  static const int flipDurationMs = 1600;
 
+  // ✅ NEW: Track actual redemption status from backend
   bool isAvailableToday = true;
+  bool _isLoadingRedemptionStatus = true;
+  DateTime? _lastRedemptionToday;
+
   int availableCoffees = 1;
   UserSubscriptionData? _subscriptionData;
   bool _isLoadingSubscription = true;
@@ -53,15 +59,19 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
   Timer? _flipTimer;
 
   SubscriptionState get _subscriptionState {
-    if (_isLoadingSubscription) return SubscriptionState.loading;
-    if (_subscriptionData?.hasActiveSubscription == true) return SubscriptionState.active;
+    if (_isLoadingSubscription || _isLoadingRedemptionStatus) {
+      return SubscriptionState.loading;
+    }
+    if (_subscriptionData?.hasActiveSubscription == true) {
+      return SubscriptionState.active;
+    }
     return SubscriptionState.inactive;
   }
 
   @override
   void initState() {
     super.initState();
-    _loadSubscriptionData();
+    _loadAllData();
 
     _progressController = AnimationController(
       duration: const Duration(milliseconds: 1500),
@@ -76,7 +86,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
       curve: Curves.easeInOut,
     ));
 
-    // Flip animation controller
     _flipController = AnimationController(
       duration: Duration(milliseconds: flipDurationMs),
       vsync: this,
@@ -95,16 +104,175 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
     _startFlipTimer();
   }
 
+  // ✅ NEW: Public method to refresh from parent
+  void refresh() {
+    if (mounted) {
+      if (AppConfig.enableLogging) {
+        print('🔄 DailyCoffeeCard: Refresh triggered');
+      }
+      _loadAllData();
+    }
+  }
+
+  // ✅ NEW: Load both subscription and redemption status
+  Future<void> _loadAllData() async {
+    await Future.wait([
+      _loadSubscriptionData(),
+      _loadRedemptionStatus(),
+    ]);
+  }
+
+  Future<void> _loadRedemptionStatus() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingRedemptionStatus = true;
+    });
+
+    try {
+      if (AppConfig.enableLogging) {
+        print('🔍 DailyCoffeeCard: Loading redemption status');
+      }
+
+      final statusResult = await RedemptionService.getRedemptionStatus();
+
+      if (statusResult['success'] == true) {
+        // Access nested status object correctly
+        final status = statusResult['status'];
+
+        // ✅ FIXED: Access canRedeemSubscription from top level, not nested in subscriptionInfo
+        final canRedeemSubscription = status['canRedeemSubscription'] ?? true;
+
+        // Coffee is available if subscription CAN be redeemed
+        final hasRedeemedToday = !canRedeemSubscription;
+
+        if (AppConfig.enableLogging) {
+          print('📊 DailyCoffeeCard: canRedeemSubscription = $canRedeemSubscription');
+          print('📊 DailyCoffeeCard: Total today redemptions = ${status['todayRedemptions']}');
+          print('☕ DailyCoffeeCard: Subscription coffee ${hasRedeemedToday ? "NOT" : "IS"} available');
+        }
+
+        if (mounted) {
+          setState(() {
+            isAvailableToday = !hasRedeemedToday;
+            _lastRedemptionToday = hasRedeemedToday ? DateTime.now() : null;
+            _isLoadingRedemptionStatus = false;
+          });
+        }
+      } else {
+        if (AppConfig.enableLogging) {
+          print('⚠️ DailyCoffeeCard: Failed to load redemption status');
+        }
+
+        if (mounted) {
+          setState(() {
+            isAvailableToday = true; // Default to available on error
+            _isLoadingRedemptionStatus = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (AppConfig.enableLogging) {
+        print('❌ DailyCoffeeCard: Error loading redemption status: $e');
+      }
+
+      if (mounted) {
+        setState(() {
+          isAvailableToday = true; // Default to available on error
+          _isLoadingRedemptionStatus = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadSubscriptionData() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingSubscription = true;
+    });
+
+    try {
+      final subscriptionData = await SubscriptionService.getUserSubscription();
+
+      if (mounted) {
+        setState(() {
+          _subscriptionData = subscriptionData;
+          _isLoadingSubscription = false;
+        });
+
+        if (subscriptionData?.accessibleShops.isNotEmpty == true) {
+          final firstShop = subscriptionData!.accessibleShops.first;
+
+          try {
+            final shopData = await ApiService.getCoffeeShops();
+            final shops = shopData['shops'] as List<CoffeeShop>;
+            final fullShopData = shops.where((shop) => shop.id == firstShop.id).firstOrNull;
+
+            if (mounted) {
+              setState(() {
+                if (fullShopData != null) {
+                  _selectedShop = fullShopData;
+                } else {
+                  _selectedShop = CoffeeShop(
+                    id: firstShop.id,
+                    name: firstShop.name,
+                    address: firstShop.address,
+                    latitude: firstShop.latitude ?? 0.0,
+                    longitude: firstShop.longitude ?? 0.0,
+                    subscriptionEnabled: true,
+                    jokerEnabled: true,
+                    userAverageRating: 0.0,
+                    userRatingCount: 0,
+                    googleRating: 0.0,
+                    googleRatingCount: 0,
+                    supportedDrinkTiers: [],
+                    isActive: true,
+                    logoUrl: null,
+                  );
+                }
+              });
+            }
+          } catch (e) {
+            if (AppConfig.enableLogging) {
+              print('Error fetching full shop data: $e');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _subscriptionData = null;
+          _isLoadingSubscription = false;
+        });
+      }
+      if (AppConfig.enableLogging) {
+        print('Error loading subscription data: $e');
+      }
+    }
+  }
+
   void _startCountdownTimer() {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
-        setState(() {});
+        setState(() {
+          // ✅ NEW: Auto-reset at midnight
+          final now = DateTime.now();
+          if (now.hour == 0 && now.minute == 0 && now.second == 0) {
+            if (AppConfig.enableLogging) {
+              print('🌅 Midnight reached! Resetting coffee availability');
+            }
+            isAvailableToday = true;
+            _lastRedemptionToday = null;
+            _loadRedemptionStatus(); // Double-check with backend
+          }
+        });
       }
     });
   }
 
   void _startFlipTimer() {
-    // Start first flip after initial delay (40% of interval)
     final initialDelay = (flipIntervalSeconds * 0.4).round();
     Future.delayed(Duration(seconds: initialDelay), () {
       if (mounted) {
@@ -167,14 +335,18 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
       try {
         launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       } catch (e) {
-        print('External app launch failed: $e');
+        if (AppConfig.enableLogging) {
+          print('External app launch failed: $e');
+        }
       }
 
       if (!launched) {
         try {
           launched = await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
         } catch (e) {
-          print('External non-browser launch failed: $e');
+          if (AppConfig.enableLogging) {
+            print('External non-browser launch failed: $e');
+          }
         }
       }
 
@@ -182,7 +354,9 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
         try {
           launched = await launchUrl(uri);
         } catch (e) {
-          print('Platform default launch failed: $e');
+          if (AppConfig.enableLogging) {
+            print('Platform default launch failed: $e');
+          }
         }
       }
 
@@ -195,7 +369,9 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
         );
       }
     } catch (e) {
-      print('URL launch error: $e');
+      if (AppConfig.enableLogging) {
+        print('URL launch error: $e');
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -204,64 +380,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
           ),
         );
       }
-    }
-  }
-
-  Future<void> _loadSubscriptionData() async {
-    try {
-      final subscriptionData = await SubscriptionService.getUserSubscription();
-
-      if (mounted) {
-        setState(() {
-          _subscriptionData = subscriptionData;
-          _isLoadingSubscription = false;
-        });
-
-        if (subscriptionData?.accessibleShops.isNotEmpty == true) {
-          final firstShop = subscriptionData!.accessibleShops.first;
-
-          try {
-            final shopData = await ApiService.getCoffeeShops();
-            final shops = shopData['shops'] as List<CoffeeShop>;
-            final fullShopData = shops.where((shop) => shop.id == firstShop.id).firstOrNull;
-
-            if (mounted) {
-              setState(() {
-                if (fullShopData != null) {
-                  _selectedShop = fullShopData;
-                } else {
-                  _selectedShop = CoffeeShop(
-                    id: firstShop.id,
-                    name: firstShop.name,
-                    address: firstShop.address,
-                    latitude: firstShop.latitude ?? 0.0,
-                    longitude: firstShop.longitude ?? 0.0,
-                    subscriptionEnabled: true,
-                    jokerEnabled: true,
-                    userAverageRating: 0.0,
-                    userRatingCount: 0,
-                    googleRating: 0.0,
-                    googleRatingCount: 0,
-                    supportedDrinkTiers: [],
-                    isActive: true,
-                    logoUrl: null,
-                  );
-                }
-              });
-            }
-          } catch (e) {
-            print('Error fetching full shop data: $e');
-          }
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _subscriptionData = null;
-          _isLoadingSubscription = false;
-        });
-      }
-      print('Error loading subscription data: $e');
     }
   }
 
@@ -321,7 +439,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gradient header section - matches redemption modal
           Container(
             padding: const EdgeInsets.all(20),
             decoration: const BoxDecoration(
@@ -363,7 +480,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
             ),
           ),
 
-          // White section - benefits and CTA
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -379,7 +495,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                 ),
                 const SizedBox(height: 16),
 
-                // Benefits container
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -408,7 +523,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
 
                 const SizedBox(height: 20),
 
-                // CTA Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -494,7 +608,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gradient header section - ALWAYS coffee brown gradient (like subscription card)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             decoration: const BoxDecoration(
@@ -524,19 +637,16 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
             ),
           ),
 
-          // White section - status with circular progress
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                // Left side - Text info
                 Expanded(
                   flex: 2,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (coffeeReady) ...[
-                        // Ready status - two lines with different colors
                         RichText(
                           text: const TextSpan(
                             children: [
@@ -572,7 +682,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                           ),
                         ),
                       ] else ...[
-                        // Countdown status
                         Text(
                           _getTimeUntilMidnight(),
                           style: const TextStyle(
@@ -597,13 +706,11 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
 
                 const SizedBox(width: 20),
 
-                // Right side - Circular progress with gradient
                 SizedBox(
                   width: 80,
                   height: 80,
                   child: Stack(
                     children: [
-                      // Background circle
                       Container(
                         width: 80,
                         height: 80,
@@ -613,7 +720,6 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                         ),
                       ),
 
-                      // Animated progress circle with gradient
                       AnimatedBuilder(
                         animation: _progressAnimation,
                         builder: (context, child) {
@@ -629,70 +735,53 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
                         },
                       ),
 
-                      // Center icon/logo with flip animation
                       Center(
                         child: AnimatedBuilder(
                           animation: _flipAnimation,
                           builder: (context, child) {
-                            // Calculate rotation angle based on number of flips
-                            // numberOfFlips = 1: 360°, numberOfFlips = 2: 720°, etc.
                             final angle = _flipAnimation.value * numberOfFlips * 2 * math.pi;
-
-                            // Calculate scale effect (shrink during middle of flip)
                             final scale = 1.0 - (math.sin(_flipAnimation.value * math.pi) * 0.15);
 
-                            // Apply 3D perspective transform with scale (Y-axis rotation)
                             return Transform(
                               alignment: Alignment.center,
                               transform: Matrix4.identity()
-                                ..setEntry(3, 2, 0.002) // stronger perspective
-                                ..rotateY(angle)  // Changed from rotateX to rotateY
+                                ..setEntry(3, 2, 0.002)
+                                ..rotateY(angle)
                                 ..scale(scale),
-                              child: GestureDetector(
-                                onTap: () {
-                                  // Debug mode: toggle between available and countdown states
-                                  print('Tapped! Current state: $isAvailableToday');
-                                  setState(() {
-                                    isAvailableToday = !isAvailableToday;
-                                  });
-                                  // Also trigger flip animation on tap
-                                  _flipController.forward(from: 0.0);
-                                },
-                                child: Container(
-                                  width: 60,
-                                  height: 60,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: coffeeReady ? coffeeGreen : Colors.grey.shade300,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: ClipOval(
-                                    child: _selectedShop?.logoUrl != null
-                                        ? Padding(
-                                      padding: const EdgeInsets.all(0),
-                                      child: Image.asset(
-                                        'assets/images/shops/${_selectedShop!.logoUrl}',
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Icon(
-                                            coffeeReady ? Icons.local_cafe : Icons.access_time,
-                                            color: Colors.white,
-                                            size: 24,
-                                          );
-                                        },
-                                      ),
-                                    )
-                                        : Icon(
-                                      coffeeReady ? Icons.local_cafe : Icons.access_time,
-                                      color: Colors.white,
-                                      size: 24,
+                              child: Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: coffeeReady ? coffeeGreen : Colors.grey.shade300,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
                                     ),
+                                  ],
+                                ),
+                                child: ClipOval(
+                                  child: _selectedShop?.logoUrl != null
+                                      ? Padding(
+                                    padding: const EdgeInsets.all(0),
+                                    child: Image.asset(
+                                      'assets/images/shops/${_selectedShop!.logoUrl}',
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Icon(
+                                          coffeeReady ? Icons.local_cafe : Icons.access_time,
+                                          color: Colors.white,
+                                          size: 24,
+                                        );
+                                      },
+                                    ),
+                                  )
+                                      : Icon(
+                                    coffeeReady ? Icons.local_cafe : Icons.access_time,
+                                    color: Colors.white,
+                                    size: 24,
                                   ),
                                 ),
                               ),
@@ -712,7 +801,7 @@ class _DailyCoffeeCardState extends State<DailyCoffeeCard>
   }
 }
 
-// Custom painter for the circular progress bar with coffee gradient
+// Custom painter for the circular progress bar
 class CircularProgressPainter extends CustomPainter {
   final double progress;
   final Color backgroundColor;
@@ -731,7 +820,6 @@ class CircularProgressPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - strokeWidth) / 2;
 
-    // Draw background circle
     final backgroundPaint = Paint()
       ..color = backgroundColor
       ..strokeWidth = strokeWidth
@@ -740,13 +828,11 @@ class CircularProgressPainter extends CustomPainter {
 
     canvas.drawCircle(center, radius, backgroundPaint);
 
-    // Draw progress arc with uniform color
     final sweepAngle = 2 * math.pi * progress;
 
-    // Use chocolate (lighter tone) for countdown, green for ready
     final Color arcColor = progressColor == const Color(0xFF4CAF50)
-        ? const Color(0xFF4CAF50) // coffeeGreen when ready
-        : const Color(0xFFD2691E); // chocolate (lighter) for countdown
+        ? const Color(0xFF4CAF50)
+        : const Color(0xFFD2691E);
 
     final progressPaint = Paint()
       ..color = arcColor

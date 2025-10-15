@@ -1,4 +1,4 @@
-// lib/screens/home_screen.dart - FIXED VERSION
+// lib/screens/home_screen.dart - FIXED VERSION with DailyCoffeeCard refresh
 
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
@@ -256,15 +256,22 @@ class _CustomerHomeTab extends StatefulWidget {
 class _CustomerHomeTabState extends State<_CustomerHomeTab> {
   int _refreshTrigger = 0;
 
-  // ✅ NEW: Public method to trigger refresh from parent
+  // ✅ NEW: Add key to access DailyCoffeeCard state
+  final GlobalKey<DailyCoffeeCardState> _dailyCoffeeCardKey = GlobalKey<DailyCoffeeCardState>();
+
+  // ✅ ENHANCED: Public method to trigger refresh from parent
   void triggerRefresh() {
     if (mounted) {
       setState(() {
         _refreshTrigger++;
       });
 
+      // ✅ NEW: Also refresh the DailyCoffeeCard
+      _dailyCoffeeCardKey.currentState?.refresh();
+
       if (AppConfig.enableLogging) {
         print('✅ _CustomerHomeTab: Refresh triggered, counter = $_refreshTrigger');
+        print('✅ _CustomerHomeTab: DailyCoffeeCard refresh called');
       }
     }
   }
@@ -287,12 +294,14 @@ class _CustomerHomeTabState extends State<_CustomerHomeTab> {
         fallbackJokersCount: '0',
       ),
       contentWidgets: [
+        // ✅ NEW: Pass the key to DailyCoffeeCard
         DailyCoffeeCard(
+          key: _dailyCoffeeCardKey,
           onRedeem: () async {
             final result = await showRedemptionModal(context);
 
             if (result == true) {
-              triggerRefresh(); // ✅ Use the same method
+              triggerRefresh(); // ✅ This now refreshes both stats and daily coffee card
             }
           },
         ),

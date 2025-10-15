@@ -1,7 +1,9 @@
 // lib/widgets/redemption_selection_modal.dart
+// ✅ COMPLETE VERSION with comprehensive debug logging
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
+import 'dart:convert'; // ✅ Add this for JSON pretty printing
 import 'package:confetti/confetti.dart';
 import '../services/redemption_service.dart';
 import '../services/monthly_stats_service.dart';
@@ -75,6 +77,20 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       final monthlyStats = await MonthlyStatsService.getMonthlyStats();
 
       if (statusResult['success']) {
+        // ✅ ENHANCED DEBUG: Pretty print the entire status object
+        if (AppConfig.enableLogging) {
+          print('═══════════════════════════════════════');
+          print('📦 REDEMPTION STATUS RESPONSE:');
+          print('═══════════════════════════════════════');
+          try {
+            final prettyJson = JsonEncoder.withIndent('  ').convert(statusResult['status']);
+            print(prettyJson);
+          } catch (e) {
+            print('Raw status: ${statusResult['status']}');
+          }
+          print('═══════════════════════════════════════');
+        }
+
         setState(() {
           _redemptionStatus = statusResult['status'];
           _monthlyStats = monthlyStats;
@@ -412,7 +428,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     final isSubscription = details['type'] == 'subscription';
     final remainingMonthly = details['remainingMonthly'] ?? 0;
 
-    return Stack(  // ✅ Stack only in success screen
+    return Stack(
       children: [
         SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -511,8 +527,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                   ],
                 ),
               ),
-
-
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -697,6 +711,34 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     final status = _redemptionStatus;
     if (status == null) return const SizedBox();
 
+    // ✅ DEBUG: Log everything about subscription status
+    if (AppConfig.enableLogging) {
+      print('═══════════════════════════════════════');
+      print('🎯 BUILDING REDEMPTION SELECTION');
+      print('═══════════════════════════════════════');
+      print('📊 Status object type: ${status.runtimeType}');
+      print('📊 Status keys: ${status.keys.toList()}');
+      print('');
+      print('🔍 Subscription Info Access:');
+      print('   status[\'subscriptionInfo\']: ${status['subscriptionInfo']}');
+      print('   Type: ${status['subscriptionInfo']?.runtimeType}');
+
+      if (status['subscriptionInfo'] != null) {
+        final subInfo = status['subscriptionInfo'];
+        print('   Keys: ${subInfo.keys.toList()}');
+      }
+      print('');
+      print('🔍 Top-level flags:');
+      print('   status[\'canRedeemSubscription\']: ${status['canRedeemSubscription']}');  // ✅ THIS IS WHERE IT IS
+      print('   status[\'canRedeemJoker\']: ${status['canRedeemJoker']}');
+      print('   status[\'jokerCount\']: ${status['jokerCount']}');
+      print('');
+      print('✅ Final enabled values:');
+      print('   Subscription enabled: ${status['canRedeemSubscription'] ?? false}');  // ✅ CORRECT ACCESS
+      print('   Joker enabled: ${status['canRedeemJoker'] ?? false}');
+      print('═══════════════════════════════════════');
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -708,11 +750,11 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: coffeeBrown.withOpacity(0.1),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Image.asset(
-                  'assets/icons/mocha_icon_coffeebean.png',
+                  'assets/icons/mocha_icon_black.png',
                   width: 32,
                   height: 32,
                   fit: BoxFit.contain,
@@ -755,6 +797,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            // ✅ FIXED: Access canRedeemSubscription from top level, not nested in subscriptionInfo
             enabled: status['canRedeemSubscription'] ?? false,
             available: _getSubscriptionAvailable(status),
           ),
