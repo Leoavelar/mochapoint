@@ -612,7 +612,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [coffeeBrown, chocolate],
+                colors: [Color(0xFF472A19), Color(0xFF472A19)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

@@ -784,7 +784,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               Icon(
                 _currentPosition != null ? Icons.location_on : Icons.location_off,
                 size: 16,
-                color: _currentPosition != null ? Color(0xFFD2691E) : Colors.red,
+                color: _currentPosition != null ? Color(0xFF472A19) : Colors.red,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -826,7 +826,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-            colors: [Color(0xFF8B4513), Color(0xFF8B4513)], // coffeeBrown to chocolate
+            colors: [Color(0xFF472A19), Color(0xFF472A19)], // coffeeBrown to chocolate
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
@@ -1192,7 +1192,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               height: 40,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF8B4513), Color(0xFF8B4513)], // coffeeBrown to chocolate
+                  colors: [Color(0xFF472A19), Color(0xFF472A19)], // coffeeBrown to chocolate
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
