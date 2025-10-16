@@ -96,7 +96,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
             'Session Expired',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF8B4513), // Coffee brown color
+              color: Color(0xFF472A19), // Coffee brown color
             ),
           ),
           content: Text(
@@ -112,7 +112,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
                 _redirectToLogin();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8B4513), // Coffee brown
+                backgroundColor: const Color(0xFF472A19), // Coffee brown
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),

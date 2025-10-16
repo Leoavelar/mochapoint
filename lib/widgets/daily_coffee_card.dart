@@ -832,7 +832,7 @@ class CircularProgressPainter extends CustomPainter {
 
     final Color arcColor = progressColor == const Color(0xFF4CAF50)
         ? const Color(0xFF4CAF50)
-        : const Color(0xFFD2691E);
+        : const Color(0xFF8B4513);
 
     final progressPaint = Paint()
       ..color = arcColor

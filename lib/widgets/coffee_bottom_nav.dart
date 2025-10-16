@@ -80,7 +80,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: const Color(0xFFA6623A).withOpacity(0.1),
+            color: const Color(0xFF8B4513).withOpacity(0.1),
             blurRadius: 30,
             offset: const Offset(0, -5),
             spreadRadius: -5,
@@ -103,12 +103,12 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                 height: 3,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFA6623A), Color(0xFF8B4513)],
+                    colors: [Color(0xFF8B4513), Color(0xFF8B4513)],
                   ),
                   borderRadius: BorderRadius.circular(2),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFA6623A).withOpacity(0.3),
+                      color: const Color(0xFF8B4513).withOpacity(0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -165,8 +165,8 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF472A19),
-                              Color(0xFF472A19),
+                              Color(0xFF000000),
+                              Color(0xFF000000),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(14),
