@@ -7,8 +7,8 @@ class OverlappingContentLayout extends StatefulWidget {
   final Widget overlappingWidget;
   final List<Widget> contentWidgets;
   final double overlap;
-  final Color backgroundColor;
-  final double contentSpacing; // New parameter for spacing between content widgets
+  final Gradient backgroundGradient; // ✅ CHANGED: From Color to Gradient
+  final double contentSpacing;
 
   const OverlappingContentLayout({
     Key? key,
@@ -16,9 +16,16 @@ class OverlappingContentLayout extends StatefulWidget {
     required this.overlappingWidget,
     required this.contentWidgets,
     this.overlap = 60.0,
-    // this.backgroundColor = const Color(0xFFF9F5F1),
-    this.backgroundColor = Colors.white12,
-    this.contentSpacing = 16.0, // Default spacing between content widgets
+    // ✅ CHANGED: Default gradient instead of solid color
+    this.backgroundGradient = const LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Colors.white,
+        Color(0xFFF5E6D3), // lightCream
+      ],
+    ),
+    this.contentSpacing = 16.0,
   }) : super(key: key);
 
   @override
@@ -28,14 +35,13 @@ class OverlappingContentLayout extends StatefulWidget {
 class _OverlappingContentLayoutState extends State<OverlappingContentLayout> {
   final GlobalKey headerKey = GlobalKey();
   final GlobalKey overlappingWidgetKey = GlobalKey();
-  double headerHeight = 200.0; // Default
+  double headerHeight = 200.0;
   double overlappingWidgetHeight = 0.0;
   bool _measured = false;
 
   @override
   void initState() {
     super.initState();
-    // Schedule measurement for after the first layout
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _measureWidgets();
     });
@@ -64,68 +70,62 @@ class _OverlappingContentLayoutState extends State<OverlappingContentLayout> {
 
   @override
   Widget build(BuildContext context) {
-    // Create a list that includes spacing between content widgets
     final List<Widget> spacedContentWidgets = [];
 
-    // Add spacing between content widgets
     for (int i = 0; i < widget.contentWidgets.length; i++) {
-      // Add the content widget
       spacedContentWidgets.add(widget.contentWidgets[i]);
-
-      // Add spacing after each widget except the last one
       if (i < widget.contentWidgets.length - 1) {
         spacedContentWidgets.add(SizedBox(height: widget.contentSpacing));
       }
     }
 
-    return SingleChildScrollView(
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Column(
-            children: [
-              // Header with key for measurement
-              KeyedSubtree(
-                key: headerKey,
-                child: widget.header,
-              ),
-
-              // Content area
-              Container(
-                color: widget.backgroundColor,
-                // color: widget.backgroundColor,
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Space for the overlapping widget
-                    SizedBox(height: _measured
-                        ? (overlappingWidgetHeight - widget.overlap)
-                        : 160.0),
-                    // Add some initial spacing between the overlapping widget and first content
-                    SizedBox(height: widget.contentSpacing),
-                    // Content widgets with spacing
-                    ...spacedContentWidgets,
-                    // Add some bottom padding
-                    SizedBox(height: widget.contentSpacing),
-                  ],
+    return Container(
+      // ✅ CHANGED: Use gradient instead of solid color
+      decoration: BoxDecoration(
+        gradient: widget.backgroundGradient,
+      ),
+      child: SingleChildScrollView(
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Column(
+              children: [
+                KeyedSubtree(
+                  key: headerKey,
+                  child: widget.header,
                 ),
-              ),
-            ],
-          ),
 
-          // Overlapping widget with key for measurement
-          Positioned(
-            top: headerHeight - widget.overlap,
-            left: 16.0,
-            right: 16.0,
-            child: KeyedSubtree(
-              key: overlappingWidgetKey,
-              child: widget.overlappingWidget,
+                // ✅ CHANGED: Remove background color (transparent to show gradient)
+                Container(
+                  color: Colors.transparent,
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: _measured
+                          ? (overlappingWidgetHeight - widget.overlap)
+                          : 160.0),
+                      SizedBox(height: widget.contentSpacing),
+                      ...spacedContentWidgets,
+                      SizedBox(height: widget.contentSpacing),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+
+            Positioned(
+              top: headerHeight - widget.overlap,
+              left: 16.0,
+              right: 16.0,
+              child: KeyedSubtree(
+                key: overlappingWidgetKey,
+                child: widget.overlappingWidget,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
