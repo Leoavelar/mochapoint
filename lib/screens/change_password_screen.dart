@@ -93,9 +93,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   borderRadius: BorderRadius.circular(5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -113,7 +113,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: Colors.black,
-                        fontFamily: 'ClashDisplay',
+                        fontFamily: 'Poppins',
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -305,9 +305,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         border: Border.all(color: const Color(0xFFA6623A).withOpacity(0.3)),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),

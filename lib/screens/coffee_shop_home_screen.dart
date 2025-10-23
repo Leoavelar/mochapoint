@@ -261,7 +261,7 @@ class _CoffeeShopHomeScreenState extends State<CoffeeShopHomeScreen> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],

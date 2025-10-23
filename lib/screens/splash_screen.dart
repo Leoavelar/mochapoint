@@ -194,10 +194,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   Column(
                     children: [
                       Text(
-                        'Mocha Point',
+                        'Mochapoint',
                         style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                          color: const Color(0xFF472A19), // Dark espresso
-                          fontFamily: 'ClashDisplay',
+                          color: Colors.black,
+                          fontFamily: 'Poppins',
                           fontWeight: FontWeight.bold,
                           fontSize: 36,
                         ),
