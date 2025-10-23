@@ -124,7 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
-                      fontFamily: 'ClashDisplay',
+                      fontFamily: 'Poppins',
                     ),
                   ),
 
@@ -278,9 +278,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         borderRadius: BorderRadius.circular(5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),

@@ -111,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Mocha Point',
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
                       color: Colors.black,
-                      fontFamily: 'ClashDisplay',
+                      fontFamily: 'Poppins',
                     ),
                   ),
                   const SizedBox(height: 8),

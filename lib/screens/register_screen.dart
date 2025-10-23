@@ -127,7 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     'Join Mocha Point',
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
                       color: Colors.black,
-                      fontFamily: 'ClashDisplay',
+                      fontFamily: 'Poppins',
                     ),
                     textAlign: TextAlign.center, // Add this line
                   ),

@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   // Colors based on the updated design
-  static const Color coffeeBean = Color(0xFF8B4513); // Brown for coffee bean
+  static const Color coffeeBean = Color(0xFF6A2801); // Brown for coffee bean
   static const Color lightCream = Color(0xFFF5E6D3); // Light cream (matches modal)
 
   @override
@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
         primaryColor: coffeeBean,
         // Remove solid scaffold background - we'll use gradient containers instead
         scaffoldBackgroundColor: Colors.transparent,
-        fontFamily: 'ClashDisplay',
+        fontFamily: 'Poppins',
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.black,
@@ -125,7 +125,8 @@ class GradientBackground extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [
             Colors.white,
-            Color(0xFFF5E6D3), // lightCream - matches modal
+            Colors.white,
+            // Color(0xFFF5E6D3), // lightCream - matches modal
           ],
         ),
       ),
@@ -203,7 +204,8 @@ class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStat
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.white,
-                  Color(0xFFF5E6D3), // lightCream
+                  Colors.white,
+                  // Color(0xFFF5E6D3), // lightCream
                 ],
               ),
             ),
@@ -225,7 +227,8 @@ class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStat
           end: Alignment.bottomCenter,
           colors: [
             Colors.white,
-            Color(0xFFF5E6D3),
+            Colors.white,
+            // Color(0xFFF5E6D3),
           ],
         ),
       ),
