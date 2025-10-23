@@ -793,7 +793,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             subtitle: _getSubscriptionSubtitle(status),
             icon: Icons.local_cafe_rounded,
             gradient: const LinearGradient(
-              colors: [coffeeBrown, chocolate],
+              colors: [Color(0xFF8B4513), Color(0xFF8B4513)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -808,7 +808,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             subtitle: 'Valid at any participating shop',
             icon: Icons.stars_rounded,
             gradient: LinearGradient(
-              colors: [Colors.orange[700]!, Colors.orange[400]!],
+              colors: [Color(0xFFD2691E), Color(0xFFD2691E)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
