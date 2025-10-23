@@ -13,7 +13,7 @@ class AppHeader extends StatefulWidget {
     Key? key,
     required this.backgroundImage,
     this.height = 200.0,
-    this.borderRadius = 20.0,
+    this.borderRadius = 40.0, // Increased from 20.0
   }) : super(key: key);
 
   @override
@@ -21,20 +21,6 @@ class AppHeader extends StatefulWidget {
 }
 
 class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMixin {
-  // Coffee-themed colors (matching splash screen)
-  static const Color darkEspresso = Color(0xFF472A19); // Dark espresso (animated wave)
-
-  // Gradient for background instead of solid froth color
-  static const LinearGradient frothGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [
-      Color(0xFF8B4513), // Medium brown (original froth)
-      Color(0xFFD2691E), // Darker brown
-    ],
-    stops: [0.0, 1.0],
-  );
-
   Map<String, dynamic>? _user;
   late AnimationController _waveController;
   late Animation<double> _waveAnimation;
@@ -97,10 +83,11 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
         height: widget.height,
         child: Stack(
           children: [
-            // Base layer - Light brown froth gradient (static background)
-            Container(
-              decoration: const BoxDecoration(
-                gradient: frothGradient, // Gradient instead of solid color
+            // Base layer - Image background
+            Positioned.fill(
+              child: Image.asset(
+                'assets/images/header_2.png',
+                fit: BoxFit.cover,
               ),
             ),
 
@@ -176,13 +163,13 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
   }
 }
 
-// Header coffee liquid painter - single dark espresso wave over froth background
+// Header coffee liquid painter - single coffee wave over image background
 class HeaderCoffeeLiquidPainter extends CustomPainter {
   final double wavePhase;
   final double height;
 
-  // Only need dark espresso color for the wave
-  static const Color darkEspresso = Color(0xFF472A19); // Dark espresso
+  // Light brown coffee color for the wave (from the original froth gradient)
+  static const Color coffeeColor = Color(0xFF94511A); // Updated medium brown
 
   HeaderCoffeeLiquidPainter({
     required this.wavePhase,
@@ -191,10 +178,10 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Only paint ONE layer: Dark espresso wave
-    // The light brown froth is now the static background
+    // Only paint ONE layer: Light brown coffee wave
+    // The image is now the static background
 
-    final espressoLevel = size.height * 0.35; // Starts at 55% from top
+    final espressoLevel = size.height * 0.75; // Starts at 75% from top (lowered, closer to bottom)
     final espressoPath = Path();
     espressoPath.moveTo(0, size.height);
 
@@ -214,7 +201,15 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
     espressoPath.close();
 
     final espressoPaint = Paint()
-      ..color = darkEspresso
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          coffeeColor,
+          Colors.black,// Light brown at top
+          Colors.black,   // Black at bottom
+        ],
+      ).createShader(Rect.fromLTWH(0, espressoLevel, size.width, size.height - espressoLevel))
       ..style = PaintingStyle.fill;
 
     canvas.drawPath(espressoPath, espressoPaint);
