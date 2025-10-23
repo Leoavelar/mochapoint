@@ -33,7 +33,7 @@ enum SubscriptionState {
 class DailyCoffeeCardState extends State<DailyCoffeeCard>
     with TickerProviderStateMixin {
   // Coffee-themed colors matching redemption modal
-  static const Color coffeeBrown = Color(0xFF8B4513);
+  static const Color coffeeBrown = Color(0xFF000000);
   static const Color chocolate = Color(0xFFD2691E);
   static const Color coffeeGreen = Color(0xFF4CAF50);
 
@@ -387,7 +387,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
@@ -397,7 +397,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         child: _buildContent(context),
       ),
     );
@@ -434,7 +434,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,7 +448,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(20),
+                top: Radius.circular(10),
               ),
             ),
             child: Row(
@@ -457,7 +457,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
                     Icons.local_cafe_rounded,
@@ -499,7 +499,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: coffeeBrown.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -603,7 +603,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -612,12 +612,12 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF472A19), Color(0xFF472A19)],
+                colors: [Color(0xFF000000), Color(0xFF000000)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.vertical(
-                top: Radius.circular(20),
+                top: Radius.circular(10),
               ),
             ),
             child: Row(
