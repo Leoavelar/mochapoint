@@ -784,7 +784,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               Icon(
                 _currentPosition != null ? Icons.location_on : Icons.location_off,
                 size: 16,
-                color: _currentPosition != null ? Color(0xFF472A19) : Colors.red,
+                color: _currentPosition != null ? Color(0xFF000000) : Colors.red,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -826,7 +826,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-            colors: [Color(0xFF472A19), Color(0xFF472A19)], // coffeeBrown to chocolate
+            colors: [Color(0xFF000000), Color(0xFF000000)], // coffeeBrown to chocolate
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
@@ -1002,12 +1002,13 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.30),
       color: Colors.white,
-      shadowColor: Colors.black,
+      // shadowColor: Colors.black,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1192,7 +1193,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               height: 40,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF472A19), Color(0xFF472A19)], // coffeeBrown to chocolate
+                  colors: [Color(0xFF000000), Color(0xFF000000)], // coffeeBrown to chocolate
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),

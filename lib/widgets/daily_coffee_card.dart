@@ -1,6 +1,7 @@
 // lib/widgets/daily_coffee_card.dart
 // ✅ SYNCED with actual redemption status from backend
 // ✅ Updates automatically after redemptions
+// ✅ FIXED: Consistent width with other cards
 
 import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
@@ -228,59 +229,42 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                     googleRatingCount: 0,
                     supportedDrinkTiers: [],
                     isActive: true,
-                    logoUrl: null,
                   );
                 }
               });
             }
           } catch (e) {
             if (AppConfig.enableLogging) {
-              print('Error fetching full shop data: $e');
+              print('Error loading full shop data: $e');
             }
           }
         }
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _subscriptionData = null;
-          _isLoadingSubscription = false;
-        });
-      }
       if (AppConfig.enableLogging) {
         print('Error loading subscription data: $e');
+      }
+
+      if (mounted) {
+        setState(() {
+          _isLoadingSubscription = false;
+        });
       }
     }
   }
 
   void _startCountdownTimer() {
+    _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
-        setState(() {
-          // ✅ NEW: Auto-reset at midnight
-          final now = DateTime.now();
-          if (now.hour == 0 && now.minute == 0 && now.second == 0) {
-            if (AppConfig.enableLogging) {
-              print('🌅 Midnight reached! Resetting coffee availability');
-            }
-            isAvailableToday = true;
-            _lastRedemptionToday = null;
-            _loadRedemptionStatus(); // Double-check with backend
-          }
-        });
+        setState(() {});
       }
     });
   }
 
   void _startFlipTimer() {
-    final initialDelay = (flipIntervalSeconds * 0.4).round();
-    Future.delayed(Duration(seconds: initialDelay), () {
-      if (mounted) {
-        _flipController.forward(from: 0.0);
-      }
-    });
-
-    _flipTimer = Timer.periodic(Duration(seconds: flipIntervalSeconds), (timer) {
+    _flipTimer?.cancel();
+    _flipTimer = Timer.periodic(const Duration(seconds: flipIntervalSeconds), (timer) {
       if (mounted) {
         _flipController.forward(from: 0.0);
       }
@@ -289,89 +273,59 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
 
   @override
   void dispose() {
-    _progressController.dispose();
-    _flipController.dispose();
     _countdownTimer?.cancel();
     _flipTimer?.cancel();
+    _progressController.dispose();
+    _flipController.dispose();
     super.dispose();
   }
 
-  double _getProgressToMidnight() {
-    final now = DateTime.now();
-    final totalSecondsInDay = 24 * 60 * 60;
-    final secondsSinceMidnight = now.hour * 3600 + now.minute * 60 + now.second;
-    return secondsSinceMidnight / totalSecondsInDay;
+  bool _isCoffeeReady() {
+    return _subscriptionState == SubscriptionState.active && isAvailableToday;
   }
 
   String _getTimeUntilMidnight() {
     final now = DateTime.now();
     final midnight = DateTime(now.year, now.month, now.day + 1);
-    final difference = midnight.difference(now);
+    final duration = midnight.difference(now);
 
-    final hours = difference.inHours;
-    final minutes = difference.inMinutes % 60;
-    final seconds = difference.inSeconds % 60;
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes % 60;
+    final seconds = duration.inSeconds % 60;
 
-    if (hours > 0) {
-      return '${hours}h ${minutes}m ${seconds}s';
-    } else if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    } else {
-      return '${seconds}s';
-    }
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  bool _isCoffeeReady() {
-    return isAvailableToday;
+  double _getProgressToMidnight() {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = DateTime(now.year, now.month, now.day + 1);
+
+    final totalSeconds = endOfDay.difference(startOfDay).inSeconds;
+    final elapsedSeconds = now.difference(startOfDay).inSeconds;
+
+    return elapsedSeconds / totalSeconds;
   }
 
   Future<void> _launchSubscriptionWebsite() async {
-    const url = 'https://mochapoint.coffee/';
+    final url = Uri.parse('https://mochapoint.coffee');
 
     try {
-      final uri = Uri.parse(url);
-      bool launched = false;
+      final canLaunch = await canLaunchUrl(url);
 
-      try {
-        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } catch (e) {
-        if (AppConfig.enableLogging) {
-          print('External app launch failed: $e');
-        }
-      }
-
-      if (!launched) {
-        try {
-          launched = await launchUrl(uri, mode: LaunchMode.externalNonBrowserApplication);
-        } catch (e) {
-          if (AppConfig.enableLogging) {
-            print('External non-browser launch failed: $e');
-          }
-        }
-      }
-
-      if (!launched) {
-        try {
-          launched = await launchUrl(uri);
-        } catch (e) {
-          if (AppConfig.enableLogging) {
-            print('Platform default launch failed: $e');
-          }
-        }
-      }
-
-      if (!launched && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Could not open browser. Please visit mochapoint.coffee manually.'),
-            backgroundColor: Colors.orange.shade700,
-          ),
+      if (canLaunch) {
+        await launchUrl(
+          url,
+          mode: LaunchMode.externalApplication,
         );
+      } else {
+        throw 'Could not launch $url';
       }
     } catch (e) {
       if (AppConfig.enableLogging) {
-        print('URL launch error: $e');
+        print('Error launching URL: $e');
       }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -386,6 +340,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity, // ✅ FIXED: Ensure full width
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
@@ -627,7 +582,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                     _selectedShop?.name ?? 'Your Coffee Shop',
                     style: const TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                       color: Colors.white,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -654,20 +609,20 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                                 text: 'Your Coffee is\n',
                                 style: TextStyle(
                                   fontSize: 20,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w500,
                                   color: Colors.black,
                                   height: 1.2,
-                                  fontFamily: "ClashDisplay",
+                                  fontFamily: "Poppins",
                                 ),
                               ),
                               TextSpan(
                                 text: 'Ready!',
                                 style: TextStyle(
                                   fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: coffeeGreen,
+                                  fontWeight: FontWeight.w700,
+                                  color: MyApp.coffeeBean,
                                   height: 1.2,
-                                  fontFamily: "ClashDisplay",
+                                  fontFamily: "Poppins",
                                 ),
                               ),
                             ],
@@ -688,7 +643,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
                             color: Colors.black,
-                            fontFamily: "ClashDisplay",
+                            fontFamily: "Poppins",
                           ),
                         ),
                         const SizedBox(height: 4),

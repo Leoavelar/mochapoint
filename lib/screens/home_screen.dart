@@ -275,31 +275,53 @@ class _CustomerHomeTabState extends State<_CustomerHomeTab> {
     final now = DateTime.now();
     final String formattedDate = DateFormat('MMMM yyyy').format(now);
 
-    return OverlappingContentLayout(
-      header: const AppHeader(
-        backgroundImage: 'assets/images/header_2.png',
-        height: 200.0,
-      ),
-      overlappingWidget: CoffeeStatsCard(
-        key: ValueKey(_refreshTrigger),
-        fallbackMonth: formattedDate,
-        fallbackRedeemedCount: '0',
-        fallbackRemainingCount: '0',
-        fallbackJokersCount: '0',
-      ),
-      contentWidgets: [
-        DailyCoffeeCard(
-          onRedeem: () async {
-            final result = await showRedemptionModal(context);
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const AppHeader(
+              backgroundImage: 'assets/images/header_2.png',
+              height: 200.0,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: DailyCoffeeCard(
+                      onRedeem: () async {
+                        final result = await showRedemptionModal(context);
 
-            if (result == true) {
-              triggerRefresh(); // ✅ Use the same method
-            }
-          },
+                        if (result == true) {
+                          triggerRefresh(); // ✅ Use the same method
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20.0),
+                  SizedBox(
+                    width: double.infinity,
+                    child: CoffeeStatsCard(
+                      key: ValueKey(_refreshTrigger),
+                      fallbackMonth: formattedDate,
+                      fallbackRedeemedCount: '0',
+                      fallbackRemainingCount: '0',
+                      fallbackJokersCount: '0',
+                    ),
+                  ),
+                  const SizedBox(height: 20.0),
+                  const SizedBox(
+                    width: double.infinity,
+                    child: NearestShopsWidget(),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const NearestShopsWidget(),
-      ],
-      contentSpacing: 20.0,
+      ),
     );
   }
 

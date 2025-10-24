@@ -455,10 +455,9 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: (isSubscription ? coffeeBrown : Colors.orange)
-                                .withOpacity(0.3),
-                            blurRadius: 30,
-                            spreadRadius: 5,
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),

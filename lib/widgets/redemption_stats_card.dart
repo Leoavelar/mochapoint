@@ -1,4 +1,5 @@
 // lib/widgets/redemption_stats_card.dart - Updated with session handling
+// ✅ FIXED: Consistent width with other cards
 
 import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
@@ -96,7 +97,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
             'Session Expired',
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: Color(0xFF472A19), // Coffee brown color
+              color: Color(0xFF462919), // Coffee brown color
             ),
           ),
           content: Text(
@@ -112,7 +113,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
                 _redirectToLogin();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF472A19), // Coffee brown
+                backgroundColor: const Color(0xFF462919), // Coffee brown
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
@@ -147,23 +148,27 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      color: Colors.white,
-      shadowColor: Colors.black,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 16),
-            _buildStatsContent(),
-          ],
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        margin: EdgeInsets.zero,
+        elevation: 4,
+        shadowColor: Colors.black.withOpacity(0.30),
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 16),
+              _buildStatsContent(),
+            ],
+          ),
         ),
       ),
     );
@@ -171,7 +176,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
 
   Widget _buildHeader() {
     String month = 'Loading...';
-    String subtitle = 'Your Redemption Stats';
+    String subtitle = 'Stats';
 
     if (_monthlyStats != null) {
       month = _monthlyStats!.month;
@@ -187,6 +192,13 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'Your Stats',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w500,
+            fontSize: 20,
+          ),
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -194,7 +206,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
               child: Text(
                 month,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   fontSize: 20,
                   color: MyApp.coffeeBean,
                 ),
@@ -221,13 +233,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
           ],
         ),
         const SizedBox(height: 4),
-        Text(
-          'Your Redemption Stats',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            fontSize: 20,
-          ),
-        ),
+
       ],
     );
   }

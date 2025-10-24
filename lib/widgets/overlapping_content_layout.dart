@@ -15,14 +15,17 @@ class OverlappingContentLayout extends StatefulWidget {
     required this.header,
     required this.overlappingWidget,
     required this.contentWidgets,
-    this.overlap = 60.0,
+    this.overlap = 40.0,
     // ✅ CHANGED: Default gradient instead of solid color
     this.backgroundGradient = const LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        Colors.white,
-        Color(0xFFF5E6D3), // lightCream
+        // Colors.white,
+        // Colors.white,
+        // Color(0xFFF5E6D3),
+        Color(0xFFF5F5F5),
+        Color(0xFFF5F5F5),
       ],
     ),
     this.contentSpacing = 16.0,
