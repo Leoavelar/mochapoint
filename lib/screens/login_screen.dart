@@ -1,5 +1,7 @@
 // lib/screens/login_screen.dart - UPDATED TO MATCH SPLASH SCREEN STYLE
 import 'package:flutter/material.dart';
+import '../config/app_typography.dart';
+import '../main.dart';
 import '../services/auth_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
@@ -89,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F5F1), // Cream background matching splash
+      backgroundColor: Color(0xFFF5F5F5),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -108,17 +110,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Mocha Point',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: Colors.black,
-                      fontFamily: 'Poppins',
+                    'Mochapoint',
+                    style: AppTypography.statsNumber.copyWith(
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Welcome back to your coffee journey',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.black54,
+                    style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: MyApp.coffeeBean
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -138,10 +140,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'Email',
-                        labelStyle: const TextStyle(color: Colors.black54),
-                        prefixIcon: const Icon(
+                        labelStyle: AppTypography.bodyMedium.copyWith(
+                            color: Colors.grey[600]
+                        ),
+                        prefixIcon: Icon(
                           Icons.email_outlined,
-                          color: Color(0xFFA6623A),
+                          color: Colors.grey[600],
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(5),
@@ -180,15 +184,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        labelStyle: const TextStyle(color: Colors.black54),
-                        prefixIcon: const Icon(
+                        labelStyle: AppTypography.bodyMedium.copyWith(
+                      color: Colors.grey[600]
+                      ),
+                        prefixIcon: Icon(
                           Icons.lock_outlined,
-                          color: Color(0xFFA6623A),
+                          color: Colors.grey[600],
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                            color: Color(0xFFA6623A),
+                            color: Colors.grey[600],
                           ),
                           onPressed: () {
                             setState(() {
@@ -234,10 +240,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFA6623A), // Coffee bean color
+                          backgroundColor: MyApp.coffeeBean, // Coffee bean color
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
+                            borderRadius: BorderRadius.circular(100),
                           ),
                           elevation: 0,
                         ),
@@ -250,11 +256,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                            : const Text(
+                            : Text(
                           'Login',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                          style: AppTypography.bodyLarge.copyWith(
+                              color: Colors.white
                           ),
                         ),
                       ),
@@ -273,7 +278,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'Or continue with',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: AppTypography.bodyMedium.copyWith(
+                          color: Colors.grey[600]
+                      ),
                     ),
                   ),
                   Expanded(child: Divider(color: Colors.grey[400])),
@@ -290,16 +297,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 20,
                   height: 20,
                 ),
-                label: const Text(
+                label: Text(
                   'Continue with Google',
-                  style: TextStyle(color: Colors.black87),
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: Colors.black87
+                    ),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   backgroundColor: Colors.white,
                   side: BorderSide(color: Colors.grey[300]!),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(100),
                   ),
                 ),
               ),
@@ -312,7 +321,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text(
                     "Don't have an account? ",
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.grey[600]
+                    ),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -320,11 +331,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         MaterialPageRoute(builder: (context) => const RegisterScreen()),
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       'Sign up',
-                      style: TextStyle(
-                        color: Color(0xFFA6623A),
-                        fontWeight: FontWeight.w600,
+                      style: AppTypography.bodyMedium.copyWith(
+                          color: MyApp.coffeeBean,
+                          fontWeight: FontWeight.w700
                       ),
                     ),
                   ),

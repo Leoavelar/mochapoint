@@ -1,5 +1,7 @@
-// lib/screens/register_screen.dart - UPDATED TO MATCH DESIGN SYSTEM
+// lib/screens/register_screen.dart - DESIGN ONLY UPDATE (FUNCTIONALITY UNCHANGED)
 import 'package:flutter/material.dart';
+import '../config/app_typography.dart';
+import '../main.dart';
 import '../services/auth_service.dart';
 import 'home_screen.dart';
 
@@ -97,54 +99,45 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F5F1), // Cream background
-      appBar: AppBar(
-        title: const Text('Create Account'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Color(0xFFA6623A)),
-      ),
+      backgroundColor: Color(0xFFF5F5F5),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 40),
 
-              // Logo and Welcome Text
+              // App Logo - Coffee Bean Image (matching login screen)
               Column(
                 children: [
                   Image.asset(
                     'assets/icons/mocha_icon_black.png',
-                    width: 80,
-                    height: 80,
+                    width: 100,
+                    height: 100,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Join Mocha Point',
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: Colors.black,
-                      fontFamily: 'Poppins',
+                    'Mochapoint',
+                    style: AppTypography.statsNumber.copyWith(
+                      fontWeight: FontWeight.w800,
                     ),
-                    textAlign: TextAlign.center, // Add this line
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Start your coffee subscription journey today',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.black54,
+                    'Join our coffee community',
+                    style: AppTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: MyApp.coffeeBean,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 48),
 
-              // Register Form
+              // Registration Form
               Form(
                 key: _formKey,
                 child: Column(
@@ -155,10 +148,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         labelText: 'Email',
-                        labelStyle: const TextStyle(color: Colors.black54),
-                        prefixIcon: const Icon(
+                        labelStyle: AppTypography.bodyMedium.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                        prefixIcon: Icon(
                           Icons.email_outlined,
-                          color: Color(0xFFA6623A),
+                          color: Colors.grey[600],
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(5),
@@ -197,15 +192,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
-                        labelStyle: const TextStyle(color: Colors.black54),
-                        prefixIcon: const Icon(
+                        labelStyle: AppTypography.bodyMedium.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                        prefixIcon: Icon(
                           Icons.lock_outlined,
-                          color: Color(0xFFA6623A),
+                          color: Colors.grey[600],
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                            color: Color(0xFFA6623A),
+                            color: Colors.grey[600],
                           ),
                           onPressed: () {
                             setState(() {
@@ -233,7 +230,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter a password';
+                          return 'Please enter your password';
                         }
                         if (value.length < 6) {
                           return 'Password must be at least 6 characters';
@@ -250,15 +247,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
                         labelText: 'Confirm Password',
-                        labelStyle: const TextStyle(color: Colors.black54),
-                        prefixIcon: const Icon(
+                        labelStyle: AppTypography.bodyMedium.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                        prefixIcon: Icon(
                           Icons.lock_outlined,
-                          color: Color(0xFFA6623A),
+                          color: Colors.grey[600],
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
-                            color: Color(0xFFA6623A),
+                            color: Colors.grey[600],
                           ),
                           onPressed: () {
                             setState(() {
@@ -308,7 +307,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               _acceptTerms = value ?? false;
                             });
                           },
-                          activeColor: const Color(0xFFA6623A),
+                          activeColor: MyApp.coffeeBean,
                         ),
                         Expanded(
                           child: GestureDetector(
@@ -321,25 +320,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               padding: const EdgeInsets.only(top: 12),
                               child: RichText(
                                 text: TextSpan(
-                                  style: const TextStyle(
+                                  style: AppTypography.bodyMedium.copyWith(
                                     color: Colors.black87,
-                                    fontSize: 14,
                                   ),
-                                  children: const [
+                                  children: [
                                     TextSpan(text: 'I agree to the '),
                                     TextSpan(
                                       text: 'Terms of Service',
                                       style: TextStyle(
-                                        color: Color(0xFFA6623A),
-                                        fontWeight: FontWeight.w600,
+                                        color: MyApp.coffeeBean,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                     TextSpan(text: ' and '),
                                     TextSpan(
                                       text: 'Privacy Policy',
                                       style: TextStyle(
-                                        color: Color(0xFFA6623A),
-                                        fontWeight: FontWeight.w600,
+                                        color: MyApp.coffeeBean,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ],
@@ -360,10 +358,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _register,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFA6623A),
+                          backgroundColor: MyApp.coffeeBean,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
+                            borderRadius: BorderRadius.circular(100),
                           ),
                           elevation: 0,
                         ),
@@ -376,11 +374,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                            : const Text(
+                            : Text(
                           'Create Account',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                          style: AppTypography.bodyLarge.copyWith(
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -398,8 +395,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'Or sign up with',
-                      style: TextStyle(color: Colors.grey[600]),
+                      'Or continue with',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ),
                   Expanded(child: Divider(color: Colors.grey[400])),
@@ -416,16 +415,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   width: 20,
                   height: 20,
                 ),
-                label: const Text(
+                label: Text(
                   'Continue with Google',
-                  style: TextStyle(color: Colors.black87),
+                  style: AppTypography.bodyLarge.copyWith(
+                    color: Colors.black87,
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   backgroundColor: Colors.white,
                   side: BorderSide(color: Colors.grey[300]!),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
+                    borderRadius: BorderRadius.circular(100),
                   ),
                 ),
               ),
@@ -438,17 +439,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Text(
                     'Already have an account? ',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: Colors.grey[600],
+                    ),
                   ),
                   GestureDetector(
                     onTap: () {
                       Navigator.of(context).pop();
                     },
-                    child: const Text(
+                    child: Text(
                       'Sign in',
-                      style: TextStyle(
-                        color: Color(0xFFA6623A),
-                        fontWeight: FontWeight.w600,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: MyApp.coffeeBean,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
