@@ -12,6 +12,8 @@ import 'package:mocha_point/utils/location_utils.dart';
 import 'package:mocha_point/widgets/profile_avatar.dart';
 import 'package:mocha_point/widgets/redemption_selection_modal.dart';
 
+import '../config/app_typography.dart';
+
 class MapScreen extends StatefulWidget {
   const MapScreen({Key? key}) : super(key: key);
 
@@ -308,17 +310,10 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Image.asset(
-              'assets/icons/mocha_icon_black.png',
-              height: 32,
-              width: 32,
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'Coffee Shops Near You',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            Text(
+              'Coffeeshops Near You',
+              style: AppTypography.titleMedium.copyWith(
+                fontWeight: FontWeight.w700,
               ),
             ),
           ],
@@ -371,26 +366,23 @@ class _MapScreenState extends State<MapScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
-            color: coffeeBean.withOpacity(0.1),
+            color: Colors.black12,
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: coffeeBean, size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Found ${_coffeeShops.length} coffee shops nearby',
-                    style: TextStyle(
-                      color: coffeeBean,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: Colors.white
                     ),
                   ),
                 ),
-                if (_userLocation != null)
+                if (_userLocation == null)
                   Text(
-                    'Location: ON',
+                    'Location: OFF',
                     style: TextStyle(
-                      color: coffeeGreen,
+                      color: AppConfig.errorColor,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
