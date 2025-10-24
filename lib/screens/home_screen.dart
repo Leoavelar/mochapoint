@@ -280,14 +280,17 @@ class _CustomerHomeTabState extends State<_CustomerHomeTab> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const AppHeader(
-              backgroundImage: 'assets/images/header_2.png',
-              height: 200.0,
-            ),
+            // const AppHeader(
+            //   backgroundImage: 'assets/images/header_2.png',
+            // ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               child: Column(
                 children: [
+                  const AppHeader(
+                    backgroundImage: 'assets/images/header_2.png',
+                  ),
+                  const SizedBox(height: 20.0),
                   SizedBox(
                     width: double.infinity,
                     child: DailyCoffeeCard(

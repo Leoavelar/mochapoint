@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mocha_point/main.dart';
 import '../services/auth_service.dart';
 import 'profile_avatar.dart';
 import '../screens/home_screen.dart';
@@ -10,11 +11,11 @@ class AppHeader extends StatefulWidget {
   final double borderRadius;
 
   const AppHeader({
-    Key? key,
+    super.key,
     required this.backgroundImage,
-    this.height = 200.0,
-    this.borderRadius = 40.0, // Increased from 20.0
-  }) : super(key: key);
+    this.height = 175.0,
+    this.borderRadius = 100.0, // Increased from 20.0
+  });
 
   @override
   State<AppHeader> createState() => _AppHeaderState();
@@ -79,15 +80,14 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
         bottomLeft: Radius.circular(widget.borderRadius),
         bottomRight: Radius.circular(widget.borderRadius),
       ),
-      child: Container(
+      child: SizedBox(
         height: widget.height,
         child: Stack(
           children: [
-            // Base layer - Image background
+            // Background
             Positioned.fill(
-              child: Image.asset(
-                'assets/images/header_2.png',
-                fit: BoxFit.cover,
+              child: Container(
+                color: Colors.white,
               ),
             ),
 
@@ -140,7 +140,7 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
                       child: Padding(
                         padding: const EdgeInsets.all(0),
                         child: Image.asset(
-                          'assets/icons/mocha_icon_white.png',
+                          'assets/icons/mocha_icon_black.png',
                           fit: BoxFit.fitHeight,
                         ),
                       ),
@@ -161,6 +161,7 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
       ),
     );
   }
+
 }
 
 // Header coffee liquid painter - single coffee wave over image background
@@ -181,13 +182,13 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
     // Only paint ONE layer: Light brown coffee wave
     // The image is now the static background
 
-    final espressoLevel = size.height * 0.75; // Starts at 75% from top (lowered, closer to bottom)
+    final espressoLevel = size.height * 0.6; // Starts at 75% from top (lowered, closer to bottom)
     final espressoPath = Path();
     espressoPath.moveTo(0, size.height);
 
     for (double x = 0; x <= size.width; x += 3) {
       final distanceFromCenter = (x - size.width / 2).abs() / (size.width / 2);
-      final amplitude = 8 * (1 - distanceFromCenter * 0.3);
+      final amplitude = 8 * (1 - distanceFromCenter * 0.1);
 
       // Wave pattern
       final wave1 = math.sin((x / size.width) * 3 * math.pi + wavePhase) * amplitude;
@@ -206,6 +207,8 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
         end: Alignment.bottomCenter,
         colors: [
           coffeeColor,
+          MyApp.coffeeBean,
+          MyApp.coffeeBean,
           Colors.black,// Light brown at top
           Colors.black,   // Black at bottom
         ],
