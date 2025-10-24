@@ -9,6 +9,7 @@ import '../services/subscription_service.dart';
 import '../services/redemption_service.dart';
 import '../widgets/nearest_shops_widget.dart';
 import '../config/app_config.dart';
+import '../config/app_typography.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'dart:async';
@@ -580,9 +581,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                 Expanded(
                   child: Text(
                     _selectedShop?.name ?? 'Your Coffee Shop',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
+                    style: AppTypography.titleMedium.copyWith(
                       color: Colors.white,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -631,26 +630,21 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                         const SizedBox(height: 4),
                         Text(
                           'Redeem your free coffee now',
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: AppTypography.bodyMedium.copyWith(
                             color: Colors.grey.shade600,
                           ),
                         ),
                       ] else ...[
                         Text(
                           _getTimeUntilMidnight(),
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black,
+                          style: AppTypography.statsNumber.copyWith(
                             fontFamily: "Poppins",
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Until next free coffee',
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: AppTypography.bodyMedium.copyWith(
                             color: Colors.grey.shade600,
                           ),
                         ),
@@ -787,7 +781,7 @@ class CircularProgressPainter extends CustomPainter {
 
     final Color arcColor = progressColor == const Color(0xFF4CAF50)
         ? const Color(0xFF4CAF50)
-        : const Color(0xFF8B4513);
+        : MyApp.coffeeBean;
 
     final progressPaint = Paint()
       ..color = arcColor
