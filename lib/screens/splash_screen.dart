@@ -1,6 +1,9 @@
-// lib/screens/splash_screen.dart - Clean Two-Layer Coffee Liquid with Bigger Offset
+// lib/screens/splash_screen.dart - Simplified with App Header Style Wave
 import 'package:flutter/material.dart';
+import 'package:mocha_point/main.dart';
 import 'dart:math' as math;
+
+import '../config/app_typography.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -39,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    )..repeat();
+    )..repeat(reverse: true);
 
     // Fade in animation
     _fadeAnimation = Tween<double>(
@@ -125,6 +128,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _fadeController.forward();
     await Future.delayed(const Duration(milliseconds: 200));
     _bounceController.forward();
+
   }
 
   @override
@@ -138,164 +142,161 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Cream background for upper 3/4
-          Container(
-            color: const Color(0xFFF9F5F1),
-          ),
-
-          // Coffee liquid animation at bottom 1/4
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: MediaQuery.of(context).size.height * 0.25, // Only bottom 1/4
-            child: AnimatedBuilder(
-              animation: _waveController,
-              builder: (context, child) {
-                return CustomPaint(
-                  painter: CoffeeLiquidPainter(
-                    wavePhase: _waveController.value * 2 * math.pi,
+      body: Container(
+        color: Colors.white, // Pure white background
+        child: Center(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Animated coffee bean icon - OUTSIDE header
+                AnimatedBuilder(
+                  animation: _bounceController,
+                  builder: (context, child) {
+                    return Transform.translate(
+                      offset: Offset(0, _slideAnimation.value),
+                      child: Transform.scale(
+                        scaleX: _stretchAnimation.value,
+                        scaleY: _squashAnimation.value,
+                        child: Image.asset(
+                          'assets/icons/mocha_icon_black.png',
+                          width: 120,
+                          height: 120,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                // Title - OUTSIDE header
+                Text(
+                  'Mochapoint',
+                  style: AppTypography.statsNumber.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
-                  size: Size.infinite,
-                );
-              },
-            ),
-          ),
-
-          // Content on top - fully transparent
-          Center(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Animated coffee bean icon - NO background
-                  AnimatedBuilder(
-                    animation: _bounceController,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(0, _slideAnimation.value),
-                        child: Transform.scale(
-                          scaleX: _stretchAnimation.value,
-                          scaleY: _squashAnimation.value,
-                          child: Image.asset(
-                            'assets/icons/mocha_icon_black.png',
-                            width: 120,
-                            height: 120,
+                ),
+                const SizedBox(height: 8),
+                // Subtitle - OUTSIDE header
+                Text(
+                  'Your daily dose of Happiness',
+                  style: AppTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: MyApp.coffeeBean
+                  ),
+                ),
+                const SizedBox(height: 32),
+                // Wave header - NOW TALLER with just the wave
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20.0),
+                    topRight: Radius.circular(20.0),
+                    bottomLeft: Radius.circular(100.0),
+                    bottomRight: Radius.circular(100.0),
+                  ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    height: 250, // Increased from 80 to 200
+                    child: Stack(
+                      children: [
+                        // White background
+                        Positioned.fill(
+                          child: Container(
+                            color: Colors.white,
                           ),
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  // Text without background container - transparent
-                  Column(
-                    children: [
-                      Text(
-                        'Mochapoint',
-                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                          color: Colors.black,
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 36,
+                        // Dark gradient overlay (same as app header)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  MyApp.coffeeBean.withOpacity(0.15),
+                                  MyApp.coffeeBean.withOpacity(0.15),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Your daily dose of Happiness',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: const Color(0xFFA6623A), // Coffee bean color
-                          fontSize: 16,
+                        // Wave animation filling the header
+                        Positioned.fill(
+                          child: AnimatedBuilder(
+                            animation: _waveController,
+                            builder: (context, child) {
+                              return CustomPaint(
+                                painter: SplashWavePainter(
+                                  wavePhase: _waveController.value * 2 * math.pi,
+                                ),
+                                size: Size.infinite,
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-// Clean two-layer coffee liquid painter with bigger offset and same wave pattern
-class CoffeeLiquidPainter extends CustomPainter {
+
+// Simplified wave painter - inspired by app header
+class SplashWavePainter extends CustomPainter {
   final double wavePhase;
 
-  // Your original coffee colors
-  static const Color frothColor = Color(0xFFA6623A); // Light brown froth (coffee bean)
-  static const Color darkEspresso = Color(0xFF472A19); // Dark espresso
-  static const Color creamBackground = Color(0xFFF9F5F1);
+  // Coffee colors from app header
+  static const Color coffeeColor = Color(0xFF94511A); // Medium brown
 
-  CoffeeLiquidPainter({required this.wavePhase});
+  SplashWavePainter({required this.wavePhase});
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Background - cream
-    final bgPaint = Paint()..color = creamBackground;
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
-
-    // LAYER 1: Light brown froth layer (painted first, bottom z-index)
-    // This fills more area and is visible above the espresso
-    final frothLevel = size.height * 0.15; // Starts at 15% from top (higher up)
-    final frothPath = Path();
-    frothPath.moveTo(0, size.height);
+    final waveLevel = size.height * 0.4; // Start wave at 40% for taller container
+    final wavePath = Path();
+    wavePath.moveTo(0, size.height);
 
     for (double x = 0; x <= size.width; x += 3) {
       final distanceFromCenter = (x - size.width / 2).abs() / (size.width / 2);
-      final amplitude = 12 * (1 - distanceFromCenter * 0.3);
+      final amplitude = 8 * (1 - distanceFromCenter * 0.1);
 
-      // Same "random" wave pattern
+      // Wave pattern (same as app header)
       final wave1 = math.sin((x / size.width) * 3 * math.pi + wavePhase) * amplitude;
       final wave2 = math.sin((x / size.width) * 5 * math.pi - wavePhase * 0.7) * (amplitude * 0.5);
 
-      final y = frothLevel + wave1 + wave2;
-      frothPath.lineTo(x, y.clamp(0, size.height));
+      final y = waveLevel + wave1 + wave2;
+      wavePath.lineTo(x, y.clamp(0, size.height));
     }
 
-    frothPath.lineTo(size.width, size.height);
-    frothPath.close();
+    wavePath.lineTo(size.width, size.height);
+    wavePath.close();
 
-    final frothPaint = Paint()
-      ..color = frothColor
+    final wavePaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          coffeeColor,
+          MyApp.coffeeBean,
+          MyApp.coffeeBean,
+          Colors.black,
+          Colors.black,
+        ],
+      ).createShader(Rect.fromLTWH(0, waveLevel, size.width, size.height - waveLevel))
       ..style = PaintingStyle.fill;
 
-    canvas.drawPath(frothPath, frothPaint);
-
-    // LAYER 2: Dark espresso layer (painted last, top z-index)
-    // Bigger offset - starts much lower to show more froth
-    final espressoLevel = size.height * 0.45; // Starts at 45% from top (much lower)
-    final espressoPath = Path();
-    espressoPath.moveTo(0, size.height);
-
-    for (double x = 0; x <= size.width; x += 3) {
-      final distanceFromCenter = (x - size.width / 2).abs() / (size.width / 2);
-      final amplitude = 12 * (1 - distanceFromCenter * 0.3);
-
-      // SAME "random" wave pattern as froth
-      final wave1 = math.sin((x / size.width) * 3 * math.pi + wavePhase) * amplitude;
-      final wave2 = math.sin((x / size.width) * 5 * math.pi - wavePhase * 0.7) * (amplitude * 0.5);
-
-      final y = espressoLevel + wave1 + wave2;
-      espressoPath.lineTo(x, y.clamp(0, size.height));
-    }
-
-    espressoPath.lineTo(size.width, size.height);
-    espressoPath.close();
-
-    final espressoPaint = Paint()
-      ..color = darkEspresso
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(espressoPath, espressoPaint);
+    canvas.drawPath(wavePath, wavePaint);
   }
 
   @override
-  bool shouldRepaint(CoffeeLiquidPainter oldDelegate) {
+  bool shouldRepaint(SplashWavePainter oldDelegate) {
     return oldDelegate.wavePhase != wavePhase;
   }
 }
