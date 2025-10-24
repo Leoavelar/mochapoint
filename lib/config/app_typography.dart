@@ -113,7 +113,7 @@ class AppTypography {
     fontFamily: secondaryFontFamily,
     fontSize: 16,
     fontWeight: semiBold,
-    letterSpacing: 0.15,
+    letterSpacing: 0,
     height: 1.50,
   );
 
@@ -141,7 +141,7 @@ class AppTypography {
     fontFamily: secondaryFontFamily,
     fontSize: 14,
     fontWeight: regular,
-    letterSpacing: 0.25,
+    letterSpacing: 0.0,
     height: 1.43,
   );
 

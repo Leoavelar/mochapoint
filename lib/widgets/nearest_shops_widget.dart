@@ -7,6 +7,7 @@ import 'package:mocha_point/main.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../config/app_config.dart';
+import '../config/app_typography.dart';
 import '../services/subscription_service.dart';
 
 class CoffeeShop {
@@ -586,26 +587,24 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           const SizedBox(width: 4),
           Text(
             shop.googleRating.toStringAsFixed(1),
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isSubscribed ? MyApp.coffeeBean : Colors.black54,
+            style: AppTypography.bodyMedium.copyWith(
+              color: Colors.black,
+              fontWeight: FontWeight.w600
             ),
           ),
           const SizedBox(width: 2),
           Text(
             '(${shop.googleRatingCount})',
-            style: TextStyle(
-              fontSize: 12,
-              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+            style: AppTypography.bodyMedium.copyWith(
+              color: Colors.grey.shade600,
             ),
           ),
           const SizedBox(width: 4),
-          Icon(
-            Icons.public,
-            size: 12,
-            color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
-          ),
+          // Icon(
+          //   Icons.public,
+          //   size: 12,
+          //   color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+          // ),
         ],
       );
     } else if (hasAppRating) {
@@ -698,9 +697,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             padding: const EdgeInsets.only(bottom: 4.0),
             child: Text(
               'Nearest Coffee Shops',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                fontSize: 20,
+              style: AppTypography.titleLarge.copyWith(
+                fontWeight: FontWeight.w700
               ),
             ),
           ),
@@ -792,10 +790,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                   _currentPosition != null
                       ? 'Showing nearest coffee shops (${_displayedShops.length} of ${_allShops.length})'
                       : 'Location unavailable - showing all shops',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade700,
-                    fontWeight: FontWeight.w500,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: Colors.grey.shade600,
                   ),
                 ),
               ),
@@ -826,7 +822,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-            colors: [Color(0xFF000000), Color(0xFF000000)], // coffeeBrown to chocolate
+            colors: [Color(0xFF000000), Color(0xFF000000)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           )
@@ -839,8 +835,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
+          style: AppTypography.bodyMedium.copyWith(
             color: isSelected ? Colors.white : Colors.grey.shade600,
             fontWeight: FontWeight.w500,
           ),
@@ -1005,7 +1000,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       elevation: 4,
       shadowColor: Colors.black.withOpacity(0.30),
       color: Colors.white,
-      // shadowColor: Colors.black,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -1050,22 +1044,18 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Shop name
                   Text(
                     shop.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.black,
+                    style: AppTypography.titleMedium.copyWith(
+                      fontWeight: FontWeight.w800
                     ),
                   ),
                   if (shop.brand != null) ...[
                     const SizedBox(height: 2),
                     Text(
                       shop.brand!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.grey.shade600,
                       ),
                     ),
                   ],
@@ -1091,9 +1081,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                           shop.distance! < 1
                               ? '${(shop.distance! * 1000).round()}m'
                               : '${shop.distance!.toStringAsFixed(1)}km',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: Colors.black,
                           ),
                         ),
                       ],
@@ -1127,15 +1116,14 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                             const Icon(
                               Icons.verified,
                               size: 14,
-                              color: coffeeGreen,
+                              color: AppConfig.successColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               'Subscribed',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: coffeeGreen,
-                                fontWeight: FontWeight.w600,
+                              style: AppTypography.bodyMedium.copyWith(
+                                color: AppConfig.successColor,
+                                fontWeight: FontWeight.w700
                               ),
                             ),
                           ],
@@ -1154,10 +1142,9 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                             const SizedBox(width: 4),
                             Text(
                               'Accepts Joker',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: coffeeBean,
-                                fontWeight: FontWeight.w500,
+                              style: AppTypography.bodyMedium.copyWith(
+                                  color: MyApp.coffeeBean,
+                                  fontWeight: FontWeight.w700
                               ),
                             ),
                           ],
