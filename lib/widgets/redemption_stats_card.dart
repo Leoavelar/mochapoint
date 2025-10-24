@@ -194,7 +194,10 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       children: [
         Text(
           'Your Stats',
-          style: AppTypography.titleMedium,
+          style: AppTypography.titleMedium.copyWith(
+              color: MyApp.coffeeBean
+          ),
+
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -204,7 +207,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
                 month,
                 style: AppTypography.titleLarge.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: MyApp.coffeeBean,
+                  // color: MyApp.coffeeBean,
                 ),
               ),
             ),
@@ -253,7 +256,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
 
   Widget _buildLoadingState() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildLoadingStatItem('Remaining'),
         _buildLoadingStatItem('Redeemed'),
@@ -268,7 +271,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
         Container(
           width: 70,
           height: 70,
-          padding: const EdgeInsets.all(8),
+          // padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: MyApp.coffeeBean.withOpacity(0.1),
             borderRadius: BorderRadius.circular(5),
@@ -324,7 +327,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
 
   Widget _buildStatsRow() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildStatItemWithIcon(
           context,
@@ -388,7 +391,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
     return Column(
       children: [
         Container(
-          width: 70,
+          width: 90,
           height: 70,
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -418,7 +421,9 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: AppTypography.bodyMedium,
+          style: AppTypography.bodyMedium.copyWith(
+            color: Colors.grey.shade600,
+          ),
         ),
       ],
     );
