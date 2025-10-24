@@ -636,9 +636,17 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                         ),
                       ] else ...[
                         Text(
+                          'Brewing...',
+                          style: AppTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: MyApp.coffeeBean
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
                           _getTimeUntilMidnight(),
                           style: AppTypography.statsNumber.copyWith(
-                            fontFamily: "Poppins",
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 4),
