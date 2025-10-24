@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
 import '../services/monthly_stats_service.dart';
 import '../utils/exceptions.dart';
+import '../config/app_typography.dart';
 
 class CoffeeStatsCard extends StatefulWidget {
   // Optional parameters for fallback/loading states
@@ -93,18 +94,17 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       barrierDismissible: false, // Prevent dismissing by tapping outside
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text(
+          title: Text(
             'Session Expired',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF462919), // Coffee brown color
+            style: AppTypography.headlineSmall.copyWith(
+              color: const Color(0xFF462919), // Coffee brown color
             ),
           ),
           content: Text(
             message.isNotEmpty
                 ? message
                 : 'Your session has expired. Please log in again to continue.',
-            style: const TextStyle(fontSize: 16),
+            style: AppTypography.bodyLarge,
           ),
           actions: [
             ElevatedButton(
@@ -194,10 +194,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       children: [
         Text(
           'Your Stats',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w500,
-            fontSize: 20,
-          ),
+          style: AppTypography.titleMedium,
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -205,9 +202,8 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
             Expanded(
               child: Text(
                 month,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                style: AppTypography.titleLarge.copyWith(
                   fontWeight: FontWeight.w700,
-                  fontSize: 20,
                   color: MyApp.coffeeBean,
                 ),
               ),
@@ -291,7 +287,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: AppTypography.bodyMedium,
         ),
       ],
     );
@@ -308,7 +304,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
         const SizedBox(height: 8),
         Text(
           'Failed to load stats',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          style: AppTypography.bodyMedium.copyWith(
             color: Colors.grey,
           ),
         ),
@@ -411,8 +407,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: TextStyle(
-                  fontSize: 20,
+                style: AppTypography.titleLarge.copyWith(
                   fontWeight: FontWeight.bold,
                   color: coffeeBean,
                 ),
@@ -423,7 +418,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: AppTypography.bodyMedium,
         ),
       ],
     );
