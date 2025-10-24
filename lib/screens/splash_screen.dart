@@ -173,7 +173,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                 Text(
                   'Mochapoint',
                   style: AppTypography.statsNumber.copyWith(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -259,7 +259,7 @@ class SplashWavePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final waveLevel = size.height * 0.4; // Start wave at 40% for taller container
+    final waveLevel = size.height * 0.30; // Start wave at 40% for taller container
     final wavePath = Path();
     wavePath.moveTo(0, size.height);
 
