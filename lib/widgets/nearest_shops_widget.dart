@@ -730,40 +730,36 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
   }
 
   Widget _buildLoadMoreButton() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16),
-      child: _isLoadingMore
-          ? const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: CircularProgressIndicator(),
-        ),
-      )
-          : Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF8B4513), Color(0xFFD2691E)], // coffeeBrown to chocolate
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        child: _isLoadingMore
+            ? Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(MyApp.coffeeBean),
           ),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ElevatedButton.icon(
-          onPressed: _loadMoreShops,
-          icon: const Icon(Icons.expand_more),
-          label: Text(
-            'Load More Shops (${_allShops.length - _displayedShops.length} remaining)',
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        )
+            : SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton.icon(
+            onPressed: _loadMoreShops,
+            icon: const Icon(Icons.expand_more),
+            label: Text(
+              'Load More Shops (${_allShops.length - _displayedShops.length} remaining)',
+              style: AppTypography.bodySmall.copyWith(
+                color: Colors.white,
+              ),
             ),
-            shadowColor: Colors.transparent,
-          ).copyWith(
-            elevation: MaterialStateProperty.all(0),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: MyApp.coffeeBean,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(100),
+              ),
+              elevation: 0,
+            ),
           ),
         ),
       ),
