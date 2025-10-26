@@ -785,6 +785,9 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             ),
             enabled: status['canRedeemSubscription'] ?? false,
             available: _getSubscriptionAvailable(status),
+            allowedCoffeeTypes: (status['subscriptionInfo']?['allowedCoffeeTypes'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList(),
           ),
           const SizedBox(height: 16),
           _buildRedemptionOption(
@@ -813,6 +816,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     required Gradient gradient,
     required bool enabled,
     required String available,
+    List<String>? allowedCoffeeTypes,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -929,7 +933,54 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                             ),
                           ],
                         ),
-                      ),
+                      ),if (type == 'subscription' && enabled && allowedCoffeeTypes != null && allowedCoffeeTypes.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: coffeeBrown.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: coffeeBrown.withOpacity(0.15)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.inventory_2_outlined, color: coffeeBrown, size: 14),
+                                  const SizedBox(width: 6),
+                                  Text('Included Coffee Types',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: coffeeBrown)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: allowedCoffeeTypes.map((coffeeType) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: coffeeBrown.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(color: coffeeBrown.withOpacity(0.2)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.check_circle, size: 12, color: coffeeBrown),
+                                        const SizedBox(width: 4),
+                                        Text(coffeeType,
+                                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: darkBrown)),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       if (type == 'subscription' && enabled) ...[
                         const SizedBox(height: 8),
                         Builder(
