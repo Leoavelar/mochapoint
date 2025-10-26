@@ -53,6 +53,11 @@ class AppConfig {
   static const Color errorColor = Color(0xFFB00020); // Red
   static const Color successColor = Color(0xFF4CAF50); // Green
 
+  static const Color coffeeBrown = Color(0xFF000000);
+  static const Color chocolate = Color(0xFFD2691E);
+  static const Color coffeeGreen = Color(0xFF4CAF50);
+  static const Color coffeeBean = Color(0xFF6A2801);
+
   // Additional color variants
   static const Color lightBrown = Color(0xFFD2691E);
   static const Color darkBrown = Color(0xFF654321);

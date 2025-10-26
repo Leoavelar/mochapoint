@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
 import 'dart:convert'; // ✅ Add this for JSON pretty printing
 import 'package:confetti/confetti.dart';
+import '../config/app_typography.dart';
 import '../services/redemption_service.dart';
 import '../services/monthly_stats_service.dart';
 import '../config/app_config.dart';
@@ -19,7 +20,8 @@ class RedemptionSelectionModal extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<RedemptionSelectionModal> createState() => _RedemptionSelectionModalState();
+  State<RedemptionSelectionModal> createState() =>
+      _RedemptionSelectionModalState();
 }
 
 class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
@@ -51,7 +53,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 1));
     _loadRedemptionStatus();
   }
 
@@ -83,7 +86,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           print('📦 REDEMPTION STATUS RESPONSE:');
           print('═══════════════════════════════════════');
           try {
-            final prettyJson = JsonEncoder.withIndent('  ').convert(statusResult['status']);
+            final prettyJson =
+                JsonEncoder.withIndent('  ').convert(statusResult['status']);
             print(prettyJson);
           } catch (e) {
             print('Raw status: ${statusResult['status']}');
@@ -175,7 +179,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
         });
 
         if (result['nextAvailableAt'] != null) {
-          final timeUntilNext = RedemptionService.getTimeUntilNextRedemption(result['nextAvailableAt']);
+          final timeUntilNext = RedemptionService.getTimeUntilNextRedemption(
+              result['nextAvailableAt']);
           setState(() {
             _error = '${result['error']}\n$timeUntilNext';
           });
@@ -229,7 +234,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       final monthlyStats = await MonthlyStatsService.getMonthlyStats();
 
       if (AppConfig.enableLogging) {
-        print('🔍 Poll check: ${monthlyStats.totalRedeemed} vs $_initialRedemptionCount');
+        print(
+            '🔍 Poll check: ${monthlyStats.totalRedeemed} vs $_initialRedemptionCount');
       }
 
       if (monthlyStats.totalRedeemed > _initialRedemptionCount) {
@@ -275,7 +281,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       builder: (context) => AlertDialog(
         backgroundColor: lightCream,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(10),
         ),
         title: Row(
           children: [
@@ -283,9 +289,10 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: Colors.orange.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.lock_clock, color: Colors.orange, size: 28),
+              child:
+                  const Icon(Icons.lock_clock, color: Colors.orange, size: 28),
             ),
             const SizedBox(width: 12),
             const Expanded(
@@ -316,7 +323,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 elevation: 4,
               ),
@@ -324,7 +331,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                 Navigator.of(context).pop();
                 Navigator.of(context).pushNamedAndRemoveUntil(
                   '/login',
-                      (route) => false,
+                  (route) => false,
                 );
               },
               child: const Text(
@@ -346,14 +353,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white,
-            lightCream,
-          ],
-        ),
+        color: Color(0xFFF5F5F5),
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: Column(
@@ -389,7 +389,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: lightCream,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(coffeeBrown),
@@ -609,7 +609,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(icon, color: color, size: 24),
         ),
@@ -641,7 +641,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
         _error!.contains('log in');
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -654,7 +654,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             child: Icon(
               isSessionError ? Icons.lock_clock : Icons.coffee_outlined,
               size: 80,
-              color: isSessionError ? Colors.orange : coffeeBrown.withOpacity(0.7),
+              color:
+                  isSessionError ? Colors.orange : coffeeBrown.withOpacity(0.7),
             ),
           ),
           const SizedBox(height: 24),
@@ -728,18 +729,20 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       }
       print('');
       print('🔍 Top-level flags:');
-      print('   status[\'canRedeemSubscription\']: ${status['canRedeemSubscription']}');  // ✅ THIS IS WHERE IT IS
+      print(
+          '   status[\'canRedeemSubscription\']: ${status['canRedeemSubscription']}'); // ✅ THIS IS WHERE IT IS
       print('   status[\'canRedeemJoker\']: ${status['canRedeemJoker']}');
       print('   status[\'jokerCount\']: ${status['jokerCount']}');
       print('');
       print('✅ Final enabled values:');
-      print('   Subscription enabled: ${status['canRedeemSubscription'] ?? false}');  // ✅ CORRECT ACCESS
+      print(
+          '   Subscription enabled: ${status['canRedeemSubscription'] ?? false}'); // ✅ CORRECT ACCESS
       print('   Joker enabled: ${status['canRedeemJoker'] ?? false}');
       print('═══════════════════════════════════════');
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -760,24 +763,21 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                 ),
               ),
               const SizedBox(width: 16),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Redeem Coffee',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                      style: AppTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     SizedBox(height: 4),
                     Text(
                       'Choose your redemption type',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: darkBrown,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.grey.shade600,
                       ),
                     ),
                   ],
@@ -785,14 +785,14 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           _buildRedemptionOption(
             type: 'subscription',
-            title: 'Subscription Coffee',
+            title: 'Free Coffee',
             subtitle: _getSubscriptionSubtitle(status),
             icon: Icons.local_cafe_rounded,
             gradient: const LinearGradient(
-              colors: [Color(0xFF8B4513), Color(0xFF8B4513)],
+              colors: [AppConfig.coffeeGreen, AppConfig.coffeeGreen],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -807,7 +807,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             subtitle: 'Valid at any participating shop',
             icon: Icons.stars_rounded,
             gradient: LinearGradient(
-              colors: [Color(0xFFD2691E), Color(0xFFD2691E)],
+              colors: [AppConfig.coffeeBean, AppConfig.coffeeBean],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -830,7 +830,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
@@ -841,9 +841,9 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(10),
           onTap: enabled ? () => _generateQRCode(type) : null,
           child: Container(
             decoration: BoxDecoration(
@@ -859,8 +859,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                     gradient: enabled
                         ? gradient
                         : LinearGradient(
-                      colors: [Colors.grey[300]!, Colors.grey[200]!],
-                    ),
+                            colors: [Colors.grey[300]!, Colors.grey[200]!],
+                          ),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(20),
                     ),
@@ -871,23 +871,20 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           icon,
                           color: Colors.white,
-                          size: 28,
+                          size: 20,
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Text(
                           title,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: enabled ? Colors.white : Colors.grey[600],
-                          ),
+                          style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.w700, color: Colors.white),
                         ),
                       ),
                       if (enabled)
@@ -913,14 +910,13 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                     children: [
                       Text(
                         subtitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: enabled ? coffeeBrown : Colors.grey[500],
+                        style: AppTypography.bodyMedium.copyWith(
                         ),
                       ),
                       const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           color: enabled
                               ? coffeeBrown.withOpacity(0.1)
@@ -931,7 +927,9 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              enabled ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                              enabled
+                                  ? Icons.check_circle_rounded
+                                  : Icons.cancel_rounded,
                               color: enabled ? coffeeBrown : Colors.grey[500],
                               size: 16,
                             ),
@@ -978,16 +976,15 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                       _qrToken = null;
                     });
                   },
-                  icon: const Icon(Icons.arrow_back_rounded, color: coffeeBrown),
+                  icon:
+                      const Icon(Icons.arrow_back_rounded, color: coffeeBrown),
                 ),
               ),
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Your Coffee QR',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                  style: AppTypography.titleLarge.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -1015,8 +1012,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: _selectedRedemptionType == 'subscription'
-                          ? [coffeeBrown, chocolate]
-                          : [Colors.orange[700]!, Colors.orange[400]!],
+                          ? [AppConfig.coffeeGreen, AppConfig.coffeeGreen]
+                          : [AppConfig.coffeeBean, AppConfig.coffeeBean],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -1024,37 +1021,22 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                       top: Radius.circular(24),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(width: 12),
+                        Text( // Remove Expanded wrapper
                           _selectedRedemptionType == 'subscription'
-                              ? Icons.local_cafe_rounded
-                              : Icons.stars_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          _selectedRedemptionType == 'subscription'
-                              ? 'Subscription Coffee'
-                              : 'Joker Redemption',
+                              ? 'Free Coffee'
+                              : 'Use Joker',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(20),
@@ -1064,7 +1046,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
                               color: coffeeBrown.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
@@ -1072,7 +1055,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.access_time, color: coffeeBrown, size: 14),
+                                Icon(Icons.access_time,
+                                    color: coffeeBrown, size: 14),
                                 SizedBox(width: 6),
                                 Text(
                                   'Valid until midnight',
@@ -1088,7 +1072,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                           if (_isPolling) ...[
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.green.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
@@ -1132,7 +1117,8 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                         ),
                       const SizedBox(height: 20),
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 20),
                         decoration: BoxDecoration(
                           color: Colors.green.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(30),
@@ -1182,7 +1168,9 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                 Row(
                   children: [
                     Icon(
-                      _isPolling ? Icons.qr_code_scanner : Icons.info_outline_rounded,
+                      _isPolling
+                          ? Icons.qr_code_scanner
+                          : Icons.info_outline_rounded,
                       color: coffeeBrown,
                       size: 24,
                     ),
