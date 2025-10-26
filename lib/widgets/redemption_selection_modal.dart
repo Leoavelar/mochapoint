@@ -749,19 +749,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           const SizedBox(height: 8),
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Image.asset(
-                  'assets/icons/mocha_icon_black.png',
-                  width: 32,
-                  height: 32,
-                  fit: BoxFit.contain,
-                ),
-              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -796,7 +783,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            // ✅ FIXED: Access canRedeemSubscription from top level, not nested in subscriptionInfo
             enabled: status['canRedeemSubscription'] ?? false,
             available: _getSubscriptionAvailable(status),
           ),
@@ -910,8 +896,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                     children: [
                       Text(
                         subtitle,
-                        style: AppTypography.bodyMedium.copyWith(
-                        ),
+                        style: AppTypography.titleMedium.copyWith(),
                       ),
                       const SizedBox(height: 12),
                       Container(
@@ -945,6 +930,44 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                           ],
                         ),
                       ),
+                      if (type == 'subscription' && enabled) ...[
+                        const SizedBox(height: 8),
+                        Builder(
+                          builder: (context) {
+                            final expirationInfo = _getSubscriptionExpirationInfo();
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: expirationInfo['backgroundColor'] as Color,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: (expirationInfo['color'] as Color).withOpacity(0.3),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    expirationInfo['icon'] as IconData,
+                                    color: expirationInfo['color'] as Color,
+                                    size: 14,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    expirationInfo['text'] as String,
+                                    style: TextStyle(
+                                      color: expirationInfo['color'] as Color,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -1278,6 +1301,107 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       return 'Monthly limit reached';
     }
 
-    return '$remainingMonthly remaining this month';
+    return '$remainingMonthly remaining';
+  }
+
+  Map<String, dynamic> _getSubscriptionExpirationInfo() {
+    // Try to get expiration from redemption status
+    final subscriptionInfo = _redemptionStatus?['subscriptionInfo'];
+    if (subscriptionInfo != null && subscriptionInfo['endDate'] != null) {
+      try {
+        final endDate = DateTime.parse(subscriptionInfo['endDate']);
+        final now = DateTime.now();
+        final daysRemaining = endDate.difference(now).inDays;
+
+        // Determine color based on days remaining
+        Color color;
+        Color backgroundColor;
+        IconData icon;
+
+        if (daysRemaining < 0) {
+          // Expired
+          color = Colors.red[700]!;
+          backgroundColor = Colors.red.withOpacity(0.1);
+          icon = Icons.error_outline;
+          return {
+            'text': 'Expired',
+            'color': color,
+            'backgroundColor': backgroundColor,
+            'icon': icon,
+          };
+        } else if (daysRemaining == 0) {
+          // Expires today
+          color = Colors.red[700]!;
+          backgroundColor = Colors.red.withOpacity(0.1);
+          icon = Icons.warning_amber_rounded;
+          return {
+            'text': 'Expires today',
+            'color': color,
+            'backgroundColor': backgroundColor,
+            'icon': icon,
+          };
+        } else if (daysRemaining == 1) {
+          // Expires tomorrow
+          color = Colors.orange[700]!;
+          backgroundColor = Colors.orange.withOpacity(0.1);
+          icon = Icons.warning_amber_rounded;
+          return {
+            'text': 'Expires tomorrow',
+            'color': color,
+            'backgroundColor': backgroundColor,
+            'icon': icon,
+          };
+        } else if (daysRemaining <= 3) {
+          // Expires within 3 days - urgent
+          color = Colors.orange[700]!;
+          backgroundColor = Colors.orange.withOpacity(0.1);
+          icon = Icons.schedule;
+          return {
+            'text': 'Expires in $daysRemaining days',
+            'color': color,
+            'backgroundColor': backgroundColor,
+            'icon': icon,
+          };
+        } else if (daysRemaining <= 7) {
+          // Expires within a week - warning
+          color = Colors.amber[700]!;
+          backgroundColor = Colors.amber.withOpacity(0.1);
+          icon = Icons.schedule;
+          return {
+            'text': 'Expires in $daysRemaining days',
+            'color': color,
+            'backgroundColor': backgroundColor,
+            'icon': icon,
+          };
+        } else {
+          // More than a week - all good
+          color = Colors.green[700]!;
+          backgroundColor = Colors.green.withOpacity(0.1);
+          icon = Icons.check_circle_outline;
+
+          // Format as "Expires Dec 31, 2025"
+          final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return {
+            'text': 'Expires ${months[endDate.month - 1]} ${endDate.day}, ${endDate.year}',
+            'color': color,
+            'backgroundColor': backgroundColor,
+            'icon': icon,
+          };
+        }
+      } catch (e) {
+        if (AppConfig.enableLogging) {
+          print('⚠️ Error parsing expiration date: $e');
+        }
+      }
+    }
+
+    // Fallback
+    return {
+      'text': 'Active subscription',
+      'color': darkBrown.withOpacity(0.7),
+      'backgroundColor': darkBrown.withOpacity(0.05),
+      'icon': Icons.calendar_today,
+    };
   }
 }
