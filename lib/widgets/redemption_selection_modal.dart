@@ -786,7 +786,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             enabled: status['canRedeemSubscription'] ?? false,
             available: _getSubscriptionAvailable(status),
             allowedCoffeeTypes: (status['subscriptionInfo']?['allowedCoffeeTypes'] as List<dynamic>?)
-                ?.map((e) => e.toString())
+                ?.map((e) => (e as Map<String, dynamic>)['name'] as String)
                 .toList(),
           ),
           const SizedBox(height: 16),
@@ -858,15 +858,11 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        padding: const EdgeInsets.all(0),
                         child: Icon(
                           icon,
                           color: Colors.white,
-                          size: 20,
+                          size: 24,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -902,38 +898,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                         subtitle,
                         style: AppTypography.titleMedium.copyWith(),
                       ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: enabled
-                              ? coffeeBrown.withOpacity(0.1)
-                              : Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              enabled
-                                  ? Icons.check_circle_rounded
-                                  : Icons.cancel_rounded,
-                              color: enabled ? coffeeBrown : Colors.grey[500],
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              available,
-                              style: TextStyle(
-                                color: enabled ? coffeeBrown : Colors.grey[600],
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),if (type == 'subscription' && enabled && allowedCoffeeTypes != null && allowedCoffeeTypes.isNotEmpty) ...[
+                      if (type == 'subscription' && enabled && allowedCoffeeTypes != null && allowedCoffeeTypes.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1327,6 +1292,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
   }
 
   String _getSubscriptionAvailable(Map<String, dynamic> status) {
+    // This method is no longer used for display - info is now in expiration text
     if (_monthlyStats == null) {
       if (AppConfig.enableLogging) {
         print('⚠️ Monthly stats not loaded yet');
@@ -1352,10 +1318,14 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
       return 'Monthly limit reached';
     }
 
-    return '$remainingMonthly remaining';
+    // Return empty string since we're showing this info in expiration text now
+    return '';
   }
 
   Map<String, dynamic> _getSubscriptionExpirationInfo() {
+    // Get remaining monthly count for combined display
+    final remainingMonthly = _monthlyStats?.remainingMonthly ?? 0;
+
     // Try to get expiration from redemption status
     final subscriptionInfo = _redemptionStatus?['subscriptionInfo'];
     if (subscriptionInfo != null && subscriptionInfo['endDate'] != null) {
@@ -1386,7 +1356,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           backgroundColor = Colors.red.withOpacity(0.1);
           icon = Icons.warning_amber_rounded;
           return {
-            'text': 'Expires today',
+            'text': '$remainingMonthly expiring today',
             'color': color,
             'backgroundColor': backgroundColor,
             'icon': icon,
@@ -1397,7 +1367,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           backgroundColor = Colors.orange.withOpacity(0.1);
           icon = Icons.warning_amber_rounded;
           return {
-            'text': 'Expires tomorrow',
+            'text': '$remainingMonthly expiring tomorrow',
             'color': color,
             'backgroundColor': backgroundColor,
             'icon': icon,
@@ -1408,7 +1378,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           backgroundColor = Colors.orange.withOpacity(0.1);
           icon = Icons.schedule;
           return {
-            'text': 'Expires in $daysRemaining days',
+            'text': '$remainingMonthly expiring in $daysRemaining days',
             'color': color,
             'backgroundColor': backgroundColor,
             'icon': icon,
@@ -1419,7 +1389,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           backgroundColor = Colors.amber.withOpacity(0.1);
           icon = Icons.schedule;
           return {
-            'text': 'Expires in $daysRemaining days',
+            'text': '$remainingMonthly expiring in $daysRemaining days',
             'color': color,
             'backgroundColor': backgroundColor,
             'icon': icon,
@@ -1430,11 +1400,11 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
           backgroundColor = Colors.green.withOpacity(0.1);
           icon = Icons.check_circle_outline;
 
-          // Format as "Expires Dec 31, 2025"
+          // Format as "18 expiring Dec 31, 2025"
           final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
             'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
           return {
-            'text': 'Expires ${months[endDate.month - 1]} ${endDate.day}, ${endDate.year}',
+            'text': '$remainingMonthly expiring ${months[endDate.month - 1]} ${endDate.day}, ${endDate.year}',
             'color': color,
             'backgroundColor': backgroundColor,
             'icon': icon,
@@ -1449,7 +1419,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
 
     // Fallback
     return {
-      'text': 'Active subscription',
+      'text': remainingMonthly > 0 ? '$remainingMonthly remaining' : 'Active subscription',
       'color': darkBrown.withOpacity(0.7),
       'backgroundColor': darkBrown.withOpacity(0.05),
       'icon': Icons.calendar_today,
