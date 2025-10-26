@@ -1,8 +1,4 @@
 // lib/widgets/daily_coffee_card.dart
-// ✅ SYNCED with actual redemption status from backend
-// ✅ Updates automatically after redemptions
-// ✅ FIXED: Consistent width with other cards
-
 import 'package:flutter/material.dart';
 import 'package:mocha_point/main.dart';
 import '../services/subscription_service.dart';
