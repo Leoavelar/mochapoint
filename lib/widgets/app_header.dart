@@ -87,7 +87,7 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
             // Background
             Positioned.fill(
               child: Container(
-                color: Colors.white,
+                color: MyApp.coffeeBean.withOpacity(0.1),
               ),
             ),
 
@@ -108,18 +108,18 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
             ),
 
             // Dark gradient overlay for better text/icon visibility
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.15),
-                    Colors.black.withOpacity(0.05),
-                  ],
-                ),
-              ),
-            ),
+            // Container(
+            //   decoration: BoxDecoration(
+            //     gradient: LinearGradient(
+            //       begin: Alignment.topCenter,
+            //       end: Alignment.bottomCenter,
+            //       colors: [
+            //         Colors.black.withOpacity(0.15),
+            //         Colors.black.withOpacity(0.05),
+            //       ],
+            //     ),
+            //   ),
+            // ),
 
             // Content layer
             SafeArea(
