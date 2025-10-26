@@ -566,13 +566,11 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF000000), Color(0xFF000000)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.vertical(
+            decoration: BoxDecoration(
+              color: coffeeReady
+                  ? coffeeGreen
+                  : const Color(0xFF000000),
+              borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(10),
               ),
             ),
@@ -582,7 +580,10 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                   child: Text(
                     _selectedShop?.name ?? 'Your Coffee Shop',
                     style: AppTypography.titleMedium.copyWith(
-                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      color: coffeeReady
+                          ? Colors.white
+                          : Colors.white
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -601,30 +602,17 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (coffeeReady) ...[
-                        RichText(
-                          text: const TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Your Coffee is\n',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black,
-                                  height: 1.2,
-                                  fontFamily: "Poppins",
-                                ),
-                              ),
-                              TextSpan(
-                                text: 'Ready!',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: MyApp.coffeeBean,
-                                  height: 1.2,
-                                  fontFamily: "Poppins",
-                                ),
-                              ),
-                            ],
+                        Text(
+                          'Your Coffee is',
+                          style: AppTypography.titleMedium.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: MyApp.coffeeBean
+                          ),
+                        ),
+                        Text(
+                          'Ready!',
+                          style: AppTypography.titleLarge.copyWith(
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 4),
