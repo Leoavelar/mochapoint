@@ -107,20 +107,6 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
               ),
             ),
 
-            // Dark gradient overlay for better text/icon visibility
-            // Container(
-            //   decoration: BoxDecoration(
-            //     gradient: LinearGradient(
-            //       begin: Alignment.topCenter,
-            //       end: Alignment.bottomCenter,
-            //       colors: [
-            //         Colors.black.withOpacity(0.15),
-            //         Colors.black.withOpacity(0.05),
-            //       ],
-            //     ),
-            //   ),
-            // ),
-
             // Content layer
             SafeArea(
               child: Padding(

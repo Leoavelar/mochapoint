@@ -456,34 +456,51 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
+                  Container(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _launchSubscriptionWebsite,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: coffeeBrown,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                        ),
-                        elevation: 2,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.coffee, size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'Explore Subscriptions',
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(Icons.arrow_forward_ios, size: 14),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomRight,
+                        end: Alignment.topLeft,
+                        colors: [
+                          MyApp.coffeeFroth,
+                          MyApp.coffeeBean,
+                          Colors.black,
                         ],
+                      ),
+                      borderRadius: BorderRadius.circular(50),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _launchSubscriptionWebsite,
+                        borderRadius: BorderRadius.circular(50),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.coffee, size: 20, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text(
+                                'Explore Subscriptions',
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),

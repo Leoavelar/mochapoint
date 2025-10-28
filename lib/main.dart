@@ -26,6 +26,7 @@ class MyApp extends StatelessWidget {
   // Colors based on the updated design
   static const Color coffeeBean = Color(0xFF6A2801); // Brown for coffee bean
   static const Color lightCream = Color(0xFFF5E6D3); // Light cream (matches modal)
+  static const Color coffeeFroth = Color(0xFF94511A);
 
   @override
   Widget build(BuildContext context) {
