@@ -744,30 +744,23 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(height: 8),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Redeem Coffee',
-                      style: AppTypography.titleLarge.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Choose your redemption type',
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
+              Text(
+                'Redeem Coffee',
+                style: AppTypography.titleLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Choose your redemption type',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Colors.grey.shade600,
                 ),
               ),
             ],
@@ -794,7 +787,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
             type: 'joker',
             title: 'Use Joker',
             subtitle: 'Valid at any participating shop',
-            icon: Icons.stars_rounded,
+            icon: Icons.card_giftcard,
             gradient: LinearGradient(
               colors: [AppConfig.coffeeBean, AppConfig.coffeeBean],
               begin: Alignment.topLeft,
@@ -1002,6 +995,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
         children: [
           Row(
             children: [
+              // Back button on the left
               Container(
                 decoration: BoxDecoration(
                   color: lightCream,
@@ -1015,19 +1009,32 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                       _qrToken = null;
                     });
                   },
-                  icon:
-                      const Icon(Icons.arrow_back_rounded, color: coffeeBrown),
+                  icon: const Icon(Icons.arrow_back_rounded, color: coffeeBrown),
                 ),
               ),
+              // Centered text
               Expanded(
-                child: Text(
-                  'Your Coffee QR',
-                  style: AppTypography.titleLarge.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Your Coffee QR',
+                      style: AppTypography.titleLarge.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Show to barista',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              // Empty space on the right to balance (same width as back button)
               const SizedBox(width: 48),
             ],
           ),
@@ -1063,7 +1070,6 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(width: 12),
                         Text( // Remove Expanded wrapper
                           _selectedRedemptionType == 'subscription'
                               ? 'Free Coffee'
