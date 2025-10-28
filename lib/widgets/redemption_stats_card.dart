@@ -134,12 +134,6 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       '/login', // Update with your login route name
           (route) => false, // Remove all previous routes
     );
-
-    // Alternative if you're not using named routes:
-    // Navigator.of(context).pushAndRemoveUntil(
-    //   MaterialPageRoute(builder: (context) => const LoginScreen()),
-    //   (route) => false,
-    // );
   }
 
   Future<void> _refresh() async {

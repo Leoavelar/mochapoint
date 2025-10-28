@@ -749,12 +749,12 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             label: Text(
               'Load More Shops (${_allShops.length - _displayedShops.length} remaining)',
               style: AppTypography.bodySmall.copyWith(
-                color: Colors.white,
+                color: MyApp.coffeeBean,
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: MyApp.coffeeBean,
-              foregroundColor: Colors.white,
+              backgroundColor: MyApp.coffeeBean.withOpacity(0.1),
+              foregroundColor: MyApp.coffeeBean,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(100),
               ),

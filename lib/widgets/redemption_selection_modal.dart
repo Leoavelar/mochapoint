@@ -842,7 +842,7 @@ class _RedemptionSelectionModalState extends State<RedemptionSelectionModal> {
                     gradient: enabled
                         ? gradient
                         : LinearGradient(
-                            colors: [Colors.grey[300]!, Colors.grey[200]!],
+                            colors: [Colors.grey[400]!, Colors.grey[400]!],
                           ),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(20),

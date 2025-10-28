@@ -465,7 +465,6 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                         colors: [
                           MyApp.coffeeFroth,
                           MyApp.coffeeBean,
-                          Colors.black,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(50),
