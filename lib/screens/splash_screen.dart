@@ -213,8 +213,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
-                                  MyApp.coffeeBean.withOpacity(0.15),
-                                  MyApp.coffeeBean.withOpacity(0.15),
+                                  MyApp.coffeeBean.withOpacity(0.1),
+                                  MyApp.coffeeBean.withOpacity(0.1),
                                 ],
                               ),
                             ),

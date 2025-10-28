@@ -194,11 +194,8 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       children: [
         Text(
           'Your Stats',
-          style: AppTypography.titleMedium.copyWith(
-              color: MyApp.coffeeBean
+          style: AppTypography.titleMedium.copyWith(color: MyApp.coffeeBean, fontWeight: FontWeight.w700,),
           ),
-
-        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

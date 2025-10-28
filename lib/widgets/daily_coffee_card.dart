@@ -22,11 +22,7 @@ class DailyCoffeeCard extends StatefulWidget {
   State<DailyCoffeeCard> createState() => DailyCoffeeCardState();
 }
 
-enum SubscriptionState {
-  loading,
-  active,
-  inactive
-}
+enum SubscriptionState { loading, active, inactive }
 
 class DailyCoffeeCardState extends State<DailyCoffeeCard>
     with TickerProviderStateMixin {
@@ -145,9 +141,12 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
         final hasRedeemedToday = !canRedeemSubscription;
 
         if (AppConfig.enableLogging) {
-          print('📊 DailyCoffeeCard: canRedeemSubscription = $canRedeemSubscription');
-          print('📊 DailyCoffeeCard: Total today redemptions = ${status['todayRedemptions']}');
-          print('☕ DailyCoffeeCard: Subscription coffee ${hasRedeemedToday ? "NOT" : "IS"} available');
+          print(
+              '📊 DailyCoffeeCard: canRedeemSubscription = $canRedeemSubscription');
+          print(
+              '📊 DailyCoffeeCard: Total today redemptions = ${status['todayRedemptions']}');
+          print(
+              '☕ DailyCoffeeCard: Subscription coffee ${hasRedeemedToday ? "NOT" : "IS"} available');
         }
 
         if (mounted) {
@@ -205,7 +204,8 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
           try {
             final shopData = await ApiService.getCoffeeShops();
             final shops = shopData['shops'] as List<CoffeeShop>;
-            final fullShopData = shops.where((shop) => shop.id == firstShop.id).firstOrNull;
+            final fullShopData =
+                shops.where((shop) => shop.id == firstShop.id).firstOrNull;
 
             if (mounted) {
               setState(() {
@@ -261,7 +261,8 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
 
   void _startFlipTimer() {
     _flipTimer?.cancel();
-    _flipTimer = Timer.periodic(const Duration(seconds: flipIntervalSeconds), (timer) {
+    _flipTimer =
+        Timer.periodic(const Duration(seconds: flipIntervalSeconds), (timer) {
       if (mounted) {
         _flipController.forward(from: 0.0);
       }
@@ -326,7 +327,8 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Please visit mochapoint.coffee in your browser'),
+            content:
+                const Text('Please visit mochapoint.coffee in your browser'),
             backgroundColor: Colors.orange.shade700,
           ),
         );
@@ -336,13 +338,16 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
 
   @override
   Widget build(BuildContext context) {
+    // Determine if subscription is active
+    final bool isActive = _subscriptionState == SubscriptionState.active; // Adjust based on your actual state property
+
     return Container(
-      width: double.infinity, // ✅ FIXED: Ensure full width
+      width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: (isActive ? Colors.black.withOpacity(0.08) : MyApp.coffeeBean.withOpacity(0.5)),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -388,142 +393,114 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [coffeeBrown, chocolate],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Start your',
+              style:
+                  AppTypography.titleMedium.copyWith(color: MyApp.coffeeBean, fontWeight: FontWeight.w700,),
+            ),
+            Text(
+              'Coffee Journey!',
+              style: AppTypography.titleLarge.copyWith(
+                fontWeight: FontWeight.w700,
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(10),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.all(0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Subscribe to enjoy daily free coffee',
+                     style: AppTypography.bodyMedium.copyWith(
+                      color: Colors.grey,)
                   ),
-                  child: const Icon(
-                    Icons.local_cafe_rounded,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                const Expanded(
-                  child: Text(
-                    'Start Your Coffee Journey!',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: MyApp.coffeeBean.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Subscribe to enjoy daily free coffee',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: coffeeBrown.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '☕ What you\'ll get:',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: coffeeBrown,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildBenefitRow('🎯', 'Daily free coffee at your favorite shops'),
-                      _buildBenefitRow('⚡', 'Skip the line with QR redemption'),
-                      _buildBenefitRow('🌟', 'Access to premium coffee selections'),
-                      _buildBenefitRow('📍', 'Multiple locations across your city'),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _launchSubscriptionWebsite,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: coffeeBrown,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.coffee, size: 20),
-                        SizedBox(width: 8),
                         Text(
-                          'Explore Subscriptions',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                          'What you\'ll get:',
+                          style: AppTypography.titleMedium.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: MyApp.coffeeBean
                           ),
                         ),
-                        SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_ios, size: 14),
+                        const SizedBox(height: 8),
+                        _buildBenefitRow(
+                            '', 'Daily free coffee at your favorite shops'),
+                        const SizedBox(height: 4),
+                        _buildBenefitRow(
+                            '', 'Collect beans and get free coffees in participating shops'),
+                        const SizedBox(height: 4),
+                        _buildBenefitRow(
+                            '', 'Fast coffee redemption with QR Code'),
+                        const SizedBox(height: 4),
+                        _buildBenefitRow(
+                            '', 'Access to premium coffee selections'),
+                        const SizedBox(height: 4),
+                        _buildBenefitRow(
+                            '', 'Multiple locations across your city'),
                       ],
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 12),
-
-                Center(
-                  child: Text(
-                    'Choose from our partner coffee shops in your city',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _launchSubscriptionWebsite,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: coffeeBrown,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.coffee, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Explore Subscriptions',
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.arrow_forward_ios, size: 14),
+                        ],
+                      ),
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Text(
+                      'Choose from our partner coffee shops in your city',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: Colors.grey),
+                        textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -532,15 +509,16 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start, 
         children: [
+          Icon(Icons.check, size: 16, color: MyApp.coffeeBean.withOpacity(1)),
           Text(emoji, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.black87,
+              style: AppTypography.bodyMedium.copyWith(
+                // color: Colors.grey.shade600,
               ),
             ),
           ),
@@ -563,9 +541,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
             decoration: BoxDecoration(
-              color: coffeeReady
-                  ? coffeeGreen
-                  : const Color(0xFF000000),
+              color: coffeeReady ? coffeeGreen : const Color(0xFF000000),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(10),
               ),
@@ -576,18 +552,14 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                   child: Text(
                     _selectedShop?.name ?? 'Your Coffee Shop',
                     style: AppTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: coffeeReady
-                          ? Colors.white
-                          : Colors.white
-                    ),
+                        fontWeight: FontWeight.w700,
+                        color: coffeeReady ? Colors.white : Colors.white),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -601,9 +573,8 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                         Text(
                           'Your Coffee is',
                           style: AppTypography.titleMedium.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: MyApp.coffeeBean
-                          ),
+                              fontWeight: FontWeight.w700,
+                              color: MyApp.coffeeBean),
                         ),
                         Text(
                           'Ready!',
@@ -622,9 +593,8 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                         Text(
                           'Brewing...',
                           style: AppTypography.titleMedium.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: MyApp.coffeeBean
-                          ),
+                              fontWeight: FontWeight.w700,
+                              color: MyApp.coffeeBean),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -644,9 +614,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                     ],
                   ),
                 ),
-
                 const SizedBox(width: 20),
-
                 SizedBox(
                   width: 80,
                   height: 80,
@@ -660,28 +628,33 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                           color: Colors.grey.shade100,
                         ),
                       ),
-
                       AnimatedBuilder(
                         animation: _progressAnimation,
                         builder: (context, child) {
                           return CustomPaint(
                             size: const Size(80, 80),
                             painter: CircularProgressPainter(
-                              progress: coffeeReady ? 1.0 : _getProgressToMidnight(),
+                              progress:
+                                  coffeeReady ? 1.0 : _getProgressToMidnight(),
                               backgroundColor: Colors.grey.shade200,
-                              progressColor: coffeeReady ? coffeeGreen : coffeeBrown,
+                              progressColor:
+                                  coffeeReady ? coffeeGreen : coffeeBrown,
                               strokeWidth: 6,
                             ),
                           );
                         },
                       ),
-
                       Center(
                         child: AnimatedBuilder(
                           animation: _flipAnimation,
                           builder: (context, child) {
-                            final angle = _flipAnimation.value * numberOfFlips * 2 * math.pi;
-                            final scale = 1.0 - (math.sin(_flipAnimation.value * math.pi) * 0.15);
+                            final angle = _flipAnimation.value *
+                                numberOfFlips *
+                                2 *
+                                math.pi;
+                            final scale = 1.0 -
+                                (math.sin(_flipAnimation.value * math.pi) *
+                                    0.15);
 
                             return Transform(
                               alignment: Alignment.center,
@@ -694,7 +667,9 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                                 height: 60,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: coffeeReady ? coffeeGreen : Colors.grey.shade300,
+                                  color: coffeeReady
+                                      ? coffeeGreen
+                                      : Colors.grey.shade300,
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.1),
@@ -706,24 +681,29 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                                 child: ClipOval(
                                   child: _selectedShop?.logoUrl != null
                                       ? Padding(
-                                    padding: const EdgeInsets.all(0),
-                                    child: Image.asset(
-                                      'assets/images/shops/${_selectedShop!.logoUrl}',
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Icon(
-                                          coffeeReady ? Icons.local_cafe : Icons.access_time,
+                                          padding: const EdgeInsets.all(0),
+                                          child: Image.asset(
+                                            'assets/images/shops/${_selectedShop!.logoUrl}',
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return Icon(
+                                                coffeeReady
+                                                    ? Icons.local_cafe
+                                                    : Icons.access_time,
+                                                color: Colors.white,
+                                                size: 24,
+                                              );
+                                            },
+                                          ),
+                                        )
+                                      : Icon(
+                                          coffeeReady
+                                              ? Icons.local_cafe
+                                              : Icons.access_time,
                                           color: Colors.white,
                                           size: 24,
-                                        );
-                                      },
-                                    ),
-                                  )
-                                      : Icon(
-                                    coffeeReady ? Icons.local_cafe : Icons.access_time,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
+                                        ),
                                 ),
                               ),
                             );
