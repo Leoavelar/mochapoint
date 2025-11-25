@@ -1,14 +1,12 @@
-// lib/widgets/redemption_stats_card.dart - Updated with session handling
-// ✅ FIXED: Consistent width with other cards
-
+// lib/widgets/redemption_stats_card.dart
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:mocha_point/main.dart';
 import '../services/monthly_stats_service.dart';
 import '../utils/exceptions.dart';
 import '../config/app_typography.dart';
 
 class CoffeeStatsCard extends StatefulWidget {
-  // Optional parameters for fallback/loading states
   final String? fallbackMonth;
   final String? fallbackRedeemedCount;
   final String? fallbackRemainingCount;
@@ -45,7 +43,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
 
   Future<void> _loadMonthlyStats() async {
     try {
-      if (!mounted) return; // Check if widget is still mounted
+      if (!mounted) return;
 
       setState(() {
         _isLoading = true;
@@ -54,21 +52,20 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
 
       final stats = await MonthlyStatsService.getMonthlyStats();
 
-      if (!mounted) return; // Check again after async operation
+      if (!mounted) return;
 
       setState(() {
         _monthlyStats = stats;
         _isLoading = false;
       });
     } on SessionExpiredException catch (e) {
-      if (!mounted) return; // Check if widget is still mounted
+      if (!mounted) return;
 
-      // Handle session expiry - show dialog and redirect to login
       if (mounted) {
         _handleSessionExpired(e.message);
       }
     } catch (e) {
-      if (!mounted) return; // Check if widget is still mounted
+      if (!mounted) return;
 
       setState(() {
         _errorMessage = e.toString();
@@ -78,26 +75,23 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
     }
   }
 
-  // New method to handle session expiry
   void _handleSessionExpired(String message) {
     if (!mounted) return;
 
-    // Clear any loading states
     setState(() {
       _isLoading = false;
-      _errorMessage = null; // Don't show generic error for session expiry
+      _errorMessage = null;
     });
 
-    // Show session expired dialog
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(
             'Session Expired',
             style: AppTypography.headlineSmall.copyWith(
-              color: const Color(0xFF462919), // Coffee brown color
+              color: const Color(0xFF462919),
             ),
           ),
           content: Text(
@@ -109,11 +103,11 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
           actions: [
             ElevatedButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
+                Navigator.of(context).pop();
                 _redirectToLogin();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF462919), // Coffee brown
+                backgroundColor: const Color(0xFF462919),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
@@ -125,14 +119,12 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
     );
   }
 
-  // Method to redirect to login screen
   void _redirectToLogin() {
     if (!mounted) return;
 
-    // Navigate to login screen and clear navigation stack
     Navigator.of(context).pushNamedAndRemoveUntil(
-      '/login', // Update with your login route name
-          (route) => false, // Remove all previous routes
+      '/login',
+          (route) => false,
     );
   }
 
@@ -144,87 +136,7 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: Card(
-        margin: EdgeInsets.zero,
-        elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.30),
-        color: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 16),
-              _buildStatsContent(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    String month = 'Loading...';
-    String subtitle = 'Stats';
-
-    if (_monthlyStats != null) {
-      month = _monthlyStats!.month;
-      if (_monthlyStats!.hasActiveSubscription && _monthlyStats!.subscriptionPlanName != null) {
-        subtitle = _monthlyStats!.subscriptionPlanName!;
-      }
-    } else if (!_isLoading && _errorMessage == null && widget.fallbackMonth != null) {
-      month = widget.fallbackMonth!;
-    } else if (_errorMessage != null) {
-      month = widget.fallbackMonth ?? 'Error';
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Your Stats',
-          style: AppTypography.titleMedium.copyWith(color: MyApp.coffeeBean, fontWeight: FontWeight.w700,),
-          ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                month,
-                style: AppTypography.titleLarge.copyWith(
-                  fontWeight: FontWeight.w700,
-                  // color: MyApp.coffeeBean,
-                ),
-              ),
-            ),
-            if (_isLoading)
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(MyApp.coffeeBean),
-                ),
-              )
-            else if (_errorMessage != null)
-              GestureDetector(
-                onTap: _refresh,
-                child: Icon(
-                  Icons.refresh,
-                  color: MyApp.coffeeBean,
-                  size: 20,
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 4),
-
-      ],
+      child: _buildStatsContent(),
     );
   }
 
@@ -241,7 +153,6 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
       return _buildStatsRow();
     }
 
-    // Fallback to provided values
     return _buildFallbackStatsRow();
   }
 
@@ -249,96 +160,128 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildLoadingStatItem('Remaining'),
-        _buildLoadingStatItem('Redeemed'),
-        _buildLoadingStatItem('Jokers'),
+        _buildLoadingStatItem(),
+        _buildLoadingStatItem(),
+        _buildLoadingStatItem(),
       ],
     );
   }
 
-  Widget _buildLoadingStatItem(String label) {
-    return Column(
-      children: [
-        Container(
-          width: 70,
-          height: 70,
-          // padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: MyApp.coffeeBean.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(MyApp.coffeeBean),
+  Widget _buildLoadingStatItem() {
+    return Expanded(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.5),
+                  Colors.white.withOpacity(0.3),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.6),
+                width: 1.5,
+              ),
+            ),
+            child: Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Colors.grey.shade600,
+                  ),
+                ),
               ),
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: AppTypography.bodyMedium,
-        ),
-      ],
+      ),
     );
   }
 
   Widget _buildErrorState() {
-    return Column(
-      children: [
-        Icon(
-          Icons.error_outline,
-          color: Colors.grey,
-          size: 32,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Failed to load stats',
-          style: AppTypography.bodyMedium.copyWith(
-            color: Colors.grey,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.5),
+                Colors.white.withOpacity(0.3),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.6),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.error_outline,
+                color: Colors.grey.shade700,
+                size: 32,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Failed to load stats',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: _refresh,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: MyApp.coffeeBean,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: _refresh,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: MyApp.coffeeBean,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          ),
-          child: const Text('Retry'),
-        ),
-      ],
+      ),
     );
   }
 
   Widget _buildStatsRow() {
+    final monthlyLimit = _monthlyStats!.monthlyLimit ?? 0;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildStatItemWithIcon(
-          context,
-          _monthlyStats!.remainingMonthly.toString(),
-          'Remaining',
-          Icons.coffee,
-          // Show different color if no remaining redemptions
-          _monthlyStats!.remainingMonthly == 0 ? Colors.grey : null,
+        _buildStatItem(
+          icon: Icons.local_cafe_outlined,
+          label: 'REMAINING',
+          value: _monthlyStats!.remainingMonthly.toString(),
         ),
-        _buildStatItemWithIcon(
-          context,
-          _monthlyStats!.totalRedeemed.toString(),
-          'Redeemed',
-          Icons.check_circle_outline,
+        _buildStatItem(
+          icon: Icons.check_circle_outline,
+          label: 'REDEEMED',
+          value: _monthlyStats!.totalRedeemed.toString(),
         ),
-        _buildStatItemWithIcon(
-          context,
-          _monthlyStats!.jokersAvailable.toString(),
-          'Jokers',
-          Icons.card_giftcard,
+        _buildStatItem(
+          icon: Icons.card_giftcard,
+          label: 'JOKERS',
+          value: _monthlyStats!.jokersAvailable.toString(),
         ),
       ],
     );
@@ -346,77 +289,116 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
 
   Widget _buildFallbackStatsRow() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildStatItemWithIcon(
-          context,
-          widget.fallbackRemainingCount ?? '0',
-          'Remaining',
-          Icons.coffee,
+        _buildStatItem(
+          icon: Icons.local_cafe_outlined,
+          label: 'REMAINING',
+          value: widget.fallbackRemainingCount ?? '0',
         ),
-        _buildStatItemWithIcon(
-          context,
-          widget.fallbackRedeemedCount ?? '0',
-          'Redeemed',
-          Icons.check_circle_outline,
+        _buildStatItem(
+          icon: Icons.check_circle_outline,
+          label: 'REDEEMED',
+          value: widget.fallbackRedeemedCount ?? '0',
+          subtitle: 'THIS PERIOD',
         ),
-        _buildStatItemWithIcon(
-          context,
-          widget.fallbackJokersCount ?? '0',
-          'Jokers',
-          Icons.card_giftcard,
+        _buildStatItem(
+          icon: Icons.card_giftcard,
+          label: 'JOKERS',
+          value: widget.fallbackJokersCount ?? '0',
+          subtitle: 'ACTIVE',
         ),
       ],
     );
   }
 
-  Widget _buildStatItemWithIcon(
-      BuildContext context,
-      String value,
-      String label,
-      IconData icon,
-      [Color? overrideColor]
-      ) {
-    final coffeeBean = overrideColor ?? Theme.of(context).colorScheme.secondary;
-
-    return Column(
-      children: [
-        Container(
-          width: 90,
-          height: 70,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: coffeeBean.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(5),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: coffeeBean,
-                size: 18,
+  Widget _buildStatItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    String? subtitle,
+  }) {
+    return Expanded(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(1),
+                  Colors.white.withOpacity(0.4),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: AppTypography.titleLarge.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: coffeeBean,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Colors.white.withOpacity(1),
+                width: 0.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    icon,
+                    color: MyApp.coffeeAccent,
+                    size: 24,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade800,
+                    height: 1.0,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: AppTypography.bodyMedium.copyWith(
-            color: Colors.grey.shade600,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

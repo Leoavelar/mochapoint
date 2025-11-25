@@ -35,8 +35,8 @@ class ProfileAvatar extends StatelessWidget {
           shape: BoxShape.circle,
           border: showBorder
               ? Border.all(
-            color: Colors.white.withOpacity(1.0),
-            width: 2,
+            color: Colors.white,
+            width: 1,
           )
               : null,
         ),

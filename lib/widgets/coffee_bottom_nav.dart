@@ -1,5 +1,6 @@
 // lib/widgets/coffee_bottom_nav.dart
 import 'package:flutter/material.dart';
+import 'package:mocha_point/main.dart';
 import '../services/auth_service.dart';
 import '../screens/coffee_shop_scanner_screen.dart';
 import 'redemption_selection_modal.dart';
@@ -103,7 +104,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                 height: 3,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF8B4513), Color(0xFF8B4513)],
+                    colors: [MyApp.coffeeAccent, MyApp.coffeeAccent],
                   ),
                   borderRadius: BorderRadius.circular(2),
                   boxShadow: [
@@ -136,7 +137,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                       index: 1,
                       icon: Icons.map_outlined,
                       activeIcon: Icons.map_rounded,
-                      label: 'Map',
+                      label: 'Shops',
                     ),
                   ),
                 ],
@@ -165,11 +166,12 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF000000),
+                              Color(0xFF2C2C2E),
+                              Color(0xFF2C2C2E),
                               Color(0xFF000000),
                             ],
                           ),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(50),
                           // Proportionally adjusted
                           boxShadow: [
                             BoxShadow(

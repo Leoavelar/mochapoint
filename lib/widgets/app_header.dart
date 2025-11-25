@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:mocha_point/main.dart';
 import '../services/auth_service.dart';
 import 'profile_avatar.dart';
@@ -14,7 +15,7 @@ class AppHeader extends StatefulWidget {
     super.key,
     required this.backgroundImage,
     this.height = 175.0,
-    this.borderRadius = 100.0, // Increased from 20.0
+    this.borderRadius = 100.0,
   });
 
   @override
@@ -31,19 +32,16 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
     super.initState();
     _loadUserData();
 
-    // Wave animation controller - smooth back-and-forth motion with easing
     _waveController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
     );
 
-    // Apply ease-in-out curve for smooth acceleration/deceleration
     _waveAnimation = CurvedAnimation(
       parent: _waveController,
       curve: Curves.easeInOut,
     );
 
-    // Repeat with reverse - slows down at ends, speeds up in middle
     _waveController.repeat(reverse: true);
   }
 
@@ -84,26 +82,62 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
         height: widget.height,
         child: Stack(
           children: [
-            // Background
+            // Liquid glass background
             Positioned.fill(
-              child: Container(
-                color: MyApp.coffeeBean.withOpacity(0.1),
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(widget.borderRadius),
+                  bottomRight: Radius.circular(widget.borderRadius),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withOpacity(0.8),
+                          Colors.white.withOpacity(0.2),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.6),
+                        width: 0.5,
+                      ),
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(widget.borderRadius),
+                        bottomRight: Radius.circular(widget.borderRadius),
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
 
-            // Animated dark espresso wave layer (only one animated layer)
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: _waveAnimation,
-                builder: (context, child) {
-                  return CustomPaint(
-                    painter: HeaderCoffeeLiquidPainter(
-                      wavePhase: _waveAnimation.value * 2 * math.pi,
-                      height: widget.height,
-                    ),
-                    size: Size.infinite,
-                  );
-                },
+            // Animated dark espresso wave layer with padding to show border
+            Positioned(
+              left: 0.5,
+              right: 0.5,
+              top: 0,
+              bottom: 0.5,
+              child: ClipRRect(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(widget.borderRadius - 0.5),
+                  bottomRight: Radius.circular(widget.borderRadius - 0.5),
+                ),
+                child: AnimatedBuilder(
+                  animation: _waveAnimation,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      painter: HeaderCoffeeLiquidPainter(
+                        wavePhase: _waveAnimation.value * 2 * math.pi,
+                        height: widget.height,
+                      ),
+                      size: Size.infinite,
+                    );
+                  },
+                ),
               ),
             ),
 
@@ -147,7 +181,6 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
       ),
     );
   }
-
 }
 
 // Header coffee liquid painter - single coffee wave over image background
@@ -155,8 +188,7 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
   final double wavePhase;
   final double height;
 
-  // Light brown coffee color for the wave (from the original froth gradient)
-  static const Color coffeeColor = Color(0xFF94511A); // Updated medium brown
+  static const Color coffeeColor = Color(0xFF94511A);
 
   HeaderCoffeeLiquidPainter({
     required this.wavePhase,
@@ -165,10 +197,7 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Only paint ONE layer: Light brown coffee wave
-    // The image is now the static background
-
-    final espressoLevel = size.height * 0.6; // Starts at 75% from top (lowered, closer to bottom)
+    final espressoLevel = size.height * 0.6;
     final espressoPath = Path();
     espressoPath.moveTo(0, size.height);
 
@@ -176,7 +205,6 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
       final distanceFromCenter = (x - size.width / 2).abs() / (size.width / 2);
       final amplitude = 8 * (1 - distanceFromCenter * 0.1);
 
-      // Wave pattern
       final wave1 = math.sin((x / size.width) * 3 * math.pi + wavePhase) * amplitude;
       final wave2 = math.sin((x / size.width) * 5 * math.pi - wavePhase * 0.7) * (amplitude * 0.5);
 
@@ -194,9 +222,9 @@ class HeaderCoffeeLiquidPainter extends CustomPainter {
         colors: [
           coffeeColor,
           MyApp.coffeeBean,
-          MyApp.coffeeBean,
-          Colors.black,// Light brown at top
-          Colors.black,   // Black at bottom
+          // MyApp.coffeeBean,
+          Colors.black,
+          Colors.black,
         ],
       ).createShader(Rect.fromLTWH(0, espressoLevel, size.width, size.height - espressoLevel))
       ..style = PaintingStyle.fill;

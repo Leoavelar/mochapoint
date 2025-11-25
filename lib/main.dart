@@ -1,4 +1,4 @@
-// lib/main.dart - With gradient background matching modal
+// lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'config/app_config.dart';
@@ -23,10 +23,10 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // Colors based on the updated design
-  static const Color coffeeBean = Color(0xFF6A2801); // Brown for coffee bean
-  static const Color lightCream = Color(0xFFF5E6D3); // Light cream (matches modal)
+  static const Color coffeeBean = Color(0xFF6A2801);
+  static const Color lightCream = Color(0xFFF5E6D3);
   static const Color coffeeFroth = Color(0xFF94511A);
+  static const Color coffeeAccent = Color(0xFFF57C00);
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: AppConfig.enableDebugFeatures,
       theme: ThemeData(
         primaryColor: coffeeBean,
-        // Remove solid scaffold background - we'll use gradient containers instead
         scaffoldBackgroundColor: Colors.transparent,
         fontFamily: 'Poppins',
         appBarTheme: const AppBarTheme(
@@ -99,7 +98,6 @@ class MyApp extends StatelessWidget {
       home: const GradientBackground(
         child: AuthWrapper(),
       ),
-      // Add routes with gradient background wrapper
       routes: {
         '/login': (context) => const GradientBackground(child: LoginScreen()),
         '/home': (context) => const GradientBackground(child: HomeScreen()),
@@ -108,7 +106,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// New widget to provide consistent gradient background
 class GradientBackground extends StatelessWidget {
   final Widget child;
 
@@ -125,9 +122,8 @@ class GradientBackground extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.white,
-            Colors.white,
-            // Color(0xFFF5E6D3), // lightCream - matches modal
+            Color(0xFFE1CFC0),
+            Color(0xFFF1E7DD),
           ],
         ),
       ),
@@ -144,7 +140,7 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStateMixin {
-  bool _showSplash = true;
+  bool _showSplash = false;
   Widget? _nextScreen;
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -197,21 +193,18 @@ class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStat
     if (_showSplash) {
       return Stack(
         children: [
-          // Gradient background layer (matching modal)
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.white,
-                  Colors.white,
-                  // Color(0xFFF5E6D3), // lightCream
+                  Color(0xFFF7F3F0),
+                  Color(0xFFF6F0EB),
                 ],
               ),
             ),
           ),
-          // Splash screen with fade
           FadeTransition(
             opacity: _fadeAnimation,
             child: const SplashScreen(),
@@ -220,16 +213,14 @@ class _AuthWrapperState extends State<AuthWrapper> with SingleTickerProviderStat
       );
     }
 
-    // Show the preloaded next screen (already wrapped with GradientBackground)
     return _nextScreen ?? Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.white,
-            Colors.white,
-            // Color(0xFFF5E6D3),
+            Color(0xFFF7F3F0),
+            Color(0xFFF6F0EB),
           ],
         ),
       ),

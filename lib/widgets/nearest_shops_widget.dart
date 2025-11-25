@@ -1,4 +1,6 @@
-// lib/widgets/nearest_shops_widget.dart - With pagination
+// lib/widgets/nearest_shops_widget.dart - With pagination and glassmorphism
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -587,24 +589,19 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           const SizedBox(width: 4),
           Text(
             shop.googleRating.toStringAsFixed(1),
-            style: AppTypography.bodyMedium.copyWith(
-              color: Colors.black,
-              fontWeight: FontWeight.w600
+            style: AppTypography.bodySmall.copyWith(
+                color: Colors.black,
+                fontWeight: FontWeight.w600
             ),
           ),
           const SizedBox(width: 2),
           Text(
             '(${shop.googleRatingCount})',
-            style: AppTypography.bodyMedium.copyWith(
+            style: AppTypography.bodySmall.copyWith(
               color: Colors.grey.shade600,
             ),
           ),
           const SizedBox(width: 4),
-          // Icon(
-          //   Icons.public,
-          //   size: 12,
-          //   color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
-          // ),
         ],
       );
     } else if (hasAppRating) {
@@ -689,42 +686,73 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
     return RefreshIndicator(
       onRefresh: _refresh,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title moved inside the widget
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4.0),
-            child: Text(
-              'Nearest Coffee Shops',
-              style: AppTypography.titleLarge.copyWith(
-                fontWeight: FontWeight.w700
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withOpacity(0.8),
+                  Colors.white.withOpacity(0.4),
+                ],
               ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.6),
+                width: 0.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4.0),
+                  child: Text(
+                    'Nearest Coffee Shops',
+                    style: AppTypography.titleMedium.copyWith(
+                        fontWeight: FontWeight.w700
+                    ),
+                  ),
+                ),
+
+                _buildLocationHeader(),
+
+                // Display paginated shops
+                ..._displayedShops.map((shop) => _buildShopItem(context, shop)).toList(),
+
+                // Load More button
+                if (_hasMoreShops)
+                  _buildLoadMoreButton(),
+
+                // Show "All shops loaded" message when at the end
+                if (!_hasMoreShops && _displayedShops.length < _allShops.length)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'All ${_allShops.length} shops loaded',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-
-          _buildLocationHeader(),
-
-          // Display paginated shops
-          ..._displayedShops.map((shop) => _buildShopItem(context, shop)).toList(),
-
-          // Load More button
-          if (_hasMoreShops)
-            _buildLoadMoreButton(),
-
-          // Show "All shops loaded" message when at the end
-          if (!_hasMoreShops && _displayedShops.length < _allShops.length)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'All ${_allShops.length} shops loaded',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -747,14 +775,14 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             onPressed: _loadMoreShops,
             icon: const Icon(Icons.expand_more),
             label: Text(
-              'Load More Shops (${_allShops.length - _displayedShops.length} remaining)',
+              'Load More (${_allShops.length - _displayedShops.length} remaining)',
               style: AppTypography.bodySmall.copyWith(
-                color: MyApp.coffeeBean,
+                color: Colors.white,
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: MyApp.coffeeBean.withOpacity(0.1),
-              foregroundColor: MyApp.coffeeBean,
+              backgroundColor: Colors.black.withOpacity(1),
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(100),
               ),
@@ -786,7 +814,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                   _currentPosition != null
                       ? 'Showing nearest coffee shops (${_displayedShops.length} of ${_allShops.length})'
                       : 'Location unavailable - showing all shops',
-                  style: AppTypography.bodyMedium.copyWith(
+                  style: AppTypography.bodySmall.copyWith(
                     color: Colors.grey.shade600,
                   ),
                 ),
@@ -796,45 +824,96 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
           if (_currentPosition != null) ...[
             const SizedBox(height: 8),
-            Row(
-              children: [
-                _buildSortButton('Distance', 'distance'),
-                const SizedBox(width: 8),
-                _buildSortButton('Rating', 'rating'),
-              ],
-            ),
+            _buildSegmentedControl(),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildSortButton(String label, String value) {
+  Widget _buildSegmentedControl() {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(1),
+                Colors.white.withOpacity(1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.6),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildSegmentButton('Distance', 'distance', Icons.near_me),
+              _buildSegmentButton('Rating', 'rating', Icons.star),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentButton(String label, String value, IconData icon) {
     final isSelected = _orderBy == value;
+
     return GestureDetector(
       onTap: () => _changeOrderBy(value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           gradient: isSelected
               ? const LinearGradient(
-            colors: [Color(0xFF000000), Color(0xFF000000)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF2C2C2E),
+              Color(0xFF2C2C2E),
+              Color(0xFF000000),
+            ],
           )
               : null,
           color: isSelected ? null : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade400,
-          ),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(
-          label,
-          style: AppTypography.bodyMedium.copyWith(
-            color: isSelected ? Colors.white : Colors.grey.shade600,
-            fontWeight: FontWeight.w500,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : Colors.grey.shade600,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? Colors.white : Colors.grey.shade600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -979,227 +1058,193 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
   Widget _buildShopItem(BuildContext context, CoffeeShop shop) {
     final coffeeBean = Theme.of(context).colorScheme.secondary;
-    const coffeeGreen = Color(0xFF4CAF50);
 
     final bool isSubscribed = _isUserSubscribedToShop(shop.id);
-    final String? subscriptionType = _getSubscriptionType(shop.id);
-
-    final bool canUseSubscription = subscriptionStatus?.hasActiveSubscription == true &&
-        shop.subscriptionEnabled &&
-        (subscriptionStatus?.weeklyUsageCount ?? 0) < (subscriptionStatus?.weeklyLimit ?? 0) &&
-        isSubscribed;
-
     final bool shopAcceptsJokers = shop.jokerEnabled;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.30),
-      color: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: shop.logoUrl != null
-                    ? Image.asset(
-                  'assets/images/shops/${shop.logoUrl}',
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      'assets/images/shops/default_coffee_logo.png',
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return _buildFallbackLogo(coffeeBean);
-                      },
-                    );
-                  },
-                )
-                    : _buildFallbackLogo(coffeeBean),
-              ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(width: 16),
-
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    shop.name,
-                    style: AppTypography.titleMedium.copyWith(
-                      fontWeight: FontWeight.w800
-                    ),
-                  ),
-                  if (shop.brand != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      shop.brand!,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 6),
-
-                  // Rating (left) and Walking Distance (right)
-                  Row(
-                    children: [
-                      // Rating on the left
-                      _buildRatingDisplay(shop, false),
-
-                      const SizedBox(width: 16),
-
-                      // Walking distance
-                      if (shop.distance != null) ...[
-                        const Icon(
-                          Icons.directions_walk,
-                          size: 14,
-                          color: Colors.black,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          shop.distance! < 1
-                              ? '${(shop.distance! * 1000).round()}m'
-                              : '${shop.distance!.toStringAsFixed(1)}km',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: Colors.black,
-                          ),
-                        ),
-                      ],
-                      if (shop.walkingTime != null && shop.distance == null) ...[
-                        const Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: Colors.black,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          shop.walkingTime!,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Subscription status and Joker acceptance (separate rows)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (isSubscribed)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.verified,
-                              size: 14,
-                              color: AppConfig.successColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Subscribed',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: AppConfig.successColor,
-                                fontWeight: FontWeight.w700
-                              ),
-                            ),
-                          ],
-                        ),
-                      if (isSubscribed && shopAcceptsJokers)
-                        const SizedBox(height: 4),
-                      if (shopAcceptsJokers)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.card_giftcard,
-                              size: 14,
-                              color: coffeeBean,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Accepts Joker',
-                              style: AppTypography.bodyMedium.copyWith(
-                                  color: MyApp.coffeeBean,
-                                  fontWeight: FontWeight.w700
-                              ),
-                            ),
-                          ],
-                        ),
-                      if (!isSubscribed && !shopAcceptsJokers)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.payments,
-                              size: 14,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'No Joker',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF000000), Color(0xFF000000)], // coffeeBrown to chocolate
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.directions,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Directions to ${shop.name} coming soon!'),
-                      duration: const Duration(seconds: 1),
-                    ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: shop.logoUrl != null
+                  ? Image.asset(
+                'assets/images/shops/${shop.logoUrl}',
+                width: 48,
+                height: 48,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    'assets/images/shops/default_coffee_logo.png',
+                    width: 48,
+                    height: 48,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildFallbackLogo(coffeeBean);
+                    },
                   );
                 },
-              ),
+              )
+                  : _buildFallbackLogo(coffeeBean),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 16),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  shop.name,
+                  style: AppTypography.titleSmall.copyWith(
+                      fontWeight: FontWeight.w700
+                  ),
+                ),
+                if (shop.brand != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    shop.brand!,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 6),
+
+                // Rating (left) and Walking Distance (right)
+                Row(
+                  children: [
+                    // Rating on the left
+                    _buildRatingDisplay(shop, false),
+
+                    const SizedBox(width: 16),
+
+                    // Walking distance
+                    if (shop.distance != null) ...[
+                      const Icon(
+                        Icons.directions_walk,
+                        size: 14,
+                        color: Colors.black,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        shop.distance! < 1
+                            ? '${(shop.distance! * 1000).round()}m'
+                            : '${shop.distance!.toStringAsFixed(1)}km',
+                        style: AppTypography.bodySmall.copyWith(
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
+                    if (shop.walkingTime != null && shop.distance == null) ...[
+                      const Icon(
+                        Icons.access_time,
+                        size: 14,
+                        color: Colors.black,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        shop.walkingTime!,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // Subscription status and Joker acceptance (separate rows)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isSubscribed)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.verified,
+                            size: 14,
+                            color: AppConfig.successColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Subscribed',
+                            style: AppTypography.bodySmall.copyWith(
+                                color: AppConfig.successColor,
+                                fontWeight: FontWeight.w700
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (isSubscribed && shopAcceptsJokers)
+                      const SizedBox(height: 4),
+                    if (shopAcceptsJokers)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.card_giftcard,
+                            size: 14,
+                            color: MyApp.coffeeAccent,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Accepts Joker',
+                            style: AppTypography.bodySmall.copyWith(
+                                color: MyApp.coffeeAccent,
+                                fontWeight: FontWeight.w700
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (!isSubscribed && !shopAcceptsJokers)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.payments,
+                            size: 14,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'No Joker',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1213,4 +1258,5 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         size: 24,
       ),
     );
-  }}
+  }
+}

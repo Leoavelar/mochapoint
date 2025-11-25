@@ -1,5 +1,4 @@
-// lib/screens/home_screen.dart - FIXED VERSION
-
+// lib/screens/home_screen.dart
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -31,10 +30,8 @@ class HomeScreenState extends State<HomeScreen> {
   bool _showCoffeeShopInterface = false;
   bool _isLoading = true;
 
-  // ✅ NEW: Key to control customer home tab refresh
   final GlobalKey<_CustomerHomeTabState> _customerHomeKey = GlobalKey<_CustomerHomeTabState>();
 
-  // Back button navigation state
   final List<int> _navigationStack = [0];
   DateTime? _lastBackPressed;
 
@@ -47,21 +44,17 @@ class HomeScreenState extends State<HomeScreen> {
 
     setState(() {
       if (index == 2) {
-        // ✅ FIXED: Index 2 is a special signal meaning "refresh current tab"
         if (AppConfig.enableLogging) {
           print('🔄 Received refresh signal, refreshing current tab');
         }
 
-        // Refresh the customer home tab if it's currently shown
         if (_selectedIndex == 0 && !_showCoffeeShopInterface) {
           _customerHomeKey.currentState?.triggerRefresh();
         }
 
-        // Don't change the selected index, stay on current tab
         return;
       }
 
-      // Normal tab switching logic
       if (index != _selectedIndex) {
         _navigationStack.add(index);
         _selectedIndex = index;
@@ -110,7 +103,6 @@ class HomeScreenState extends State<HomeScreen> {
       _tabs.add(const SizedBox());
       _tabs.add(const ProfileScreen());
     } else {
-      // ✅ FIXED: Use the key for customer home tab
       _tabs.add(_CustomerHomeTab(key: _customerHomeKey));
       _tabs.add(const MapScreen());
       _tabs.add(const SizedBox());
@@ -205,6 +197,7 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
+        backgroundColor: Colors.transparent,
         body: Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFA6623A)),
@@ -215,6 +208,7 @@ class HomeScreenState extends State<HomeScreen> {
 
     if (_tabs.isEmpty) {
       return const Scaffold(
+        backgroundColor: Colors.transparent,
         body: Center(
           child: Text('Initializing...'),
         ),
@@ -257,7 +251,6 @@ class _CustomerHomeTab extends StatefulWidget {
 class _CustomerHomeTabState extends State<_CustomerHomeTab> {
   int _refreshTrigger = 0;
 
-  // ✅ NEW: Public method to trigger refresh from parent
   void triggerRefresh() {
     if (mounted) {
       setState(() {
@@ -276,13 +269,10 @@ class _CustomerHomeTabState extends State<_CustomerHomeTab> {
     final String formattedDate = DateFormat('MMMM yyyy').format(now);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Colors.transparent,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // const AppHeader(
-            //   backgroundImage: 'assets/images/header_2.png',
-            // ),
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               child: Column(
@@ -298,7 +288,7 @@ class _CustomerHomeTabState extends State<_CustomerHomeTab> {
                         final result = await showRedemptionModal(context);
 
                         if (result == true) {
-                          triggerRefresh(); // ✅ Use the same method
+                          triggerRefresh();
                         }
                       },
                     ),
