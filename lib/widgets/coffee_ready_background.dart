@@ -1,17 +1,18 @@
+// lib/widgets/coffee_ready_background.dart
 import 'package:flutter/material.dart';
 
 class CoffeeReadyBackground extends StatefulWidget {
   final double width;
-  final double height;
+  final double? height; // Make height nullable
   final Widget? child;
   final VoidCallback? onTap;
 
   const CoffeeReadyBackground({
     super.key,
     this.width = double.infinity,
-    this.height = 200,
+    this.height, // Remove default value, let it be dynamic
     this.child,
-    this.onTap, 
+    this.onTap,
   });
 
   @override
@@ -47,10 +48,10 @@ class _CoffeeReadyBackgroundState extends State<CoffeeReadyBackground>
       onTap: widget.onTap,
       child: Container(
         width: widget.width,
-        height: widget.height,
+        height: widget.height, // Will be null if not specified, allowing dynamic sizing
         // The container decoration (Dark Card Base)
         decoration: BoxDecoration(
-          color: cardDarkBg,
+          color: Colors.black,
           borderRadius: BorderRadius.circular(24), // rounded-[2.5rem]
           border: Border.all(
             color: Colors.white.withOpacity(0.1),
@@ -64,15 +65,6 @@ class _CoffeeReadyBackgroundState extends State<CoffeeReadyBackground>
               offset: const Offset(0, 10),
             ),
           ],
-          // Subtle internal gradient to give depth to the dark surface
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              cardDarkBg,
-              Color(0xFF000000),
-            ],
-          ),
         ),
         // ClipRRect is needed to contain the overflow of the Shine Effect
         child: ClipRRect(
@@ -138,7 +130,7 @@ class _CoffeeReadyBackgroundState extends State<CoffeeReadyBackground>
 
               // 3. The Content (passed as child)
               if (widget.child != null)
-                Positioned.fill(child: widget.child!),
+                widget.child!,
             ],
           ),
         ),

@@ -26,7 +26,8 @@ class MyApp extends StatelessWidget {
   static const Color coffeeBean = Color(0xFF6A2801);
   static const Color lightCream = Color(0xFFF5E6D3);
   static const Color coffeeFroth = Color(0xFF94511A);
-  static const Color coffeeAccent = Color(0xFFF57C00);
+  static const Color coffeeAccent = Color(0xFFD85C27);
+  static const Color coffeeGreen = Color(0xFF4CAF50);
 
   @override
   Widget build(BuildContext context) {
@@ -121,9 +122,13 @@ class GradientBackground extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
+          // colors: [
+          //   Color(0xFFE1CFC0),
+          //   Color(0xFFF1E7DD),
+          // ],
           colors: [
-            Color(0xFFE1CFC0),
-            Color(0xFFF1E7DD),
+            Color(0xFFE4E4E4),
+            Color(0xFFE4E4E4),
           ],
         ),
       ),

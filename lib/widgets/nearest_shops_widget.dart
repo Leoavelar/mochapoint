@@ -687,33 +687,35 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
+        // borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(0),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withOpacity(0.8),
-                  Colors.white.withOpacity(0.4),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.6),
-                width: 0.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+            padding: const EdgeInsets.all(8),
+            // padding: const EdgeInsets.all(24),
+            // decoration: BoxDecoration(
+            //   gradient: LinearGradient(
+            //     begin: Alignment.topLeft,
+            //     end: Alignment.bottomRight,
+            //     colors: [
+            //       Colors.white.withOpacity(0.8),
+            //       Colors.white.withOpacity(0.4),
+            //     ],
+            //   ),
+            //   borderRadius: BorderRadius.circular(24),
+            //   border: Border.all(
+            //     color: Colors.white.withOpacity(0.6),
+            //     width: 0.5,
+            //   ),
+            //   boxShadow: [
+            //     BoxShadow(
+            //       color: Colors.black.withOpacity(0.1),
+            //       blurRadius: 8,
+            //       offset: const Offset(0, 4),
+            //     ),
+            //   ],
+            // ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -722,7 +724,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                   padding: const EdgeInsets.only(bottom: 4.0),
                   child: Text(
                     'Nearest Coffee Shops',
-                    style: AppTypography.titleMedium.copyWith(
+                    style: AppTypography.titleLarge.copyWith(
                         fontWeight: FontWeight.w700
                     ),
                   ),
@@ -849,14 +851,14 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withOpacity(1),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: Colors.black.withOpacity(1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -1058,29 +1060,52 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
   Widget _buildShopItem(BuildContext context, CoffeeShop shop) {
     final coffeeBean = Theme.of(context).colorScheme.secondary;
-
     final bool isSubscribed = _isUserSubscribedToShop(shop.id);
     final bool shopAcceptsJokers = shop.jokerEnabled;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
+      // decoration: BoxDecoration(
+      //   color: Colors.white,
+      //   borderRadius: BorderRadius.circular(32),
+      //   boxShadow: [
+      //     BoxShadow(
+      //       color: Colors.black.withOpacity(0.05),
+      //       blurRadius: 8,
+      //       offset: const Offset(0, 2),
+      //     ),
+      //   ],
+      // ),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.8),
+            Colors.white.withOpacity(0.8),
+            Colors.white.withOpacity(0.6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.6),
+          width: 0.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 64,
+            height: 64,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
@@ -1207,13 +1232,13 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                           Icon(
                             Icons.card_giftcard,
                             size: 14,
-                            color: MyApp.coffeeAccent,
+                            color: MyApp.coffeeFroth,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             'Accepts Joker',
                             style: AppTypography.bodySmall.copyWith(
-                                color: MyApp.coffeeAccent,
+                                color: MyApp.coffeeFroth,
                                 fontWeight: FontWeight.w700
                             ),
                           ),
