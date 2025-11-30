@@ -545,60 +545,69 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
     );
   }
 
-  // In daily_coffee_card.dart, update the _buildAvailableView method:
-
   Widget _buildAvailableView(BuildContext context) {
     final bool coffeeReady = _isCoffeeReady();
-
     return CoffeeReadyBackground(
       // Don't specify height - let it size dynamically based on content
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16), // Reduced from 24
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Important: Use min to fit content
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // QR CODE READY status badge
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: coffeeReady ? MyApp.coffeeGreen : Colors.orange,
-                    boxShadow: coffeeReady
-                        ? [
-                      BoxShadow(
-                        color: MyApp.coffeeGreen.withOpacity(0.5),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                        : null,
-                  ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20), // Pill-shaped
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.1),
+                  width: 0.5,
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  coffeeReady ? 'QR CODE READY' : 'BREWING',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: Colors.white.withOpacity(0.7),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min, // Make it fit content width
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: coffeeReady ? MyApp.coffeeGreen : Colors.orange,
+                      boxShadow: coffeeReady
+                          ? [
+                        BoxShadow(
+                          color: MyApp.coffeeGreen.withOpacity(0.5),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                          : null,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  Text(
+                    coffeeReady ? 'QR code ready' : 'BREWING',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Colors.white.withOpacity(0.7),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 20), // Reduced from 32
 
             // Center content
             if (coffeeReady) ...[
               // Circular progress indicator with logo (centered)
               Center(
                 child: SizedBox(
-                  width: 120,
-                  height: 120,
+                  width: 80, // Reduced from 120
+                  height: 80, // Reduced from 120
                   child: Stack(
                     children: [
                       // Pulse animation
@@ -606,15 +615,15 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                         animation: _pulseAnimation,
                         builder: (context, child) {
                           return Container(
-                            width: 120,
-                            height: 120,
+                            width: 80,
+                            height: 80,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
                                   color: MyApp.coffeeAccent
                                       .withOpacity(_pulseAnimation.value),
-                                  blurRadius: 60,
+                                  blurRadius: 40, // Reduced from 60
                                   spreadRadius: 0,
                                 ),
                               ],
@@ -624,8 +633,8 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                       ),
                       // Background circle
                       Container(
-                        width: 120,
-                        height: 120,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white.withOpacity(0.1),
@@ -636,7 +645,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                         animation: _progressAnimation,
                         builder: (context, child) {
                           return CustomPaint(
-                            size: const Size(120, 120),
+                            size: const Size(80, 80), // Reduced from 120
                             painter: CircularProgressPainter(
                               progress: 1.0,
                               backgroundColor: Colors.white.withOpacity(0.1),
@@ -644,7 +653,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                                 MyApp.coffeeAccent,
                                 MyApp.coffeeAccent
                               ],
-                              strokeWidth: 8,
+                              strokeWidth: 5, // Reduced from 8
                             ),
                           );
                         },
@@ -669,16 +678,16 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                                 ..rotateY(angle)
                                 ..scale(scale),
                               child: Container(
-                                width: 90,
-                                height: 90,
+                                width: 60, // Reduced from 90
+                                height: 60, // Reduced from 90
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.green,
+                                  color: MyApp.coffeeAccent,
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.5),
-                                      blurRadius: 15,
-                                      offset: const Offset(0, 3),
+                                      blurRadius: 10, // Reduced from 15
+                                      offset: const Offset(0, 2), // Reduced from 3
                                     ),
                                   ],
                                 ),
@@ -692,14 +701,14 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                                       return const Icon(
                                         Icons.local_cafe,
                                         color: Colors.white,
-                                        size: 36,
+                                        size: 24, // Reduced from 36
                                       );
                                     },
                                   )
                                       : const Icon(
                                     Icons.local_cafe,
                                     color: Colors.white,
-                                    size: 36,
+                                    size: 24, // Reduced from 36
                                   ),
                                 ),
                               ),
@@ -712,28 +721,27 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 8), // Reduced from 24
 
               // "YOUR ORDER IS" text
               Center(
                 child: Text(
-                  'YOUR ORDER IS',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: Colors.white.withOpacity(0.6),
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.5,
+                  'Your coffee is',
+                  style: AppTypography.titleMedium.copyWith( // Changed from bodyMedium
+                    color: Colors.white,
+                    fontWeight: FontWeight.w100,
                   ),
                 ),
               ),
 
-              const SizedBox(height: 4),
+              const SizedBox(height: 8), // Reduced from 4
 
               // "[Ready]" text
               Center(
                 child: Text(
                   '[Ready]',
                   style: TextStyle(
-                    fontSize: 42,
+                    fontSize: 28, // Reduced from 42
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                     letterSpacing: 0,
@@ -742,17 +750,17 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16), // Reduced from 24
 
               // Shop location info
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12), // Reduced from 16
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12), // Reduced from 16
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
+                    color: Colors.white.withOpacity(0.1),
+                    width: 0.5,
                   ),
                 ),
                 child: Row(
@@ -760,18 +768,19 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                     Icon(
                       Icons.location_on,
                       color: MyApp.coffeeAccent,
-                      size: 20,
+                      size: 16, // Reduced from 20
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8), // Reduced from 12
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             _selectedShop?.name ?? 'Your Coffee Shop',
-                            style: AppTypography.bodyMedium.copyWith(
+                            style: AppTypography.bodySmall.copyWith( // Changed from bodyMedium
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
+                              fontSize: 13, // Added explicit size
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -780,6 +789,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                               '${(_selectedShop!.distance! * 1000).toStringAsFixed(0)}m • ${(_selectedShop!.distance! * 12).toStringAsFixed(0)} min walk',
                               style: AppTypography.bodySmall.copyWith(
                                 color: Colors.white.withOpacity(0.6),
+                                fontSize: 11, // Added explicit size
                               ),
                             ),
                         ],
@@ -788,7 +798,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                     Icon(
                       Icons.arrow_forward_ios,
                       color: Colors.white.withOpacity(0.4),
-                      size: 16,
+                      size: 12, // Reduced from 16
                     ),
                   ],
                 ),
@@ -796,39 +806,39 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
             ] else ...[
               // Not ready state - show countdown
               Column(
-                mainAxisSize: MainAxisSize.min, // Important: Use min to fit content
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Brewing...',
-                    style: AppTypography.titleMedium.copyWith(
+                    style: AppTypography.titleSmall.copyWith( // Changed from titleMedium
                       fontWeight: FontWeight.w700,
                       color: Colors.white70,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6), // Reduced from 8
                   Text(
                     _getTimeUntilMidnight(),
                     style: AppTypography.statsNumber.copyWith(
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
-                      fontSize: 48,
+                      fontSize: 32, // Reduced from 48
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3), // Reduced from 4
                   Text(
                     'Until next free coffee',
-                    style: AppTypography.bodyMedium.copyWith(
+                    style: AppTypography.bodySmall.copyWith( // Changed from bodyMedium
                       color: Colors.white60,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14), // Reduced from 20
                   // Progress bar
                   Container(
-                    height: 8,
+                    height: 6, // Reduced from 8
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(3), // Reduced from 4
                     ),
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
@@ -838,7 +848,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                           gradient: LinearGradient(
                             colors: [MyApp.coffeeAccent, MyApp.coffeeFroth],
                           ),
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(3), // Reduced from 4
                         ),
                       ),
                     ),

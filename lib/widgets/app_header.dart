@@ -102,8 +102,8 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
                         ],
                       ),
                       border: Border.all(
-                        color: Colors.white.withOpacity(0.6),
-                        width: 0.5,
+                        color: Colors.black,
+                        width: 2,
                       ),
                       borderRadius: BorderRadius.only(
                         bottomLeft: Radius.circular(widget.borderRadius),
@@ -117,14 +117,14 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
 
             // Animated dark espresso wave layer with padding to show border
             Positioned(
-              left: 0.5,
-              right: 0.5,
+              left: 2,
+              right: 2,
               top: 0,
-              bottom: 0.5,
+              bottom: 2,
               child: ClipRRect(
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(widget.borderRadius - 0.5),
-                  bottomRight: Radius.circular(widget.borderRadius - 0.5),
+                  bottomLeft: Radius.circular(widget.borderRadius - 2),
+                  bottomRight: Radius.circular(widget.borderRadius - 2),
                 ),
                 child: AnimatedBuilder(
                   animation: _waveAnimation,

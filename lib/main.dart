@@ -127,8 +127,8 @@ class GradientBackground extends StatelessWidget {
           //   Color(0xFFF1E7DD),
           // ],
           colors: [
-            Color(0xFFE4E4E4),
-            Color(0xFFE4E4E4),
+            Color(0xFFFFFFFF),
+            Color(0xFFFFFFFF),
           ],
         ),
       ),

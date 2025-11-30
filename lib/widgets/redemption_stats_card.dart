@@ -377,9 +377,9 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey.shade800,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
                     height: 1.0,
                   ),
                 ),
