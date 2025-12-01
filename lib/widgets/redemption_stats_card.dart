@@ -337,8 +337,8 @@ class _CoffeeStatsCardState extends State<CoffeeStatsCard> {
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.white.withOpacity(1),
-                width: 0.5,
+                color: Colors.black.withOpacity(0.1),
+                width: 1,
               ),
             ),
             child: Column(

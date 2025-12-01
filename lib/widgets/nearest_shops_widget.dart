@@ -1,6 +1,4 @@
-// lib/widgets/nearest_shops_widget.dart - With pagination and glassmorphism
-import 'dart:ui';
-
+// lib/widgets/nearest_shops_widget.dart - With pagination and clean design
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -686,75 +684,69 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
     return RefreshIndicator(
       onRefresh: _refresh,
-      child: ClipRRect(
-        // borderRadius: BorderRadius.circular(24),
-        borderRadius: BorderRadius.circular(0),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            // padding: const EdgeInsets.all(24),
-            // decoration: BoxDecoration(
-            //   gradient: LinearGradient(
-            //     begin: Alignment.topLeft,
-            //     end: Alignment.bottomRight,
-            //     colors: [
-            //       Colors.white.withOpacity(0.8),
-            //       Colors.white.withOpacity(0.4),
-            //     ],
-            //   ),
-            //   borderRadius: BorderRadius.circular(24),
-            //   border: Border.all(
-            //     color: Colors.white.withOpacity(0.6),
-            //     width: 0.5,
-            //   ),
-            //   boxShadow: [
-            //     BoxShadow(
-            //       color: Colors.black.withOpacity(0.1),
-            //       blurRadius: 8,
-            //       offset: const Offset(0, 4),
-            //     ),
-            //   ],
-            // ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4.0),
-                  child: Text(
-                    'Nearest Coffee Shops',
-                    style: AppTypography.titleLarge.copyWith(
-                        fontWeight: FontWeight.w700
-                    ),
-                  ),
-                ),
+      child: Stack(
+        children: [
+          // Border container
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Colors.black,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              padding: const EdgeInsets.only(top: 20, left: 8, right: 8, bottom: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLocationHeader(),
 
-                _buildLocationHeader(),
+                  // Display paginated shops
+                  ..._displayedShops.map((shop) => _buildShopItem(context, shop)).toList(),
 
-                // Display paginated shops
-                ..._displayedShops.map((shop) => _buildShopItem(context, shop)).toList(),
+                  // Load More button
+                  if (_hasMoreShops)
+                    _buildLoadMoreButton(),
 
-                // Load More button
-                if (_hasMoreShops)
-                  _buildLoadMoreButton(),
-
-                // Show "All shops loaded" message when at the end
-                if (!_hasMoreShops && _displayedShops.length < _allShops.length)
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'All ${_allShops.length} shops loaded',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
+                  // Show "All shops loaded" message when at the end
+                  if (!_hasMoreShops && _displayedShops.length < _allShops.length)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'All ${_allShops.length} shops loaded',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
+
+          // Title positioned on top of border
+          Positioned(
+            left: 16,
+            top: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                'nearest cafés',
+                style: AppTypography.titleLarge.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -783,7 +775,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black.withOpacity(1),
+              backgroundColor: Colors.black,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(100),
@@ -808,7 +800,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               Icon(
                 _currentPosition != null ? Icons.location_on : Icons.location_off,
                 size: 16,
-                color: _currentPosition != null ? Color(0xFF000000) : Colors.red,
+                color: _currentPosition != null ? const Color(0xFF000000) : Colors.red,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -834,42 +826,21 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
   }
 
   Widget _buildSegmentedControl() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withOpacity(1),
-                Colors.white.withOpacity(1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withOpacity(1),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildSegmentButton('Distance', 'distance', Icons.near_me),
-              _buildSegmentButton('Rating', 'rating', Icons.star),
-            ],
-          ),
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1,
         ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildSegmentButton('Distance', 'distance', Icons.near_me),
+          _buildSegmentButton('Rating', 'rating', Icons.star),
+        ],
       ),
     );
   }
@@ -883,18 +854,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF2C2C2E),
-              Color(0xFF2C2C2E),
-              Color(0xFF000000),
-            ],
-          )
-              : null,
-          color: isSelected ? null : Colors.transparent,
+          color: isSelected ? Colors.black : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -929,9 +889,10 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: MyApp.coffeeBean.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: MyApp.coffeeBean.withOpacity(0.3)),
+        border: Border.all(
+          color: MyApp.coffeeBean.withOpacity(0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1066,39 +1027,12 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
-      // decoration: BoxDecoration(
-      //   color: Colors.white,
-      //   borderRadius: BorderRadius.circular(32),
-      //   boxShadow: [
-      //     BoxShadow(
-      //       color: Colors.black.withOpacity(0.05),
-      //       blurRadius: 8,
-      //       offset: const Offset(0, 2),
-      //     ),
-      //   ],
-      // ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.8),
-            Colors.white.withOpacity(0.8),
-            Colors.white.withOpacity(0.6),
-          ],
-        ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Colors.white.withOpacity(0.6),
-          width: 0.5,
+          color: Colors.grey.shade300,
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -1107,8 +1041,11 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.white,
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.grey.shade200,
+                width: 1,
+              ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -1276,7 +1213,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
   Widget _buildFallbackLogo(Color coffeeBean) {
     return Container(
-      color: coffeeBean.withOpacity(0.1),
       child: Icon(
         Icons.coffee,
         color: coffeeBean,
