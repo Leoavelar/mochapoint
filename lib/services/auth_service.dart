@@ -6,13 +6,18 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../config/app_config.dart'; // ADD THIS IMPORT
 
 class AuthService {
-  // REMOVE THIS LINE: static const String baseUrl = 'http://192.168.1.109:8000/api';
   static const String _tokenKey = 'jwt_token';
   static const String _userKey = 'user_data';
 
   // Google Sign-In instance
+  // IMPORTANT: serverClientId (GOOGLE_CLIENT_ID) is required to get idToken for backend verification
+  // GOOGLE_CLIENT_ID = Web client ID from Google Cloud Console
+  // GOOGLE_MOBILE_CLIENT_ID = Android client ID (used automatically from google-services.json)
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
+    serverClientId: AppConfig.googleClientId.isNotEmpty
+        ? AppConfig.googleClientId
+        : null,
   );
 
   // Get stored JWT token
@@ -174,8 +179,31 @@ class AuthService {
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       if (AppConfig.enableLogging) {
-        print('Got Google auth tokens. Access token: ${googleAuth.accessToken?.substring(0, 20)}...');
+        print('Got Google auth tokens.');
         print('Sending data to backend...');
+      }
+
+      // idToken is required for backend verification (JWT with 3 segments)
+      // accessToken is for calling Google APIs, NOT for backend verification
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        if (AppConfig.enableLogging) {
+          print('Error: No ID token received from Google');
+          if (AppConfig.googleClientId.isEmpty) {
+            print('HINT: GOOGLE_CLIENT_ID is not configured.');
+            print('Run with: --dart-define=GOOGLE_CLIENT_ID=your-web-client-id.apps.googleusercontent.com');
+          }
+        }
+        return AuthResult(
+          success: false,
+          error: AppConfig.googleClientId.isEmpty
+              ? 'Google Sign-In not configured. Missing GOOGLE_CLIENT_ID.'
+              : 'Failed to get ID token from Google',
+        );
+      }
+
+      if (AppConfig.enableLogging) {
+        print('Got ID token (first 50 chars): ${idToken.substring(0, 50)}...');
       }
 
       final response = await http.post(
@@ -186,7 +214,7 @@ class AuthService {
           'email': googleUser.email,
           'name': googleUser.displayName,
           'photoUrl': googleUser.photoUrl,
-          'accessToken': googleAuth.accessToken,
+          'idToken': idToken,
         }),
       ).timeout(AppConfig.apiTimeout); // ADDED: Use AppConfig timeout
 

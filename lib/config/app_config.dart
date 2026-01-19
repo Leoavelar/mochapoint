@@ -31,6 +31,12 @@ class AppConfig {
   static bool get enableDebugFeatures => isDevelopment;
   static bool get enableAnalytics => isProduction;
 
+  // OAuth Configuration (passed via --dart-define, matching Infisical naming)
+  // GOOGLE_CLIENT_ID = Web client ID (used as serverClientId to get idToken for backend)
+  // GOOGLE_MOBILE_CLIENT_ID = Android client ID (for reference, usually in google-services.json)
+  static const String googleClientId = String.fromEnvironment('GOOGLE_CLIENT_ID');
+  static const String googleMobileClientId = String.fromEnvironment('GOOGLE_MOBILE_CLIENT_ID');
+
   // ============================================================================
   // TYPOGRAPHY CONFIGURATION
   // ============================================================================
