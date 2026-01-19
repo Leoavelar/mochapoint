@@ -166,8 +166,7 @@ class _CoffeeBottomNavState extends State<CoffeeBottomNav>
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              Color(0xFF2C2C2E),
-                              Color(0xFF2C2C2E),
+                              Color(0xFF000000),
                               Color(0xFF000000),
                             ],
                           ),

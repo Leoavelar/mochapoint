@@ -40,7 +40,6 @@ class HistoryScreen extends StatelessWidget {
         children: [
           AppHeader(
             backgroundImage: 'assets/images/header_2.png',
-            height: 200,
           ), // Header spans full width
 
           // Content area with padding

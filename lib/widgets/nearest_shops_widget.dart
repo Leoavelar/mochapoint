@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'package:mocha_point/main.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -153,14 +154,16 @@ class ApiService {
       ).timeout(AppConfig.apiTimeout);
 
       if (AppConfig.enableLogging) {
-        print('📊 ApiService: Coffee shops response status = ${response.statusCode}');
+        print(
+            '📊 ApiService: Coffee shops response status = ${response.statusCode}');
       }
 
       if (response.statusCode == 200) {
         final dynamic responseData = json.decode(response.body);
 
         if (AppConfig.enableLogging) {
-          print('📊 ApiService: Response data type = ${responseData.runtimeType}');
+          print(
+              '📊 ApiService: Response data type = ${responseData.runtimeType}');
         }
 
         // Handle different response formats
@@ -179,13 +182,16 @@ class ApiService {
             jsonData = [responseData];
           }
         } else {
-          throw Exception('Unexpected response format: ${responseData.runtimeType}');
+          throw Exception(
+              'Unexpected response format: ${responseData.runtimeType}');
         }
 
-        final List<CoffeeShop> shops = jsonData.map((shop) => CoffeeShop.fromJson(shop)).toList();
+        final List<CoffeeShop> shops =
+            jsonData.map((shop) => CoffeeShop.fromJson(shop)).toList();
 
         if (AppConfig.enableLogging) {
-          print('✅ ApiService: Successfully loaded ${shops.length} coffee shops');
+          print(
+              '✅ ApiService: Successfully loaded ${shops.length} coffee shops');
         }
 
         return {
@@ -195,9 +201,11 @@ class ApiService {
         };
       } else {
         if (AppConfig.enableLogging) {
-          print('❌ ApiService: Failed to load coffee shops: ${response.statusCode} - ${response.body}');
+          print(
+              '❌ ApiService: Failed to load coffee shops: ${response.statusCode} - ${response.body}');
         }
-        throw Exception('Failed to load coffee shops: ${response.statusCode} - ${response.body}');
+        throw Exception(
+            'Failed to load coffee shops: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       if (AppConfig.enableLogging) {
@@ -207,7 +215,8 @@ class ApiService {
     }
   }
 
-  static Future<UserSubscriptionStatus> getUserSubscriptionStatus(String token) async {
+  static Future<UserSubscriptionStatus> getUserSubscriptionStatus(
+      String token) async {
     try {
       if (AppConfig.enableLogging) {
         print('🔍 ApiService: Getting user subscription status');
@@ -222,7 +231,8 @@ class ApiService {
       ).timeout(AppConfig.apiTimeout);
 
       if (AppConfig.enableLogging) {
-        print('📊 ApiService: Subscription status response = ${response.statusCode}');
+        print(
+            '📊 ApiService: Subscription status response = ${response.statusCode}');
       }
 
       if (response.statusCode == 200) {
@@ -233,9 +243,11 @@ class ApiService {
         return UserSubscriptionStatus.fromJson(jsonData);
       } else {
         if (AppConfig.enableLogging) {
-          print('❌ ApiService: Failed to load subscription status: ${response.statusCode}');
+          print(
+              '❌ ApiService: Failed to load subscription status: ${response.statusCode}');
         }
-        throw Exception('Failed to load subscription status: ${response.statusCode}');
+        throw Exception(
+            'Failed to load subscription status: ${response.statusCode}');
       }
     } catch (e) {
       if (AppConfig.enableLogging) {
@@ -351,7 +363,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       _locationPermissionGranted = true;
 
       if (AppConfig.enableLogging && _currentPosition != null) {
-        print('📍 Got location: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
+        print(
+            '📍 Got location: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}');
       }
 
       await _loadData();
@@ -438,8 +451,10 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         });
       } else if (_orderBy == 'rating') {
         shopsWithDistances.sort((a, b) {
-          final ratingA = (a.googleRating > 0) ? a.googleRating : a.userAverageRating;
-          final ratingB = (b.googleRating > 0) ? b.googleRating : b.userAverageRating;
+          final ratingA =
+              (a.googleRating > 0) ? a.googleRating : a.userAverageRating;
+          final ratingB =
+              (b.googleRating > 0) ? b.googleRating : b.userAverageRating;
           return ratingB.compareTo(ratingA);
         });
       }
@@ -447,7 +462,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       // Load user subscription status if token provided
       UserSubscriptionStatus? userStatus;
       if (widget.userToken != null) {
-        userStatus = await ApiService.getUserSubscriptionStatus(widget.userToken!);
+        userStatus =
+            await ApiService.getUserSubscriptionStatus(widget.userToken!);
       } else {
         userStatus = UserSubscriptionStatus(
           hasActiveSubscription: false,
@@ -484,7 +500,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       });
 
       if (AppConfig.enableLogging) {
-        print('📊 Pagination: Showing ${_displayedShops.length} of ${_allShops.length} shops');
+        print(
+            '📊 Pagination: Showing ${_displayedShops.length} of ${_allShops.length} shops');
       }
     } catch (e) {
       if (!mounted || _isDisposed) return;
@@ -521,7 +538,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
       });
 
       if (AppConfig.enableLogging) {
-        print('📊 Loaded more shops: Now showing ${_displayedShops.length} of ${_allShops.length}');
+        print(
+            '📊 Loaded more shops: Now showing ${_displayedShops.length} of ${_allShops.length}');
       }
     });
   }
@@ -536,7 +554,9 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
 
     final hours = minutes ~/ 60;
     final remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? "${hours}h ${remainingMinutes}m" : "${hours}h";
+    return remainingMinutes > 0
+        ? "${hours}h ${remainingMinutes}m"
+        : "${hours}h";
   }
 
   Future<void> _refresh() async {
@@ -573,8 +593,10 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
   }
 
   Widget _buildRatingDisplay(CoffeeShop shop, bool isSubscribed) {
-    final bool hasGoogleRating = shop.googleRating > 0 && shop.googleRatingCount > 0;
-    final bool hasAppRating = shop.userAverageRating > 0 && shop.userRatingCount > 0;
+    final bool hasGoogleRating =
+        shop.googleRating > 0 && shop.googleRatingCount > 0;
+    final bool hasAppRating =
+        shop.userAverageRating > 0 && shop.userRatingCount > 0;
 
     if (hasGoogleRating) {
       return Row(
@@ -587,10 +609,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           const SizedBox(width: 4),
           Text(
             shop.googleRating.toStringAsFixed(1),
-            style: AppTypography.bodySmall.copyWith(
-                color: Colors.black,
-                fontWeight: FontWeight.w600
-            ),
+            style: AppTypography.bodySmall
+                .copyWith(color: Colors.black, fontWeight: FontWeight.w600),
           ),
           const SizedBox(width: 2),
           Text(
@@ -624,14 +644,17 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             '(${shop.userRatingCount})',
             style: TextStyle(
               fontSize: 12,
-              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+              color: isSubscribed
+                  ? MyApp.coffeeBean.withOpacity(0.7)
+                  : Colors.grey,
             ),
           ),
           const SizedBox(width: 4),
           Icon(
             Icons.coffee,
             size: 12,
-            color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+            color:
+                isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
           ),
         ],
       );
@@ -641,14 +664,17 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           Icon(
             Icons.star_border,
             size: 14,
-            color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.5) : Colors.grey,
+            color:
+                isSubscribed ? MyApp.coffeeBean.withOpacity(0.5) : Colors.grey,
           ),
           const SizedBox(width: 4),
           Text(
             'No ratings',
             style: TextStyle(
               fontSize: 12,
-              color: isSubscribed ? MyApp.coffeeBean.withOpacity(0.7) : Colors.grey,
+              color: isSubscribed
+                  ? MyApp.coffeeBean.withOpacity(0.7)
+                  : Colors.grey,
             ),
           ),
         ],
@@ -665,9 +691,14 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(),
+              const CircularProgressIndicator(
+                color: MyApp.coffeeAccent,
+                backgroundColor: Colors.transparent,
+              ),
               const SizedBox(height: 16),
-              Text(_isLoadingLocation ? 'Getting your location...' : 'Loading coffee shops...'),
+              Text(_isLoadingLocation
+                  ? 'Getting your location...'
+                  : 'Loading coffee shops...'),
             ],
           ),
         ),
@@ -697,21 +728,24 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Container(
-              padding: const EdgeInsets.only(top: 20, left: 8, right: 8, bottom: 8),
+              padding:
+                  const EdgeInsets.only(top: 20, left: 8, right: 8, bottom: 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildLocationHeader(),
 
                   // Display paginated shops
-                  ..._displayedShops.map((shop) => _buildShopItem(context, shop)).toList(),
+                  ..._displayedShops
+                      .map((shop) => _buildShopItem(context, shop))
+                      .toList(),
 
                   // Load More button
-                  if (_hasMoreShops)
-                    _buildLoadMoreButton(),
+                  if (_hasMoreShops) _buildLoadMoreButton(),
 
                   // Show "All shops loaded" message when at the end
-                  if (!_hasMoreShops && _displayedShops.length < _allShops.length)
+                  if (!_hasMoreShops &&
+                      _displayedShops.length < _allShops.length)
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
@@ -742,6 +776,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                 style: AppTypography.titleLarge.copyWith(
                   fontWeight: FontWeight.w700,
                   fontSize: 20,
+                  letterSpacing: -1,
                 ),
               ),
             ),
@@ -757,33 +792,33 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
         margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         child: _isLoadingMore
             ? Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(MyApp.coffeeBean),
-          ),
-        )
+                padding: const EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(MyApp.coffeeBean),
+                ),
+              )
             : SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton.icon(
-            onPressed: _loadMoreShops,
-            icon: const Icon(Icons.expand_more),
-            label: Text(
-              'Load More (${_allShops.length - _displayedShops.length} remaining)',
-              style: AppTypography.bodySmall.copyWith(
-                color: Colors.white,
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _loadMoreShops,
+                  icon: const Icon(Icons.expand_more),
+                  label: Text(
+                    'Load More (${_allShops.length - _displayedShops.length} remaining)',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(100),
-              ),
-              elevation: 0,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -798,9 +833,13 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
           Row(
             children: [
               Icon(
-                _currentPosition != null ? Icons.location_on : Icons.location_off,
+                _currentPosition != null
+                    ? Icons.location_on
+                    : Icons.location_off,
                 size: 16,
-                color: _currentPosition != null ? const Color(0xFF000000) : Colors.red,
+                color: _currentPosition != null
+                    ? const Color(0xFF000000)
+                    : Colors.red,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -815,7 +854,6 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
               ),
             ],
           ),
-
           if (_currentPosition != null) ...[
             const SizedBox(height: 8),
             _buildSegmentedControl(),
@@ -1042,36 +1080,35 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
             height: 64,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Colors.grey.shade200,
-                width: 1,
-              ),
+              // border: Border.all(
+              //   color: Colors.grey.shade200,
+              //   width: 1,
+              // ),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: shop.logoUrl != null
                   ? Image.asset(
-                'assets/images/shops/${shop.logoUrl}',
-                width: 48,
-                height: 48,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Image.asset(
-                    'assets/images/shops/default_coffee_logo.png',
-                    width: 48,
-                    height: 48,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return _buildFallbackLogo(coffeeBean);
-                    },
-                  );
-                },
-              )
+                      'assets/images/shops/${shop.logoUrl}',
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/shops/default_coffee_logo.png',
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return _buildFallbackLogo(coffeeBean);
+                          },
+                        );
+                      },
+                    )
                   : _buildFallbackLogo(coffeeBean),
             ),
           ),
           const SizedBox(width: 16),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1079,7 +1116,8 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                 Text(
                   shop.name,
                   style: AppTypography.titleSmall.copyWith(
-                      fontWeight: FontWeight.w700
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 if (shop.brand != null) ...[
@@ -1088,6 +1126,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                     shop.brand!,
                     style: AppTypography.bodySmall.copyWith(
                       color: Colors.grey.shade600,
+                      letterSpacing: -0.5,
                     ),
                   ),
                 ],
@@ -1155,8 +1194,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                             'Subscribed',
                             style: AppTypography.bodySmall.copyWith(
                                 color: AppConfig.successColor,
-                                fontWeight: FontWeight.w700
-                            ),
+                                fontWeight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -1176,8 +1214,7 @@ class _NearestShopsWidgetState extends State<NearestShopsWidget> {
                             'Accepts Joker',
                             style: AppTypography.bodySmall.copyWith(
                                 color: MyApp.coffeeFroth,
-                                fontWeight: FontWeight.w700
-                            ),
+                                fontWeight: FontWeight.w700),
                           ),
                         ],
                       ),

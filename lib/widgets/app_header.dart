@@ -8,14 +8,14 @@ import 'dart:math' as math;
 
 class AppHeader extends StatefulWidget {
   final String backgroundImage;
-  final double height;
+  // final double height;
   final double borderRadius;
 
   const AppHeader({
     super.key,
     required this.backgroundImage,
-    this.height = 175.0,
-    this.borderRadius = 100.0,
+    // this.height = 120.0,
+    this.borderRadius = 00.0,
   });
 
   @override
@@ -79,92 +79,50 @@ class _AppHeaderState extends State<AppHeader> with SingleTickerProviderStateMix
         bottomRight: Radius.circular(widget.borderRadius),
       ),
       child: SizedBox(
-        height: widget.height,
+        // height: widget.height,
         child: Stack(
           children: [
-            // Liquid glass background
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(widget.borderRadius),
-                  bottomRight: Radius.circular(widget.borderRadius),
-                ),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.white.withOpacity(0.8),
-                          Colors.white.withOpacity(0.2),
-                        ],
-                      ),
-                      border: Border.all(
-                        color: Colors.black,
-                        width: 2,
-                      ),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(widget.borderRadius),
-                        bottomRight: Radius.circular(widget.borderRadius),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Animated dark espresso wave layer with padding to show border
-            Positioned(
-              left: 2,
-              right: 2,
-              top: 0,
-              bottom: 2,
-              child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(widget.borderRadius - 2),
-                  bottomRight: Radius.circular(widget.borderRadius - 2),
-                ),
-                child: AnimatedBuilder(
-                  animation: _waveAnimation,
-                  builder: (context, child) {
-                    return CustomPaint(
-                      painter: HeaderCoffeeLiquidPainter(
-                        wavePhase: _waveAnimation.value * 2 * math.pi,
-                        height: widget.height,
-                      ),
-                      size: Size.infinite,
-                    );
-                  },
-                ),
-              ),
-            ),
-
             // Content layer
+
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                // padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.only(top: 32, left: 8, right: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Logo icon on the left
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.0),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(0),
-                        child: Image.asset(
-                          'assets/icons/mocha_icon_black.png',
-                          fit: BoxFit.fitHeight,
+                    // Greeting text on the left (replacing logo)
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Montserrat',
+                            height: 1.25,
+                            letterSpacing: -1,
+                          ),
+                          children: [
+                            const TextSpan(
+                              text: 'Good morning\n[',
+                              style: TextStyle(color: Colors.black),
+                            ),
+                            TextSpan(
+                              text: 'Leonardo',
+                              style: TextStyle(color: MyApp.coffeeAccent),
+                            ),
+                            const TextSpan(
+                              text: ']',
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+
+                    const SizedBox(width: 16),
+
                     // Profile avatar on the right
                     ProfileAvatar(
                       user: _user,

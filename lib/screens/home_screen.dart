@@ -269,7 +269,7 @@ class _CustomerHomeTabState extends State<_CustomerHomeTab> {
     final String formattedDate = DateFormat('MMMM yyyy').format(now);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [

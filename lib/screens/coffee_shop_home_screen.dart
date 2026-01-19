@@ -238,7 +238,7 @@ class _CoffeeShopHomeScreenState extends State<CoffeeShopHomeScreen> {
     return OverlappingContentLayout(
       header: const AppHeader(
         backgroundImage: 'assets/images/header_2.png',
-        height: 200.0,
+        // height: 200.0,
       ),
       overlappingWidget: _buildShopHeaderCard(),
       contentWidgets: [

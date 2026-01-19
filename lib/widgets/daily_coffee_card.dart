@@ -96,7 +96,8 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
-    )..repeat(reverse: true);
+    )
+      ..repeat(reverse: true);
 
     _pulseAnimation = Tween<double>(
       begin: 0.3,
@@ -154,7 +155,9 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
           print(
               '📊 DailyCoffeeCard: Total today redemptions = ${status['todayRedemptions']}');
           print(
-              '☕ DailyCoffeeCard: Subscription coffee ${hasRedeemedToday ? "NOT" : "IS"} available');
+              '☕ DailyCoffeeCard: Subscription coffee ${hasRedeemedToday
+                  ? "NOT"
+                  : "IS"} available');
         }
 
         if (mounted) {
@@ -213,7 +216,9 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
             final shopData = await ApiService.getCoffeeShops();
             final shops = shopData['shops'] as List<CoffeeShop>;
             final fullShopData =
-                shops.where((shop) => shop.id == firstShop.id).firstOrNull;
+                shops
+                    .where((shop) => shop.id == firstShop.id)
+                    .firstOrNull;
 
             if (mounted) {
               setState(() {
@@ -300,7 +305,8 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
     final minutes = duration.inMinutes % 60;
     final seconds = duration.inSeconds % 60;
 
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(
+        2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   double _getProgressToMidnight() {
@@ -308,8 +314,12 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
     final startOfDay = DateTime(now.year, now.month, now.day);
     final endOfDay = DateTime(now.year, now.month, now.day + 1);
 
-    final totalSeconds = endOfDay.difference(startOfDay).inSeconds;
-    final elapsedSeconds = now.difference(startOfDay).inSeconds;
+    final totalSeconds = endOfDay
+        .difference(startOfDay)
+        .inSeconds;
+    final elapsedSeconds = now
+        .difference(startOfDay)
+        .inSeconds;
 
     return elapsedSeconds / totalSeconds;
   }
@@ -435,8 +445,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                         Text(
                           'What you\'ll get:',
                           style: AppTypography.titleMedium.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white),
+                              fontWeight: FontWeight.w700, color: Colors.white),
                         ),
                         const SizedBox(height: 8),
                         _buildBenefitRow(
@@ -548,9 +557,8 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
   Widget _buildAvailableView(BuildContext context) {
     final bool coffeeReady = _isCoffeeReady();
     return CoffeeReadyBackground(
-      // Don't specify height - let it size dynamically based on content
       child: Container(
-        padding: const EdgeInsets.all(16), // Reduced from 24
+        padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -560,14 +568,14 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20), // Pill-shaped
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.1),
                   width: 0.5,
                 ),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min, // Make it fit content width
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     width: 6,
@@ -588,7 +596,7 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    coffeeReady ? 'QR code ready' : 'BREWING',
+                    _selectedShop?.hours ?? 'open now',
                     style: AppTypography.bodySmall.copyWith(
                       color: Colors.white.withOpacity(0.7),
                       fontWeight: FontWeight.w600,
@@ -599,165 +607,192 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
               ),
             ),
 
-            const SizedBox(height: 20), // Reduced from 32
+            const SizedBox(height: 20),
 
-            // Center content
+            // Main content
             if (coffeeReady) ...[
-              // Circular progress indicator with logo (centered)
-              Center(
-                child: SizedBox(
-                  width: 80, // Reduced from 120
-                  height: 80, // Reduced from 120
-                  child: Stack(
-                    children: [
-                      // Pulse animation
-                      AnimatedBuilder(
-                        animation: _pulseAnimation,
-                        builder: (context, child) {
-                          return Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: MyApp.coffeeAccent
-                                      .withOpacity(_pulseAnimation.value),
-                                  blurRadius: 40, // Reduced from 60
-                                  spreadRadius: 0,
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                      // Background circle
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.1),
+              // Ready state - show message with logo (same row layout as brewing)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left side - ready message
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your coffee is',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w100,
+                          ),
                         ),
-                      ),
-                      // Progress circle
-                      AnimatedBuilder(
-                        animation: _progressAnimation,
-                        builder: (context, child) {
-                          return CustomPaint(
-                            size: const Size(80, 80), // Reduced from 120
-                            painter: CircularProgressPainter(
-                              progress: 1.0,
-                              backgroundColor: Colors.white.withOpacity(0.1),
-                              gradientColors: [
-                                MyApp.coffeeAccent,
-                                MyApp.coffeeAccent
-                              ],
-                              strokeWidth: 5, // Reduced from 8
+                        const SizedBox(height: 4),
+                        RichText(
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Montserrat',
+                              height: 1.25,
+                              letterSpacing: -0.5,
                             ),
-                          );
-                        },
-                      ),
-                      // Logo with flip animation
-                      Center(
-                        child: AnimatedBuilder(
-                          animation: _flipAnimation,
+                            children: [
+                              TextSpan(
+                                text: '[ ',
+                                style: TextStyle(color: MyApp.coffeeAccent),
+                              ),
+                              const TextSpan(
+                                text: 'Ready',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              TextSpan(
+                                text: ' ]',
+                                style: TextStyle(color: MyApp.coffeeAccent),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Enjoy your cup!',
+                          style: AppTypography.titleMedium.copyWith(
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w100,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Right side - logo with progress (same as brewing state)
+                  SizedBox(
+                    width: 90,
+                    height: 90,
+                    child: Stack(
+                      children: [
+                        // Pulse animation
+                        AnimatedBuilder(
+                          animation: _pulseAnimation,
                           builder: (context, child) {
-                            final angle = _flipAnimation.value *
-                                numberOfFlips *
-                                2 *
-                                math.pi;
-                            final scale = 1.0 -
-                                (math.sin(_flipAnimation.value * math.pi) *
-                                    0.15);
-
-                            return Transform(
-                              alignment: Alignment.center,
-                              transform: Matrix4.identity()
-                                ..setEntry(3, 2, 0.002)
-                                ..rotateY(angle)
-                                ..scale(scale),
-                              child: Container(
-                                width: 60, // Reduced from 90
-                                height: 60, // Reduced from 90
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: MyApp.coffeeAccent,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.5),
-                                      blurRadius: 10, // Reduced from 15
-                                      offset: const Offset(0, 2), // Reduced from 3
-                                    ),
-                                  ],
-                                ),
-                                child: ClipOval(
-                                  child: _selectedShop?.logoUrl != null
-                                      ? Image.asset(
-                                    'assets/images/shops/${_selectedShop!.logoUrl}',
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) {
-                                      return const Icon(
-                                        Icons.local_cafe,
-                                        color: Colors.white,
-                                        size: 24, // Reduced from 36
-                                      );
-                                    },
-                                  )
-                                      : const Icon(
-                                    Icons.local_cafe,
-                                    color: Colors.white,
-                                    size: 24, // Reduced from 36
+                            return Container(
+                              width: 90,
+                              height: 90,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: MyApp.coffeeAccent
+                                        .withOpacity(_pulseAnimation.value),
+                                    blurRadius: 40,
+                                    spreadRadius: 0,
                                   ),
-                                ),
+                                ],
                               ),
                             );
                           },
                         ),
-                      ),
-                    ],
+                        // Background circle
+                        Container(
+                          width: 90,
+                          height: 90,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                        // Progress circle
+                        AnimatedBuilder(
+                          animation: _progressAnimation,
+                          builder: (context, child) {
+                            return CustomPaint(
+                              size: const Size(90, 90),
+                              painter: CircularProgressPainter(
+                                progress: 1.0,
+                                backgroundColor: Colors.white.withOpacity(0.1),
+                                gradientColors: [
+                                  MyApp.coffeeAccent,
+                                  MyApp.coffeeAccent
+                                ],
+                                strokeWidth: 5,
+                              ),
+                            );
+                          },
+                        ),
+                        // Logo with flip animation
+                        Center(
+                          child: AnimatedBuilder(
+                            animation: _flipAnimation,
+                            builder: (context, child) {
+                              final angle = _flipAnimation.value *
+                                  numberOfFlips *
+                                  2 *
+                                  math.pi;
+                              final scale = 1.0 -
+                                  (math.sin(_flipAnimation.value * math.pi) *
+                                      0.15);
+
+                              return Transform(
+                                alignment: Alignment.center,
+                                transform: Matrix4.identity()
+                                  ..setEntry(3, 2, 0.002)
+                                  ..rotateY(angle)
+                                  ..scale(scale),
+                                child: Container(
+                                  width: 68,
+                                  height: 68,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: MyApp.coffeeAccent,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.5),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ClipOval(
+                                    child: _selectedShop?.logoUrl != null
+                                        ? Image.asset(
+                                      'assets/images/shops/${_selectedShop!
+                                          .logoUrl}',
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return const Icon(
+                                          Icons.local_cafe,
+                                          color: Colors.white,
+                                          size: 28,
+                                        );
+                                      },
+                                    )
+                                        : const Icon(
+                                      Icons.local_cafe,
+                                      color: Colors.white,
+                                      size: 28,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
 
-              const SizedBox(height: 8), // Reduced from 24
-
-              // "YOUR ORDER IS" text
-              Center(
-                child: Text(
-                  'Your coffee is',
-                  style: AppTypography.titleMedium.copyWith( // Changed from bodyMedium
-                    color: Colors.white,
-                    fontWeight: FontWeight.w100,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8), // Reduced from 4
-
-              // "[Ready]" text
-              Center(
-                child: Text(
-                  '[Ready]',
-                  style: TextStyle(
-                    fontSize: 28, // Reduced from 42
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 0,
-                    height: 1.0,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16), // Reduced from 24
+              const SizedBox(height: 16),
 
               // Shop location info
               Container(
-                padding: const EdgeInsets.all(12), // Reduced from 16
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12), // Reduced from 16
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: Colors.white.withOpacity(0.1),
                     width: 0.5,
@@ -768,94 +803,207 @@ class DailyCoffeeCardState extends State<DailyCoffeeCard>
                     Icon(
                       Icons.location_on,
                       color: MyApp.coffeeAccent,
-                      size: 16, // Reduced from 20
+                      size: 16,
                     ),
-                    const SizedBox(width: 8), // Reduced from 12
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             _selectedShop?.name ?? 'Your Coffee Shop',
-                            style: AppTypography.bodySmall.copyWith( // Changed from bodyMedium
+                            style: AppTypography.bodySmall.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
-                              fontSize: 13, // Added explicit size
+                              fontSize: 13,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (_selectedShop?.distance != null)
-                            Text(
-                              '${(_selectedShop!.distance! * 1000).toStringAsFixed(0)}m • ${(_selectedShop!.distance! * 12).toStringAsFixed(0)} min walk',
-                              style: AppTypography.bodySmall.copyWith(
-                                color: Colors.white.withOpacity(0.6),
-                                fontSize: 11, // Added explicit size
-                              ),
+                          Text(
+                            _selectedShop?.brand ?? '',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 11,
                             ),
+                          ),
                         ],
                       ),
                     ),
                     Icon(
                       Icons.arrow_forward_ios,
                       color: Colors.white.withOpacity(0.4),
-                      size: 12, // Reduced from 16
+                      size: 12,
                     ),
                   ],
                 ),
               ),
-            ] else ...[
-              // Not ready state - show countdown
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Brewing...',
-                    style: AppTypography.titleSmall.copyWith( // Changed from titleMedium
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 6), // Reduced from 8
-                  Text(
-                    _getTimeUntilMidnight(),
-                    style: AppTypography.statsNumber.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                      fontSize: 32, // Reduced from 48
-                    ),
-                  ),
-                  const SizedBox(height: 3), // Reduced from 4
-                  Text(
-                    'Until next free coffee',
-                    style: AppTypography.bodySmall.copyWith( // Changed from bodyMedium
-                      color: Colors.white60,
-                    ),
-                  ),
-                  const SizedBox(height: 14), // Reduced from 20
-                  // Progress bar
-                  Container(
-                    height: 6, // Reduced from 8
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(3), // Reduced from 4
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: _getProgressToMidnight(),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [MyApp.coffeeAccent, MyApp.coffeeFroth],
+            ] else
+              ...[
+                // Not ready state - show countdown with logo
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left side - countdown info
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Brewing...',
+                            style: AppTypography.titleSmall.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: MyApp.coffeeAccent,
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(3), // Reduced from 4
-                        ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _getTimeUntilMidnight(),
+                            style: AppTypography.statsNumber.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              fontSize: 32,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            'Until next free coffee',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: Colors.white60,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    const SizedBox(width: 16),
+                    // Right side - logo with progress
+                    SizedBox(
+                      width: 90,
+                      height: 90,
+                      child: Stack(
+                        children: [
+                          // Background circle
+                          Container(
+                            width: 90,
+                            height: 90,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                          // Progress circle
+                          CustomPaint(
+                            size: const Size(90, 90),
+                            painter: CircularProgressPainter(
+                              progress: _getProgressToMidnight(),
+                              backgroundColor: Colors.white.withOpacity(0.1),
+                              gradientColors: [
+                                MyApp.coffeeAccent,
+                                MyApp.coffeeAccent
+                              ],
+                              strokeWidth: 5,
+                            ),
+                          ),
+                          // Logo
+                          Center(
+                            child: Container(
+                              width: 68,
+                              height: 68,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: MyApp.coffeeAccent,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.5),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: ClipOval(
+                                child: _selectedShop?.logoUrl != null
+                                    ? Image.asset(
+                                  'assets/images/shops/${_selectedShop!
+                                      .logoUrl}',
+                                  fit: BoxFit.cover,
+                                  errorBuilder:
+                                      (context, error, stackTrace) {
+                                    return const Icon(
+                                      Icons.local_cafe,
+                                      color: Colors.white,
+                                      size: 28,
+                                    );
+                                  },
+                                )
+                                    : const Icon(
+                                  Icons.local_cafe,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Shop location info
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.1),
+                      width: 0.5,
+                    ),
                   ),
-                ],
-              ),
-            ],
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        color: MyApp.coffeeAccent,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _selectedShop?.name ?? 'Your Coffee Shop',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                letterSpacing: -0.5,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (_selectedShop?.distance != null)
+                              Text(
+                                _selectedShop?.brand ?? '',
+                                style: AppTypography.bodySmall.copyWith(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.white.withOpacity(0.4),
+                        size: 12,
+                      ),
+                    ],
+                  ),
+                ),
+              ]
           ],
         ),
       ),

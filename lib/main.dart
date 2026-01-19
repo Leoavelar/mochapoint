@@ -25,7 +25,8 @@ class MyApp extends StatelessWidget {
 
   static const Color coffeeBean = Color(0xFF6A2801);
   static const Color lightCream = Color(0xFFF5E6D3);
-  static const Color coffeeFroth = Color(0xFF94511A);
+  // static const Color coffeeFroth = Color(0xFF94511A);
+  static const Color coffeeFroth = Color(0xFFD85C27);
   static const Color coffeeAccent = Color(0xFFD85C27);
   static const Color coffeeGreen = Color(0xFF4CAF50);
 
